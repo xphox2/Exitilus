@@ -80,24 +80,57 @@ export class GameEngine {
   }
 
   private async enterRealm(): Promise<void> {
-    // Check for existing player
-    const userInfo = this.session.getUserInfo();
-    let player = this.db.findPlayerByName(userInfo.name);
+    this.session.clear();
+    this.session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════╗`);
+    this.session.writeln(`║         ENTER THE REALM          ║`);
+    this.session.writeln(`╚══════════════════════════════════╝${ANSI.RESET}`);
+    this.session.writeln('');
 
-    if (!player) {
-      // Offer to create or enter a name
-      this.session.writeln(`${ANSI.BRIGHT_GREEN}No character found. Let's create one!${ANSI.RESET}`);
+    // List existing players so they know who's available
+    const allPlayers = this.db.listPlayers();
+    if (allPlayers.length > 0) {
+      this.session.writeln(`${ANSI.BRIGHT_CYAN}  Existing characters:${ANSI.RESET}`);
+      for (const p of allPlayers) {
+        const cls = this.content.classes.find(c => c.id === p.classId);
+        const status = p.alive ? `${ANSI.BRIGHT_GREEN}Alive` : `${ANSI.BRIGHT_RED}Dead`;
+        this.session.writeln(
+          `    ${ANSI.BRIGHT_WHITE}${p.name}${ANSI.RESET} - Level ${p.level} ${cls?.name ?? ''} [${status}${ANSI.RESET}]`
+        );
+      }
       this.session.writeln('');
+    }
+
+    const name = await this.session.readLine(
+      `${ANSI.BRIGHT_GREEN}Enter your character name (or type ${ANSI.BRIGHT_WHITE}NEW${ANSI.BRIGHT_GREEN} to create): ${ANSI.BRIGHT_WHITE}`
+    );
+
+    let player: PlayerRecord | null = null;
+
+    if (name.toUpperCase() === 'NEW') {
       player = await createNewPlayer(this.session, this.content, this.db);
     } else {
-      // Welcome back
-      this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
-      player.lastLogin = new Date().toISOString();
-      // Reset daily counters
-      player.monsterFights = 0;
-      player.playerFights = 0;
-      this.db.updatePlayer(player);
-      await this.session.pause();
+      player = this.db.findPlayerByName(name);
+      if (!player) {
+        this.session.writeln(`${ANSI.BRIGHT_RED}No character named "${name}" found.${ANSI.RESET}`);
+        const create = await this.session.readLine(
+          `${ANSI.BRIGHT_CYAN}Create a new character? (Y/N): ${ANSI.BRIGHT_WHITE}`
+        );
+        if (create.toLowerCase() === 'y') {
+          player = await createNewPlayer(this.session, this.content, this.db);
+        } else {
+          return;
+        }
+      } else {
+        // Welcome back
+        this.session.writeln('');
+        this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+        player.lastLogin = new Date().toISOString();
+        // Reset daily counters
+        player.monsterFights = 0;
+        player.playerFights = 0;
+        this.db.updatePlayer(player);
+        await this.session.pause();
+      }
     }
 
     this.player = player;

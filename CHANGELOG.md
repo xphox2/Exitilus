@@ -1,3 +1,13 @@
+## 0.1.3
+
+Fix character login for standalone/local mode.
+
+### Fixed
+- Entering the realm now asks for your character name instead of auto-matching by session username (which defaulted to "Adventurer" and never found your character)
+- Shows list of existing characters so you can see who's available
+- Type your character name to log in, or NEW to create a fresh character
+- If name not found, offers to create a new one
+
 ## 0.1.2
 
 Use original ANSI art screens as menus instead of rendering programmatic menus on top.
