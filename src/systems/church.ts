@@ -3,7 +3,7 @@ import type { PlayerRecord } from '../types/index.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
-import { showMenu, confirmPrompt, formatGold } from '../core/menus.js';
+import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 
 function randomInt(min: number, max: number): number {
@@ -16,19 +16,20 @@ export async function enterChurch(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
+  const validKeys = ['b', 'c', 'g', 'a', 's', 'r', 'q', 'y'];
+
   while (true) {
     session.clear();
     await session.showAnsi('CHURCH.ANS');
 
-    const choice = await showMenu(session, 'The Church', [
-      { key: 'b', label: 'Buy Healing Potions' },
-      { key: 'c', label: 'Contribute to the Church' },
-      { key: 'g', label: 'Give to the Poor' },
-      { key: 'a', label: 'Accept Blessings' },
-      { key: 's', label: 'Steal from the Church' },
-      { key: 'y', label: 'Your Stats' },
-      { key: 'r', label: 'Return to Main Street' },
-    ], { showBorder: false });
+    // CHURCH.ANS already shows the menu and "Your Choice:" prompt - just read a key
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
+      }
+    }
 
     switch (choice) {
       case 'b': {
@@ -149,6 +150,7 @@ export async function enterChurch(
         await session.pause();
         break;
 
+      case 'q':
       case 'r':
         return;
     }

@@ -3,7 +3,8 @@ import type { PlayerRecord } from '../types/index.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
-import { showMenu, formatGold } from '../core/menus.js';
+import { formatGold } from '../core/menus.js';
+import { showStats } from '../core/stats.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -35,21 +36,26 @@ export async function enterTavern(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
+  const validKeys = ['m', 'd', 'g', 't', 'r', 'q', 'y'];
+
   while (true) {
     session.clear();
     await session.showAnsi('INN.ANS');
 
-    session.writeln(`${ANSI.BRIGHT_GREEN}  Bryant the Terrible welcomes you!${ANSI.RESET}`);
-    session.writeln('');
-
-    const choice = await showMenu(session, 'The Tavern', [
-      { key: 'd', label: 'Buy a Drink' },
-      { key: 't', label: 'Talk to Bartender' },
-      { key: 'g', label: 'Gamble' },
-      { key: 'r', label: 'Return to Main Street' },
-    ], { showBorder: false });
+    // INN.ANS already shows the menu and "Your Choice:" prompt - just read a key
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
+      }
+    }
 
     switch (choice) {
+      case 'm':
+        session.writeln(`${ANSI.BRIGHT_RED}  The Message Board is not yet available.${ANSI.RESET}`);
+        await session.pause();
+        break;
       case 'd':
         await buyDrink(session, player, db);
         break;
@@ -61,6 +67,12 @@ export async function enterTavern(
       case 'g':
         await gamble(session, player, db);
         break;
+      case 'y':
+        session.clear();
+        showStats(session, player, content);
+        await session.pause();
+        break;
+      case 'q':
       case 'r':
         return;
     }

@@ -4,7 +4,8 @@ import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
-import { showMenu, confirmPrompt, formatGold } from '../core/menus.js';
+import { confirmPrompt, formatGold } from '../core/menus.js';
+import { showStats } from '../core/stats.js';
 
 function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
   player[slot] = value;
@@ -135,17 +136,20 @@ async function runShop(
   const config = SHOP_CONFIG[shopType];
   const shopItems = content.items.filter(i => i.type === shopType && i.price > 0);
 
+  const validKeys = ['b', 's', 'a', 't', 'r'];
+
   while (true) {
     session.clear();
     await session.showAnsi(config.ansi);
 
-    const choice = await showMenu(session, config.title, [
-      { key: 'b', label: 'Browse / Purchase' },
-      { key: 's', label: 'Sell Equipment' },
-      { key: 'a', label: 'Attempt to Steal' },
-      { key: 't', label: 'Talk to Shopkeeper' },
-      { key: 'r', label: 'Return' },
-    ], { showBorder: false });
+    // Individual shop ANSIs already show the menu and prompt - just read a key
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
+      }
+    }
 
     switch (choice) {
       case 'b':
@@ -176,21 +180,35 @@ export async function enterShops(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
+  const validKeys = ['s', 'w', 'a', 'm', 'r', 'q', 'y'];
+
   while (true) {
     session.clear();
     await session.showAnsi('SHOPS.ANS');
 
-    const choice = await showMenu(session, 'The Shops', [
-      { key: 'w', label: 'Weapon Shop' },
-      { key: 's', label: 'Shield Shop' },
-      { key: 'a', label: 'Armour Shop' },
-      { key: 'r', label: 'Return to Main Street' },
-    ], { showBorder: false });
+    // SHOPS.ANS already shows the menu and "Your Choice:" prompt - just read a key
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
+      }
+    }
 
     switch (choice) {
       case 'w': await runShop(session, player, content, db, 'weapon'); break;
       case 's': await runShop(session, player, content, db, 'shield'); break;
       case 'a': await runShop(session, player, content, db, 'armour'); break;
+      case 'm':
+        session.writeln(`${ANSI.BRIGHT_RED}  The Magician's Shop is not yet open for business.${ANSI.RESET}`);
+        await session.pause();
+        break;
+      case 'y':
+        session.clear();
+        showStats(session, player, content);
+        await session.pause();
+        break;
+      case 'q':
       case 'r': return;
     }
   }

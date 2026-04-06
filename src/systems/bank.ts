@@ -13,21 +13,17 @@ export async function enterBank(
     session.clear();
     await session.showAnsi('BANK.ANS');
 
-    session.writeln(`${ANSI.BRIGHT_YELLOW}  Gold on Hand: ${ANSI.BRIGHT_WHITE}$${formatGold(player.gold)}${ANSI.RESET}`);
-    session.writeln(`${ANSI.BRIGHT_YELLOW}  Bank Balance: ${ANSI.BRIGHT_WHITE}$${formatGold(player.bankGold)}${ANSI.RESET}`);
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}D${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Deposit`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}W${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Withdraw`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}.${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Deposit All`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE},${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Withdraw All`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}R${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Return${ANSI.RESET}`);
-    session.writeln('');
+    // BANK.ANS already shows the menu and prompt - just read a key
+    const validKeys = ['d', 'w', '.', '>', ',', '<', 't', 'r'];
+    let key = '';
+    while (!key) {
+      const k = await session.readKey();
+      if (validKeys.includes(k.toLowerCase())) {
+        key = k.toLowerCase();
+      }
+    }
 
-    session.write(`${ANSI.BRIGHT_CYAN}  Your choice: ${ANSI.BRIGHT_WHITE}`);
-    const key = await session.readKey();
-    session.writeln(key);
-
-    switch (key.toLowerCase()) {
+    switch (key) {
       case 'd': {
         if (player.gold <= 0) {
           session.writeln(`${ANSI.BRIGHT_RED}  You have no gold to deposit!${ANSI.RESET}`);
@@ -92,11 +88,12 @@ export async function enterBank(
         break;
       }
 
+      case 't':
+        session.writeln(`${ANSI.BRIGHT_RED}  Transfers are not yet available.${ANSI.RESET}`);
+        break;
+
       case 'r':
         return;
-
-      default:
-        session.writeln(`${ANSI.BRIGHT_RED}  Invalid choice.${ANSI.RESET}`);
     }
     await session.pause();
   }

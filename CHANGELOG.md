@@ -1,3 +1,13 @@
+## 0.1.2
+
+Use original ANSI art screens as menus instead of rendering programmatic menus on top.
+
+### Fixed
+- Main Street now displays the original MAIN.ANS which includes the full menu art and "Your Choice:" prompt, then reads a single keypress
+- Shops, Church, Inn/Tavern, Bank, Training, and Guilds all use their respective ANSI screens (SHOPS.ANS, CHURCH.ANS, INN.ANS, BANK.ANS, TRAIN.ANS, GUILDS.ANS) as the menu display
+- Individual shop screens (WEAPON.ANS, SHIELD.ANS, ARMOUR.ANS) also used directly
+- Eliminated double-menu rendering that caused garbled display
+
 ## 0.1.1
 
 Add core gameplay systems: combat, shops, bank, church, tavern, and training.

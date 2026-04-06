@@ -107,32 +107,20 @@ export class GameEngine {
   private async mainStreet(): Promise<void> {
     if (!this.player) return;
 
+    const validKeys = ['s', 'g', 'i', 'c', 't', 'm', 'b', 'u', 'w', 'a', 'y', 'l', 'f', 'p', 'r', 'v', 'k', '*', 'q'];
+
     while (true) {
       this.session.clear();
       await this.session.showAnsi('MAIN.ANS');
 
-      const items: MenuItem[] = [
-        { key: 's', label: 'Shops' },
-        { key: 'g', label: 'Guilds' },
-        { key: 'i', label: 'Inn / Tavern' },
-        { key: 'c', label: 'Church' },
-        { key: 't', label: 'Training Grounds' },
-        { key: 'm', label: "Merchants' Wharves" },
-        { key: 'b', label: 'Back Alleys' },
-        { key: 'u', label: 'Quests' },
-        { key: 'w', label: 'Walk Outside the City' },
-        { key: 'a', label: 'Army & Manor Commands' },
-        { key: 'y', label: 'Your Stats' },
-        { key: 'l', label: 'List Players' },
-        { key: 'f', label: 'Player Fight' },
-        { key: 'p', label: 'Personal Commands' },
-        { key: 'r', label: 'Read in Grand Library' },
-        { key: 'v', label: 'View Ratings' },
-        { key: 'k', label: 'Bank' },
-        { key: 'q', label: 'Quit for Today' },
-      ];
-
-      const choice = await showMenu(this.session, 'Main Street', items);
+      // MAIN.ANS already shows the menu and "Your Choice:" prompt - just read a key
+      let choice = '';
+      while (!choice) {
+        const key = await this.session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
+      }
 
       switch (choice) {
         case 's':
