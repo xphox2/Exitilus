@@ -6,8 +6,11 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js"
+    "dev": "tsx src/index.ts --local",
+    "dev:telnet": "tsx src/index.ts --telnet 2323",
+    "start": "node dist/index.js --local",
+    "start:telnet": "node dist/index.js --telnet 2323",
+    "start:door": "node dist/index.js --door"
   },
   "dependencies": {
     "sql.js": "^1.10.0",

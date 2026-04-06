@@ -1,3 +1,27 @@
+## 0.2.0
+
+Add telnet server, BBS door adapter, daily maintenance, expanded content.
+
+### Added
+- **Telnet server** (`src/io/telnet.ts`): Standalone multiplayer server. Run with `--telnet [port]` (default 2323). Full telnet protocol negotiation, per-connection game sessions, backspace handling, graceful disconnect
+- **BBS door adapter** (`src/io/door.ts`): Reads DOOR.SYS, DORINFO1.DEF, or CHAIN.TXT drop files. Run with `--door <dropdir>`. Supports standard BBS door conventions
+- **Daily maintenance** (`src/systems/maintenance.ts`): Runs automatically on first connection each day:
+  - Bank interest on savings
+  - Manor: food production/consumption, population growth/starvation, building income, morale shifts, military upkeep/desertion
+  - Inactive player deletion
+  - Daily fight counter resets
+- **CLI help** (`--help`): Full usage documentation with examples
+- **4 new quests**: The Pirate Cove (Lv 8), The Enchanted Forest (Lv 4), The King's Tournament (Lv 12), The Plague Village (Lv 6) - now 9 total
+- **9 new monsters**: Dark Spider, Griffin, Ice Drake, Living Scarecrow, Dust Devil, Pirate Raider, Siren, Enchanted Knight, Garden Golem - now 21 total, all 7 areas fully populated
+- npm scripts: `dev:telnet`, `start:telnet`, `start:door`
+
+### Running
+```
+npm run dev              # Local terminal mode
+npm run dev:telnet       # Telnet server on port 2323
+npm run build && npm start:door -- C:\BBS\NODE1  # BBS door mode
+```
+
 ## 0.1.6
 
 Add merchants, manor/army/kingdom system, and quest engine - ALL main street menu options now functional.
