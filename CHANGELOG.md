@@ -1,3 +1,16 @@
+## 0.2.1
+
+Add scoreboard bulletin generation for BBS display.
+
+### Added
+- **Bulletin generator** (`src/systems/bulletin.ts`): Auto-generates scoreboard files on every startup:
+  - `bulletin.ans` - Full-color ANSI version with box art, medals for top 3, 5 leaderboard categories
+  - `bulletin.txt` / `scores.txt` - Plain text version for ASCII-only BBS display
+  - Categories: Top Warriors (by level/XP), Wealthiest Players, Mightiest Fighters (by STR/DEF/AGI), Realm Lords (manor owners by serfs/army), Quest Champions
+  - Realm statistics: active players, average level, total gold, total manors
+- **World News** menu (W/Y on entry screen) now displays the ANSI scoreboard bulletin instead of "no news"
+- Added `bulletin.ans`, `bulletin.txt`, `scores.txt` to `.gitignore` (generated files)
+
 ## 0.2.0
 
 Add telnet server, BBS door adapter, daily maintenance, expanded content.

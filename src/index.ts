@@ -7,6 +7,7 @@ import { GameDatabase } from './data/database.js';
 import { loadGameContent } from './data/loader.js';
 import { GameEngine } from './core/game.js';
 import { runDailyMaintenance } from './systems/maintenance.js';
+import { generateBulletin } from './systems/bulletin.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
@@ -70,6 +71,9 @@ async function main() {
     console.log('Daily maintenance:');
     maintLog.forEach(line => console.log(`  ${line}`));
   }
+
+  // Generate scoreboard bulletin
+  generateBulletin(db, content, dataDir);
 
   // Determine mode
   const telnetMode = args.includes('--telnet');

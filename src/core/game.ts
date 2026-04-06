@@ -1,3 +1,6 @@
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { PlayerSession } from '../io/session.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
@@ -71,12 +74,8 @@ export class GameEngine {
           await this.enterRealm();
           break;
         case 'w':
-          this.session.writeln(`${ANSI.BRIGHT_CYAN}No world news today.${ANSI.RESET}`);
-          await this.session.pause();
-          break;
         case 'y':
-          this.session.writeln(`${ANSI.BRIGHT_CYAN}No news from yesterday.${ANSI.RESET}`);
-          await this.session.pause();
+          await this.showBulletin();
           break;
         case 'h':
           await this.showHallOfEmperors();
@@ -308,6 +307,20 @@ export class GameEngine {
       }
     }
     this.session.writeln('');
+    await this.session.pause();
+  }
+
+  private async showBulletin(): Promise<void> {
+    this.session.clear();
+    // Read the generated ANSI bulletin
+    const __dir = dirname(fileURLToPath(import.meta.url));
+    const bulletinPath = join(__dir, '..', '..', 'bulletin.ans');
+    if (existsSync(bulletinPath)) {
+      const content = readFileSync(bulletinPath, 'utf-8');
+      this.session.write(content);
+    } else {
+      this.session.writeln(`${ANSI.BRIGHT_CYAN}No scoreboard bulletin has been generated yet.${ANSI.RESET}`);
+    }
     await this.session.pause();
   }
 

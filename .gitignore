@@ -4,3 +4,6 @@ dist/
 *.db-journal
 *.db-wal
 *.db-shm
+bulletin.ans
+bulletin.txt
+scores.txt
