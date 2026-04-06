@@ -174,6 +174,67 @@ async function runShop(
   }
 }
 
+async function runMagicShop(
+  session: PlayerSession,
+  player: PlayerRecord,
+  content: GameContent,
+  db: GameDatabase
+): Promise<void> {
+  // Magic items: anything with magicBonus > 0
+  const magicItems = content.items.filter(i => i.magicBonus > 0 && i.price > 0);
+
+  while (true) {
+    session.clear();
+    await session.showAnsi('MAGICIAN.ANS');
+
+    session.writeln('');
+    session.writeln(`  ${ANSI.BRIGHT_MAGENTA}═══ Magician's Shop ═══${ANSI.RESET}`);
+    session.writeln(`  ${ANSI.BRIGHT_CYAN}${'#'.padStart(3)}  ${'Item'.padEnd(25)} ${'Price'.padStart(10)} ${'MAG'.padStart(5)} ${'Type'.padEnd(8)}${ANSI.RESET}`);
+    session.writeln(`  ${ANSI.CYAN}${'─'.repeat(55)}${ANSI.RESET}`);
+
+    for (let i = 0; i < magicItems.length; i++) {
+      const item = magicItems[i];
+      const affordable = player.gold >= item.price;
+      const color = affordable ? ANSI.BRIGHT_MAGENTA : ANSI.BRIGHT_BLACK;
+      session.writeln(
+        `  ${color}${String(i + 1).padStart(3)}  ${item.name.padEnd(25)} $${formatGold(item.price).padStart(9)} ` +
+        `+${String(item.magicBonus).padStart(3)} ${(item.type).padEnd(8)}${ANSI.RESET}`
+      );
+    }
+    session.writeln('');
+    session.writeln(`  ${ANSI.BRIGHT_YELLOW}Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
+    session.writeln(`  ${ANSI.BRIGHT_MAGENTA}(B)${ANSI.RESET} Buy  ${ANSI.BRIGHT_MAGENTA}(R)${ANSI.RESET} Return`);
+    session.writeln('');
+
+    session.write(`${ANSI.BRIGHT_CYAN}  Choice: ${ANSI.BRIGHT_WHITE}`);
+    const key = await session.readKey();
+    session.writeln(key);
+
+    if (key.toLowerCase() === 'r') return;
+
+    if (key.toLowerCase() === 'b') {
+      const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Buy which? (0 cancel): ${ANSI.BRIGHT_WHITE}`);
+      const idx = parseInt(input, 10) - 1;
+      if (idx >= 0 && idx < magicItems.length) {
+        const item = magicItems[idx];
+        if (player.gold < item.price) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You can't afford that!${ANSI.RESET}`);
+        } else {
+          player.gold -= item.price;
+          if (item.slot) {
+            setEquipSlot(player, item.slot, item.id);
+          }
+          // Also boost wisdom from magic purchase
+          player.wisdom += Math.floor(item.magicBonus / 10);
+          db.updatePlayer(player);
+          session.writeln(`${ANSI.BRIGHT_GREEN}  You purchased the ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+        }
+      }
+      await session.pause();
+    }
+  }
+}
+
 export async function enterShops(
   session: PlayerSession,
   player: PlayerRecord,
@@ -200,8 +261,7 @@ export async function enterShops(
       case 's': await runShop(session, player, content, db, 'shield'); break;
       case 'a': await runShop(session, player, content, db, 'armour'); break;
       case 'm':
-        session.writeln(`${ANSI.BRIGHT_RED}  The Magician's Shop is not yet open for business.${ANSI.RESET}`);
-        await session.pause();
+        await runMagicShop(session, player, content, db);
         break;
       case 'y':
         session.clear();

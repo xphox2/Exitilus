@@ -1,0 +1,17 @@
+[
+  { "id": "minor_heal", "name": "Minor Heal", "description": "Restore some health", "mpCost": 5, "minLevel": 1, "classes": ["all"], "effect": { "type": "heal", "power": 35 } },
+  { "id": "major_heal", "name": "Major Heal", "description": "Restore a large amount of health", "mpCost": 15, "minLevel": 5, "classes": ["cleric", "monk", "sage", "ranger"], "effect": { "type": "heal", "power": 90 } },
+  { "id": "full_restore", "name": "Full Restore", "description": "Fully restore HP and MP", "mpCost": 30, "minLevel": 10, "classes": ["cleric", "sage"], "effect": { "type": "heal", "power": 9999 } },
+  { "id": "fireball", "name": "Fireball", "description": "Hurl a ball of fire at your enemy", "mpCost": 8, "minLevel": 2, "classes": ["sorcerer", "sage", "alchemist"], "effect": { "type": "damage", "power": 30 } },
+  { "id": "lightning", "name": "Lightning Bolt", "description": "Strike your foe with a bolt of lightning", "mpCost": 14, "minLevel": 6, "classes": ["sorcerer", "sage"], "effect": { "type": "damage", "power": 55 } },
+  { "id": "ice_storm", "name": "Ice Storm", "description": "Freeze your enemy with a blizzard", "mpCost": 20, "minLevel": 10, "classes": ["sorcerer"], "effect": { "type": "damage", "power": 80 } },
+  { "id": "poison", "name": "Poison Cloud", "description": "Engulf the enemy in toxic fumes", "mpCost": 10, "minLevel": 4, "classes": ["alchemist", "ninja", "assassin"], "effect": { "type": "damage", "power": 40 } },
+  { "id": "fortify", "name": "Fortify", "description": "Boost your defense permanently", "mpCost": 10, "minLevel": 3, "classes": ["all"], "effect": { "type": "buff", "power": 3, "stat": "defense" } },
+  { "id": "empower", "name": "Empower", "description": "Boost your strength permanently", "mpCost": 10, "minLevel": 3, "classes": ["all"], "effect": { "type": "buff", "power": 3, "stat": "strength" } },
+  { "id": "enlighten", "name": "Enlighten", "description": "Boost your wisdom permanently", "mpCost": 12, "minLevel": 6, "classes": ["all"], "effect": { "type": "buff", "power": 3, "stat": "wisdom" } },
+  { "id": "swiftness", "name": "Swiftness", "description": "Boost your agility permanently", "mpCost": 10, "minLevel": 4, "classes": ["thief", "ninja", "assassin", "ranger", "monk"], "effect": { "type": "buff", "power": 3, "stat": "agility" } },
+  { "id": "alchemy", "name": "Alchemy", "description": "Transmute air into gold", "mpCost": 20, "minLevel": 8, "classes": ["alchemist", "sorcerer", "sage"], "effect": { "type": "utility", "power": 500 } },
+  { "id": "teleport", "name": "Teleport", "description": "Instantly return to town from anywhere", "mpCost": 15, "minLevel": 7, "classes": ["sorcerer", "sage", "monk"], "effect": { "type": "teleport", "power": 0 } },
+  { "id": "weakness", "name": "Curse of Weakness", "description": "Reduce enemy attack power", "mpCost": 12, "minLevel": 5, "classes": ["sorcerer", "cleric", "alchemist"], "effect": { "type": "debuff", "power": 15, "stat": "strength" } },
+  { "id": "slow", "name": "Curse of Slowness", "description": "Reduce enemy agility", "mpCost": 12, "minLevel": 5, "classes": ["sorcerer", "cleric"], "effect": { "type": "debuff", "power": 15, "stat": "agility" } }
+]

@@ -18,5 +18,14 @@
   { "id": "plate_armour", "name": "Plate Armour", "description": "Heavy plate offering superior protection.", "type": "armour", "slot": "armour", "price": 4000, "strengthBonus": 0, "defenseBonus": 35, "magicBonus": 0, "hpBonus": 10 },
   { "id": "dragon_scale_armour", "name": "Dragon Scale Armour", "description": "Armour crafted from the scales of an ancient dragon.", "type": "armour", "slot": "armour", "price": 30000, "strengthBonus": 10, "defenseBonus": 60, "magicBonus": 10, "hpBonus": 25 },
 
-  { "id": "healing_potion", "name": "Healing Potion", "description": "Restores a portion of your health.", "type": "potion", "price": 100, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 50 }
+  { "id": "healing_potion", "name": "Healing Potion", "description": "Restores a portion of your health.", "type": "potion", "price": 100, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 50 },
+
+  { "id": "mana_potion", "name": "Mana Potion", "description": "Restores magic points.", "type": "potion", "price": 150, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 30, "hpBonus": 0 },
+  { "id": "wand_of_fire", "name": "Wand of Fire", "description": "A wand that enhances fire magic.", "type": "weapon", "slot": "rightHand", "price": 1200, "strengthBonus": 5, "defenseBonus": 0, "magicBonus": 15, "hpBonus": 0 },
+  { "id": "staff_of_wisdom", "name": "Staff of Wisdom", "description": "An ancient staff pulsing with knowledge.", "type": "weapon", "slot": "rightHand", "price": 3000, "strengthBonus": 3, "defenseBonus": 2, "magicBonus": 25, "hpBonus": 0 },
+  { "id": "arcane_staff", "name": "Arcane Staff", "description": "The most powerful magical weapon known.", "type": "weapon", "slot": "rightHand", "price": 12000, "strengthBonus": 10, "defenseBonus": 5, "magicBonus": 45, "hpBonus": 5 },
+  { "id": "mystic_robes", "name": "Mystic Robes", "description": "Enchanted robes that boost magical power.", "type": "armour", "slot": "armour", "price": 2000, "strengthBonus": 0, "defenseBonus": 8, "magicBonus": 20, "hpBonus": 5 },
+  { "id": "archmage_robes", "name": "Archmage Robes", "description": "Legendary robes worn by the greatest mages.", "type": "armour", "slot": "armour", "price": 15000, "strengthBonus": 0, "defenseBonus": 20, "magicBonus": 40, "hpBonus": 15 },
+  { "id": "amulet_of_protection", "name": "Amulet of Protection", "description": "A magical shield amulet.", "type": "shield", "slot": "leftHand", "price": 1500, "strengthBonus": 0, "defenseBonus": 15, "magicBonus": 10, "hpBonus": 5 },
+  { "id": "orb_of_power", "name": "Orb of Power", "description": "A pulsing orb of concentrated magic.", "type": "shield", "slot": "leftHand", "price": 6000, "strengthBonus": 5, "defenseBonus": 10, "magicBonus": 30, "hpBonus": 10 }
 ]

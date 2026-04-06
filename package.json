@@ -10,7 +10,12 @@
     "dev:telnet": "tsx src/index.ts --telnet 2323",
     "start": "node dist/index.js --local",
     "start:telnet": "node dist/index.js --telnet 2323",
-    "start:door": "node dist/index.js --door"
+    "start:door": "node dist/index.js --door",
+    "admin": "tsx src/tools/admin.ts",
+    "admin:list": "tsx src/tools/admin.ts list",
+    "admin:bulletin": "tsx src/tools/admin.ts bulletin",
+    "admin:maintenance": "tsx src/tools/admin.ts maintenance",
+    "admin:reset": "tsx src/tools/admin.ts reset"
   },
   "dependencies": {
     "sql.js": "^1.10.0",

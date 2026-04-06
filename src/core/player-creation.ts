@@ -28,6 +28,9 @@ export async function createNewPlayer(
   db: GameDatabase
 ): Promise<PlayerRecord> {
   session.clear();
+  await session.showAnsi('INTRO.ANS');
+  await session.pause();
+  session.clear();
   session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════╗`);
   session.writeln(`║     CREATE YOUR CHARACTER        ║`);
   session.writeln(`╚══════════════════════════════════╝${ANSI.RESET}`);

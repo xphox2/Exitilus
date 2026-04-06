@@ -1,7 +1,8 @@
 import type { PlayerSession } from '../io/session.js';
-import type { PlayerRecord } from '../types/index.js';
+import type { PlayerRecord, SpellDef } from '../types/index.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
+import { getSpellsForClass } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
@@ -10,131 +11,118 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-interface GuildSpell {
-  key: string;
-  name: string;
-  mpCost: number;
-  minLevel: number;
-  description: string;
-  effect: (player: PlayerRecord, session: PlayerSession) => void;
+/** Cast a spell outside of combat (guild hall). Returns description of what happened. */
+export function castSpellEffect(spell: SpellDef, player: PlayerRecord): string {
+  switch (spell.effect.type) {
+    case 'heal': {
+      const amount = Math.min(spell.effect.power, player.maxHp - player.hp);
+      if (spell.effect.power >= 9999) {
+        player.hp = player.maxHp;
+        player.mp = player.maxMp;
+        return 'You are fully restored!';
+      }
+      const heal = randomInt(Math.floor(spell.effect.power * 0.8), spell.effect.power) + Math.floor(player.wisdom / 5);
+      player.hp = Math.min(player.maxHp, player.hp + heal);
+      return `You heal ${heal} HP! (${player.hp}/${player.maxHp})`;
+    }
+    case 'buff': {
+      const gain = randomInt(Math.max(1, spell.effect.power - 1), spell.effect.power + 1);
+      const stat = spell.effect.stat;
+      if (stat === 'strength') player.strength += gain;
+      else if (stat === 'defense') player.defense += gain;
+      else if (stat === 'agility') player.agility += gain;
+      else if (stat === 'wisdom') player.wisdom += gain;
+      else if (stat === 'leadership') player.leadership += gain;
+      else if (stat === 'hp') { player.maxHp += gain; player.hp += gain; }
+      else if (stat === 'mp') { player.maxMp += gain; player.mp += gain; }
+      return `${stat} increased by ${gain}!`;
+    }
+    case 'utility': {
+      // Alchemy - gold
+      const gold = randomInt(spell.effect.power, spell.effect.power * 2) + player.wisdom * 5;
+      player.gold += gold;
+      return `Transmuted $${formatGold(gold)} gold from thin air!`;
+    }
+    case 'teleport':
+      return 'You feel the world shift around you... (teleport works in combat areas)';
+    case 'damage':
+      return `This spell is meant for combat. Visit the wilderness to use it!`;
+    case 'debuff':
+      return `This spell targets enemies. Use it in combat!`;
+    default:
+      return 'The spell fizzles.';
+  }
 }
 
-const SPELLS: GuildSpell[] = [
-  {
-    key: '1', name: 'Minor Heal', mpCost: 5, minLevel: 1,
-    description: 'Restore some health',
-    effect: (p, s) => {
-      const heal = randomInt(20, 50);
-      p.hp = Math.min(p.maxHp, p.hp + heal);
-      s.writeln(`${ANSI.BRIGHT_GREEN}  You heal ${heal} HP! (${p.hp}/${p.maxHp})${ANSI.RESET}`);
+/** Cast a spell during combat. Returns damage dealt (negative = heal self). */
+export function castCombatSpell(spell: SpellDef, player: PlayerRecord): { damage: number; message: string } {
+  switch (spell.effect.type) {
+    case 'damage': {
+      const dmg = randomInt(Math.floor(spell.effect.power * 0.8), Math.floor(spell.effect.power * 1.3)) + Math.floor(player.wisdom / 4);
+      return { damage: dmg, message: `Your ${spell.name} deals ${dmg} magical damage!` };
     }
-  },
-  {
-    key: '2', name: 'Major Heal', mpCost: 15, minLevel: 5,
-    description: 'Restore a large amount of health',
-    effect: (p, s) => {
-      const heal = randomInt(60, 120);
-      p.hp = Math.min(p.maxHp, p.hp + heal);
-      s.writeln(`${ANSI.BRIGHT_GREEN}  You heal ${heal} HP! (${p.hp}/${p.maxHp})${ANSI.RESET}`);
+    case 'heal': {
+      const heal = spell.effect.power >= 9999
+        ? player.maxHp - player.hp
+        : randomInt(Math.floor(spell.effect.power * 0.8), spell.effect.power);
+      player.hp = Math.min(player.maxHp, player.hp + heal);
+      return { damage: 0, message: `You heal ${heal} HP!` };
     }
-  },
-  {
-    key: '3', name: 'Fortify', mpCost: 10, minLevel: 3,
-    description: 'Temporarily boost your defense',
-    effect: (p, s) => {
-      const boost = randomInt(2, 5);
-      p.defense += boost;
-      s.writeln(`${ANSI.BRIGHT_CYAN}  Your defense increases by ${boost}!${ANSI.RESET}`);
+    case 'debuff': {
+      return { damage: Math.floor(spell.effect.power * 0.5), message: `Your ${spell.name} weakens the enemy! (-${spell.effect.power} ${spell.effect.stat ?? 'power'})` };
     }
-  },
-  {
-    key: '4', name: 'Empower', mpCost: 10, minLevel: 3,
-    description: 'Temporarily boost your strength',
-    effect: (p, s) => {
-      const boost = randomInt(2, 5);
-      p.strength += boost;
-      s.writeln(`${ANSI.BRIGHT_RED}  Your strength increases by ${boost}!${ANSI.RESET}`);
-    }
-  },
-  {
-    key: '5', name: 'Enlighten', mpCost: 12, minLevel: 6,
-    description: 'Boost your wisdom',
-    effect: (p, s) => {
-      const boost = randomInt(1, 4);
-      p.wisdom += boost;
-      s.writeln(`${ANSI.BRIGHT_MAGENTA}  Your wisdom increases by ${boost}!${ANSI.RESET}`);
-    }
-  },
-  {
-    key: '6', name: 'Full Restore', mpCost: 30, minLevel: 10,
-    description: 'Fully restore health and mana',
-    effect: (p, s) => {
-      p.hp = p.maxHp;
-      p.mp = p.maxMp;
-      s.writeln(`${ANSI.BRIGHT_GREEN}  You are fully restored!${ANSI.RESET}`);
-    }
-  },
-  {
-    key: '7', name: 'Alchemy', mpCost: 20, minLevel: 8,
-    description: 'Transmute air into gold',
-    effect: (p, s) => {
-      const gold = randomInt(100, 1000) + p.wisdom * 5;
-      p.gold += gold;
-      s.writeln(`${ANSI.BRIGHT_YELLOW}  You transmute $${formatGold(gold)} gold from thin air!${ANSI.RESET}`);
-    }
-  },
-];
+    default:
+      return { damage: 0, message: 'The spell has no effect in combat.' };
+  }
+}
 
 async function castSpells(
   session: PlayerSession,
   player: PlayerRecord,
-  _content: GameContent,
+  content: GameContent,
   db: GameDatabase,
   guildName: string
 ): Promise<void> {
+  const available = getSpellsForClass(content, player.classId, player.level);
+
   session.clear();
-  session.writeln(`${ANSI.BRIGHT_MAGENTA}  ═══ ${guildName} - Spell Casting ═══${ANSI.RESET}`);
-  session.writeln(`${ANSI.BRIGHT_CYAN}  MP: ${player.mp}/${player.maxMp}${ANSI.RESET}`);
+  session.writeln(`${ANSI.BRIGHT_MAGENTA}  ═══ ${guildName} ═══${ANSI.RESET}`);
+  session.writeln(`${ANSI.BRIGHT_CYAN}  MP: ${player.mp}/${player.maxMp}   Class: ${player.classId}${ANSI.RESET}`);
   session.writeln('');
 
-  const available = SPELLS.filter(sp => player.level >= sp.minLevel);
-
   if (available.length === 0) {
-    session.writeln(`${ANSI.BRIGHT_RED}  You haven't learned any spells yet. Gain more levels!${ANSI.RESET}`);
+    session.writeln(`${ANSI.BRIGHT_RED}  No spells available for your class and level.${ANSI.RESET}`);
     await session.pause();
     return;
   }
 
-  for (const sp of available) {
+  for (let i = 0; i < available.length; i++) {
+    const sp = available[i];
     const canCast = player.mp >= sp.mpCost;
     const color = canCast ? ANSI.BRIGHT_GREEN : ANSI.BRIGHT_BLACK;
     session.writeln(
-      `  ${color}(${sp.key}) ${sp.name.padEnd(16)} MP: ${String(sp.mpCost).padStart(3)}  ${sp.description}${ANSI.RESET}`
+      `  ${color}(${i + 1}) ${sp.name.padEnd(20)} MP: ${String(sp.mpCost).padStart(3)}  ${sp.description}${ANSI.RESET}`
     );
   }
   session.writeln(`  ${ANSI.BRIGHT_GREEN}(R) Return${ANSI.RESET}`);
   session.writeln('');
 
-  const validKeys = [...available.map(s => s.key), 'r'];
-  session.write(`${ANSI.BRIGHT_CYAN}  Cast which spell? ${ANSI.BRIGHT_WHITE}`);
-  while (true) {
-    const key = await session.readKey();
-    const k = key.toLowerCase();
-    if (k === 'r') { session.writeln(key); return; }
-    const spell = available.find(s => s.key === k);
-    if (spell) {
-      session.writeln(key);
-      if (player.mp < spell.mpCost) {
-        session.writeln(`${ANSI.BRIGHT_RED}  Not enough MP! (need ${spell.mpCost}, have ${player.mp})${ANSI.RESET}`);
-      } else {
-        player.mp -= spell.mpCost;
-        spell.effect(player, session);
-        db.updatePlayer(player);
-      }
-      await session.pause();
-      return;
-    }
+  const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Cast which spell? ${ANSI.BRIGHT_WHITE}`);
+  if (input.toLowerCase() === 'r') return;
+
+  const idx = parseInt(input, 10) - 1;
+  if (idx < 0 || idx >= available.length) return;
+
+  const spell = available[idx];
+  if (player.mp < spell.mpCost) {
+    session.writeln(`${ANSI.BRIGHT_RED}  Not enough MP! (need ${spell.mpCost}, have ${player.mp})${ANSI.RESET}`);
+  } else {
+    player.mp -= spell.mpCost;
+    const result = castSpellEffect(spell, player);
+    db.updatePlayer(player);
+    session.writeln(`${ANSI.BRIGHT_GREEN}  ${result}${ANSI.RESET}`);
   }
+  await session.pause();
 }
 
 export async function enterGuilds(
@@ -158,24 +146,12 @@ export async function enterGuilds(
     }
 
     switch (choice) {
-      case 's':
-        await castSpells(session, player, content, db, "Sorcerers' Guild");
-        break;
-      case 'a':
-        await castSpells(session, player, content, db, "Alchemists' Guild");
-        break;
-      case 'f':
-        await castSpells(session, player, content, db, "Fighters' Guild");
-        break;
-      case 'm':
-        await castSpells(session, player, content, db, "Monks' Guild");
-        break;
-      case 'p':
-        await castSpells(session, player, content, db, "Peddlers' Guild");
-        break;
-      case 'c':
-        await castSpells(session, player, content, db, "Clerics' Guild");
-        break;
+      case 's': await castSpells(session, player, content, db, "Sorcerers' Guild"); break;
+      case 'a': await castSpells(session, player, content, db, "Alchemists' Guild"); break;
+      case 'f': await castSpells(session, player, content, db, "Fighters' Guild"); break;
+      case 'm': await castSpells(session, player, content, db, "Monks' Guild"); break;
+      case 'p': await castSpells(session, player, content, db, "Peddlers' Guild"); break;
+      case 'c': await castSpells(session, player, content, db, "Clerics' Guild"); break;
       case 'y':
         session.clear();
         showStats(session, player, content);

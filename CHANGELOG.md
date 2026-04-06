@@ -1,3 +1,28 @@
+## 0.3.0
+
+Sysop admin tool, magic system overhaul, Magician's Shop, expanded content, ANSI screen integration.
+
+### Added
+- **Sysop admin tool** (`src/tools/admin.ts`): Interactive and CLI admin utility replacing EXSETUP/EXEDIT
+  - List players, edit any player stat, delete players, edit game config
+  - Generate bulletin, run maintenance, reset game
+  - Run with `npm run admin` (interactive) or `npm run admin:list`, `admin:bulletin`, etc.
+- **Data-driven spell system** (`content/spells.json`): 15 spells loaded from JSON
+  - Damage: Fireball, Lightning Bolt, Ice Storm, Poison Cloud
+  - Healing: Minor Heal, Major Heal, Full Restore
+  - Buffs: Fortify, Empower, Enlighten, Swiftness
+  - Utility: Alchemy (gold), Teleport
+  - Debuffs: Curse of Weakness, Curse of Slowness
+  - Spells are class-restricted and level-gated
+- **Spell casting in combat**: New "Cast Spell" option in monster fights, uses MP, class-appropriate spells only
+- **Magician's Shop**: Sells magic weapons (wands, staves), magic armour (robes), and magic shields (amulets, orbs) with magicBonus stats
+- **8 new magic items**: Mana Potion, Wand of Fire, Staff of Wisdom, Arcane Staff, Mystic Robes, Archmage Robes, Amulet of Protection, Orb of Power (25 items total)
+- **ANSI screen integration**: OPEN2.ANS shown in title sequence, INTRO.ANS shown before character creation, MAGICIAN.ANS for magic shop
+
+### Changed
+- Guilds now use data-driven spells from spells.json with class/level filtering (was hardcoded)
+- Combat spell damage scales with wisdom stat
+
 ## 0.2.2
 
 Add messaging, diplomacy, resurrection, death matches, and bank transfers - closing remaining feature gaps from the original game.

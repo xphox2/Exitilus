@@ -2,10 +2,11 @@ import type { PlayerSession } from '../io/session.js';
 import type { PlayerRecord, MonsterDef, AreaDef } from '../types/index.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
-import { findItem, findArea } from '../data/loader.js';
+import { findItem, findArea, getSpellsForClass } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { showMenu, confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { castCombatSpell } from './guilds.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -73,8 +74,13 @@ async function fightMonster(
   while (player.hp > 0 && monsterHp > 0 && round < 1000) {
     round++;
 
+    const combatSpells = getSpellsForClass(content, player.classId, player.level)
+      .filter(s => s.effect.type === 'damage' || s.effect.type === 'heal' || s.effect.type === 'debuff');
+    const hasSpells = combatSpells.length > 0 && player.mp > 0;
+
     const choice = await showMenu(session, `Round ${round}`, [
       { key: 'a', label: 'Attack' },
+      { key: 'c', label: `Cast Spell (${player.mp} MP)`, enabled: hasSpells },
       { key: 'h', label: `Heal (${player.healingPotions} potions)`, enabled: player.healingPotions > 0 },
       { key: 'r', label: 'Run Away' },
     ], { showBorder: false });
@@ -93,6 +99,29 @@ async function fightMonster(
       const healAmount = Math.min(50 + player.wisdom, player.maxHp - player.hp);
       player.hp += healAmount;
       session.writeln(`${ANSI.BRIGHT_GREEN}  You drink a healing potion and recover ${healAmount} HP!${ANSI.RESET}`);
+    }
+
+    if (choice === 'c') {
+      // Show spell list
+      for (let i = 0; i < combatSpells.length; i++) {
+        const sp = combatSpells[i];
+        const canCast = player.mp >= sp.mpCost;
+        const color = canCast ? ANSI.BRIGHT_MAGENTA : ANSI.BRIGHT_BLACK;
+        session.writeln(`  ${color}(${i + 1}) ${sp.name.padEnd(18)} MP:${sp.mpCost}  ${sp.description}${ANSI.RESET}`);
+      }
+      const spInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  Cast: ${ANSI.BRIGHT_WHITE}`);
+      const spIdx = parseInt(spInput, 10) - 1;
+      if (spIdx >= 0 && spIdx < combatSpells.length) {
+        const spell = combatSpells[spIdx];
+        if (player.mp >= spell.mpCost) {
+          player.mp -= spell.mpCost;
+          const result = castCombatSpell(spell, player);
+          monsterHp -= result.damage;
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  ${result.message}${ANSI.RESET}`);
+        } else {
+          session.writeln(`${ANSI.BRIGHT_RED}  Not enough MP!${ANSI.RESET}`);
+        }
+      }
     }
 
     if (choice === 'a') {

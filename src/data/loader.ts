@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type {
-  ClassDef, RaceDef, MonsterDef, ItemDef, AreaDef, GameConfig, KingdomDef, StatBlock
+  ClassDef, RaceDef, MonsterDef, ItemDef, SpellDef, AreaDef, GameConfig, KingdomDef, StatBlock
 } from '../types/index.js';
 
 export interface GameContent {
@@ -10,6 +10,7 @@ export interface GameContent {
   races: RaceDef[];
   monsters: MonsterDef[];
   items: ItemDef[];
+  spells: SpellDef[];
   areas: AreaDef[];
   config: GameConfig;
   kingdoms: KingdomDef[];
@@ -27,6 +28,7 @@ export function loadGameContent(contentDir: string): GameContent {
   const races = loadJson<RaceDef[]>(contentDir, 'races.json');
   const monsters = loadJson<MonsterDef[]>(contentDir, 'monsters.json');
   const items = loadJson<ItemDef[]>(contentDir, 'items.json');
+  const spells = loadJson<SpellDef[]>(contentDir, 'spells.json');
   const areas = loadJson<AreaDef[]>(contentDir, 'areas.json');
 
   // Load YAML config
@@ -42,6 +44,7 @@ export function loadGameContent(contentDir: string): GameContent {
     races,
     monsters,
     items,
+    spells,
     areas,
     config: configDoc.game,
     kingdoms: configDoc.kingdoms,
@@ -68,4 +71,14 @@ export function findMonster(content: GameContent, id: string): MonsterDef | unde
 
 export function findArea(content: GameContent, id: string): AreaDef | undefined {
   return content.areas.find(a => a.id === id);
+}
+
+export function findSpell(content: GameContent, id: string): SpellDef | undefined {
+  return content.spells.find(s => s.id === id);
+}
+
+export function getSpellsForClass(content: GameContent, classId: string, level: number): SpellDef[] {
+  return content.spells.filter(s =>
+    s.minLevel <= level && (s.classes.includes('all') || s.classes.includes(classId))
+  );
 }

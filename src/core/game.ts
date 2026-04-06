@@ -45,6 +45,9 @@ export class GameEngine {
     this.session.clear();
     await this.session.showAnsi('OPEN.ANS');
     await this.session.pause();
+    this.session.clear();
+    await this.session.showAnsi('OPEN2.ANS');
+    await this.session.pause();
   }
 
   private async entryMenu(): Promise<void> {
