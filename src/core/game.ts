@@ -18,6 +18,9 @@ import { enterAlleys } from '../systems/alleys.js';
 import { enterLibrary } from '../systems/library.js';
 import { viewRatings } from '../systems/ratings.js';
 import { personalCommands } from '../systems/personal.js';
+import { enterMerchants } from '../systems/merchants.js';
+import { enterArmyManor } from '../systems/manor.js';
+import { enterQuests } from '../systems/quests.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -216,6 +219,18 @@ export class GameEngine {
 
         case 'r':
           await enterLibrary(this.session, this.player, this.content);
+          break;
+
+        case 'm':
+          await enterMerchants(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'u':
+          await enterQuests(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'a':
+          await enterArmyManor(this.session, this.player, this.content, this.db);
           break;
 
         case 'v':

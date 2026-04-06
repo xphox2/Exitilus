@@ -1,3 +1,25 @@
+## 0.1.6
+
+Add merchants, manor/army/kingdom system, and quest engine - ALL main street menu options now functional.
+
+### Added
+- **Merchants' Wharves** (`merchants.ts`): Rotating random deals selling stat boosts, bulk potions, vitality/mana elixirs, treasure maps, XP scrolls - 5 random items offered each visit
+- **Army & Manor** (`manor.ts`): Full kingdom management system:
+  - Purchase land and name your manor
+  - Recruit soldiers, knights, cannons, forts
+  - Build farms, silos, circuses, iron mines, gold mines
+  - Set tax rate (affects morale and population)
+  - Collect treasury (daily income from all buildings, food production, population growth/decline)
+  - Attack other players' manors (army strength calculation with randomness, plunder gold and capture serfs)
+- **Quest Engine** (`quests.ts`): 5 built-in quests with branching narrative:
+  - The Goblin Cave (Lv 1+), The Lost Merchant (Lv 3+), The Haunted Library (Lv 5+), The Undead Crypt (Lv 7+), The Dragon's Egg (Lv 10+)
+  - Quest steps: narration, combat encounters, multiple-choice decisions with consequences, stat-based skill checks (d20 + stat/3 vs DC)
+  - Quest completion tracking with optional replay
+  - Rewards: gold, XP, stat changes, moral choices affecting evil deeds
+
+### Changed
+- All 18 main street menu options now route to functional systems (no more "Coming soon")
+
 ## 0.1.5
 
 Add PvP combat, guilds/magic, back alleys, library, ratings, and personal commands - nearly all main street options now functional.
