@@ -9,11 +9,13 @@ export class LocalAdapter implements PlayerSession {
   private timeLimit: number; // minutes
   private ansiDir: string;
   private userName: string;
+  private asciiMode: boolean;
 
-  constructor(options: { ansiDir: string; userName?: string; timeLimit?: number }) {
+  constructor(options: { ansiDir: string; userName?: string; timeLimit?: number; asciiMode?: boolean }) {
     this.ansiDir = options.ansiDir;
     this.userName = options.userName ?? 'Local Sysop';
     this.timeLimit = options.timeLimit ?? 60;
+    this.asciiMode = options.asciiMode ?? false;
     this.startTime = Date.now();
   }
 
@@ -68,7 +70,7 @@ export class LocalAdapter implements PlayerSession {
   }
 
   async showAnsi(filename: string): Promise<void> {
-    const content = loadAnsiFile(this.ansiDir, filename);
+    const content = loadAnsiFile(this.ansiDir, filename, this.asciiMode);
     if (content) {
       this.write(content);
     }

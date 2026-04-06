@@ -27,10 +27,12 @@ Modes:
 Options:
   --data <dir>         Data directory for database (default: project root)
   --time <minutes>     Session time limit (default: 60)
+  --ascii              Use ASCII art instead of ANSI (for non-ANSI terminals)
   --help, -h           Show this help
 
 Examples:
   exitilus --local                    Play locally
+  exitilus --local --ascii            Play with ASCII art (no colors)
   exitilus --telnet 2323              Start telnet server on port 2323
   exitilus --door C:\\BBS\\NODE1       Run as BBS door using drop file
 `);
@@ -130,9 +132,11 @@ async function main() {
 
   } else {
     // ── Local Mode (default) ──
+    const asciiMode = args.includes('--ascii');
     const session = new LocalAdapter({
       ansiDir,
       timeLimit,
+      asciiMode,
     });
 
     const engine = new GameEngine(session, db, content);

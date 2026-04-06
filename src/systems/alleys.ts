@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { thievesGuild, drughouse } from '../systems/criminal.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -173,11 +174,11 @@ export async function enterAlleys(
 
     switch (choice) {
       case 'd':
-        session.writeln(`${ANSI.BRIGHT_RED}  The Drughouse is closed for renovation.${ANSI.RESET}`);
+        await drughouse(session, player, db);
         await session.pause();
         break;
       case 't':
-        await pickpocket(session, player, db);
+        await thievesGuild(session, player, content, db);
         await session.pause();
         break;
       case 'b':

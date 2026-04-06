@@ -124,8 +124,23 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
   return result;
 }
 
-/** Load an ANSI art file and return its Unicode content */
-export function loadAnsiFile(ansiDir: string, filename: string): string | null {
+/** Load an ANSI art file and return its Unicode content.
+ *  If asciiMode is true, tries to load .ASC file instead for non-ANSI terminals. */
+export function loadAnsiFile(ansiDir: string, filename: string, asciiMode = false): string | null {
+  // In ASCII mode, try the .ASC version first
+  if (asciiMode) {
+    const ascName = filename.replace(/\.ans$/i, '.ASC');
+    const ascPath = join(ansiDir, ascName);
+    const ascUpper = join(ansiDir, ascName.toUpperCase());
+    if (existsSync(ascPath)) {
+      return readFileSync(ascPath, 'utf-8');
+    }
+    if (existsSync(ascUpper)) {
+      return readFileSync(ascUpper, 'utf-8');
+    }
+    // Fall through to ANSI if no ASCII version
+  }
+
   const filepath = join(ansiDir, filename);
   if (!existsSync(filepath)) {
     // Try case-insensitive lookup

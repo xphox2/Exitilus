@@ -6,6 +6,7 @@ import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { messageBoard } from '../systems/messaging.js';
+import { rentRoom } from '../systems/inn.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -58,6 +59,14 @@ export async function enterTavern(
         break;
       case 'd':
         await buyDrink(session, player, db);
+        // After drinking, offer gambling
+        session.writeln(`${ANSI.BRIGHT_YELLOW}  "Care for a round of dice?" the bartender asks.${ANSI.RESET}`);
+        session.write(`${ANSI.BRIGHT_CYAN}  Gamble? (Y/N): ${ANSI.BRIGHT_WHITE}`);
+        const gKey = await session.readKey();
+        session.writeln(gKey);
+        if (gKey.toLowerCase() === 'y') {
+          await gamble(session, player, db);
+        }
         break;
       case 't':
         session.writeln('');
@@ -65,7 +74,8 @@ export async function enterTavern(
         await session.pause();
         break;
       case 'g':
-        await gamble(session, player, db);
+        await rentRoom(session, player, db);
+        await session.pause();
         break;
       case 'y':
         session.clear();

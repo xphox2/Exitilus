@@ -28,6 +28,7 @@ async function manorOverview(
   content: GameContent
 ): Promise<void> {
   session.clear();
+  await session.showAnsi('INSPECT.ANS');
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
 
   session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════════════════╗`);
@@ -104,6 +105,7 @@ async function recruitMilitary(
     return;
   }
 
+  await session.showAnsi('MILITARY.ANS');
   session.writeln(`${ANSI.BRIGHT_YELLOW}  ═══ Recruit Military ═══${ANSI.RESET}`);
   session.writeln(`  ${ANSI.BRIGHT_CYAN}(1) Soldiers  $${SOLDIER_COST} each    (have ${player.soldiers})${ANSI.RESET}`);
   session.writeln(`  ${ANSI.BRIGHT_CYAN}(2) Knights   $${KNIGHT_COST} each    (have ${player.knights})${ANSI.RESET}`);

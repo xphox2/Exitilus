@@ -1,3 +1,21 @@
+## 0.3.1
+
+Complete remaining features: inn rooms, full criminal system, drughouse, ASCII fallback, and additional ANSI screen integration.
+
+### Added
+- **Inn room rental** (`inn.ts`): 4 room tiers (Common Bunk to Royal Chamber) with HP/MP restoration and luxury stat bonuses. Wired into tavern's [G]et a room option
+- **Thieves' Guild** (`criminal.ts`): Full criminal actions system with 6 activities:
+  - Pickpocket citizen (easy), Rob merchant (medium), Burgle noble's house (hard)
+  - Steal from another player (PvP theft), Forge documents (reduce evil deeds), Hire informant (scout other players' stats/gear)
+- **Drughouse** (`criminal.ts`): 5 substances with stat trade-offs (Berserker Rage, Eagle Eye, Iron Skin, Mind Expander, Mystery Injection with random effects)
+- **ASCII fallback mode**: `--ascii` flag loads .ASC files instead of .ANS for non-ANSI terminals
+- **ANSI screens wired**: INSPECT.ANS (manor overview), MILITARY.ANS (recruit military), MAGICIAN.ANS (magic shop)
+- **Gambling integrated**: After buying a drink at the tavern, bartender offers a dice game
+
+### Changed
+- Tavern [G] option now opens inn room rental (was gambling, which is now offered after drinks)
+- Back Alleys: Drughouse and Thieves' Guild are now fully functional (were placeholders)
+
 ## 0.3.0
 
 Sysop admin tool, magic system overhaul, Magician's Shop, expanded content, ANSI screen integration.
