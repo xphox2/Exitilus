@@ -24,6 +24,8 @@ import { personalCommands } from '../systems/personal.js';
 import { enterMerchants } from '../systems/merchants.js';
 import { enterArmyManor } from '../systems/manor.js';
 import { enterQuests } from '../systems/quests.js';
+import { attemptResurrection } from '../systems/resurrection.js';
+import { checkMessages } from '../systems/messaging.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -128,6 +130,10 @@ export class GameEngine {
         } else {
           return;
         }
+      } else if (!player.alive) {
+        // Dead player - attempt resurrection
+        const resurrected = await attemptResurrection(this.session, player, this.db);
+        if (!resurrected) return;
       } else {
         // Welcome back
         this.session.writeln('');
@@ -137,6 +143,7 @@ export class GameEngine {
         player.monsterFights = 0;
         player.playerFights = 0;
         this.db.updatePlayer(player);
+        await checkMessages(this.session, player, this.db);
         await this.session.pause();
       }
     }

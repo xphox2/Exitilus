@@ -4,6 +4,7 @@ import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
+import { findItem } from '../data/loader.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -158,6 +159,38 @@ export async function playerFight(
     opponent.gold -= goldWon;
     session.writeln(`${ANSI.BRIGHT_GREEN}  ⚔  You defeated ${ANSI.BRIGHT_WHITE}${opponent.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  You take $${formatGold(goldWon)} gold and earn ${formatGold(xpWon)} XP!${ANSI.RESET}`);
+
+    // Death match loot - take equipment from the fallen
+    if (content.config.deathMatches) {
+      const taken: string[] = [];
+      if (opponent.rightHand) {
+        const item = findItem(content, opponent.rightHand);
+        if (item) {
+          player.rightHand = opponent.rightHand;
+          opponent.rightHand = '';
+          taken.push(item.name);
+        }
+      }
+      if (opponent.leftHand) {
+        const item = findItem(content, opponent.leftHand);
+        if (item) {
+          player.leftHand = opponent.leftHand;
+          opponent.leftHand = '';
+          taken.push(item.name);
+        }
+      }
+      if (opponent.armour) {
+        const item = findItem(content, opponent.armour);
+        if (item) {
+          player.armour = opponent.armour;
+          opponent.armour = '';
+          taken.push(item.name);
+        }
+      }
+      if (taken.length > 0) {
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  You strip their equipment: ${ANSI.BRIGHT_WHITE}${taken.join(', ')}${ANSI.RESET}`);
+      }
+    }
   }
 
   db.updatePlayer(player);

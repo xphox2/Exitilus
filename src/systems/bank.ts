@@ -88,9 +88,39 @@ export async function enterBank(
         break;
       }
 
-      case 't':
-        session.writeln(`${ANSI.BRIGHT_RED}  Transfers are not yet available.${ANSI.RESET}`);
+      case 't': {
+        const others = db.listPlayers().filter(p => p.id !== player.id && p.alive);
+        if (others.length === 0) {
+          session.writeln(`${ANSI.BRIGHT_RED}  No other players to transfer to!${ANSI.RESET}`);
+          break;
+        }
+        if (player.gold <= 0) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You have no gold to transfer!${ANSI.RESET}`);
+          break;
+        }
+        session.writeln(`${ANSI.BRIGHT_CYAN}  Transfer gold to another player's bank account:${ANSI.RESET}`);
+        session.writeln('');
+        for (let i = 0; i < others.length; i++) {
+          session.writeln(`  ${ANSI.BRIGHT_WHITE}(${i + 1}) ${others[i].name}${ANSI.RESET}`);
+        }
+        session.writeln('');
+        const pickInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  Transfer to who? (0 cancel): ${ANSI.BRIGHT_WHITE}`);
+        const pickIdx = parseInt(pickInput, 10) - 1;
+        if (pickIdx < 0 || pickIdx >= others.length) break;
+        const target = others[pickIdx];
+        const amtInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  Amount to transfer? (have $${formatGold(player.gold)}): ${ANSI.BRIGHT_WHITE}`);
+        const amt = parseInt(amtInput, 10);
+        if (amt > 0 && amt <= player.gold) {
+          player.gold -= amt;
+          target.bankGold += amt;
+          db.updatePlayer(player);
+          db.updatePlayer(target);
+          session.writeln(`${ANSI.BRIGHT_GREEN}  Transferred $${formatGold(amt)} to ${target.name}'s bank account!${ANSI.RESET}`);
+        } else if (amt > 0) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You don't have that much gold!${ANSI.RESET}`);
+        }
         break;
+      }
 
       case 'r':
         return;

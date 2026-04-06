@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { messageBoard } from '../systems/messaging.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -53,8 +54,7 @@ export async function enterTavern(
 
     switch (choice) {
       case 'm':
-        session.writeln(`${ANSI.BRIGHT_RED}  The Message Board is not yet available.${ANSI.RESET}`);
-        await session.pause();
+        await messageBoard(session, player, db);
         break;
       case 'd':
         await buyDrink(session, player, db);

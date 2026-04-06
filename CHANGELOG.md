@@ -1,3 +1,22 @@
+## 0.2.2
+
+Add messaging, diplomacy, resurrection, death matches, and bank transfers - closing remaining feature gaps from the original game.
+
+### Added
+- **Message board** (`messaging.ts`): Player-to-player messaging via the tavern. Read/send messages, stores up to 20 messages per player, auto-checks for new messages on login
+- **Diplomacy & treaties** (`diplomacy.ts`): Kingdom-level politics accessible from the manor. Propose/break treaties (costs gold + leadership), declare kingdom wars (army-vs-army with realm-wide effects), view kingdom status with member counts, army totals, and wealth
+- **Resurrection** (`resurrection.ts`): Dead players can be resurrected at the church if less than 7 days have passed. Costs gold from bank, revives at half HP with small stat penalty
+- **Death matches**: PvP winners now strip equipment (rightHand, leftHand, armour) from losers when death matches are enabled in config
+- **Bank transfers**: Send gold to other players' bank accounts via the bank's transfer option
+- **Login message check**: New messages are automatically displayed when returning to the game
+
+### Changed
+- Tavern message board option now functional (was placeholder)
+- Bank transfer option now functional (was placeholder)
+- Manor menu now includes Diplomacy & Treaties option
+- Dead players are offered resurrection before being rejected
+- PvP victory now shows equipment taken in death match mode
+
 ## 0.2.1
 
 Add scoreboard bulletin generation for BBS display.
