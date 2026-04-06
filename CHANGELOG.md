@@ -1,3 +1,41 @@
+## 0.4.0
+
+Enhanced graphics system: true-color rendering, animations, and procedural art.
+
+### Added
+- **True-color renderer** (`truecolor.ts`): 24-bit RGB color support using Unicode half-block characters (▀▄█) giving 160x50 effective pixel resolution in 80x25 terminal. Includes:
+  - `renderPixelGrid()` - Render arbitrary pixel art from RGB arrays
+  - `generateSceneArt()` - Procedural scene generation with 5 patterns (mountains, waves, flames, stars, gradient)
+  - 6 color palettes: fire, forest, ice, magic, gold, shadow
+  - Color interpolation utilities
+- **Animation system** (`animation.ts`): Terminal animation effects:
+  - `typeText()` - Typewriter character-by-character reveal
+  - `fadeInText()` - Line-by-line fade-in with true color dimming
+  - `animatedBanner()` - Color-cycling text banner (used for title logo)
+  - `flashScreen()` - Screen flash effect for combat hits and death
+  - `progressBar()` - Animated gradient loading bar
+  - `dramaticText()` - Dramatic text reveal with per-line timing and colors
+  - `particleEffect()` - Falling particle animation (rain, snow, sparks)
+- **Enhanced screens** (`enhanced-screens.ts`): Dynamic replacements for static ANSI art:
+  - `enhancedTitleScreen()` - Starfield particle effect → animated color-cycling logo → dramatic subtitle text
+  - `enhancedAreaScreen()` - Procedural landscape art themed per area (forest, ice, fire, etc.)
+  - `enhancedDeathScreen()` - Red flash → flame art → dramatic death text
+  - `enhancedLevelUp()` - Gold flash → animated star celebration
+  - `enhancedCombatHit()` - Damage number flash effect
+  - `enhancedQuestStart()` - Magic starfield → quest name reveal
+- **Terminal capability detection** (`capabilities.ts`): Auto-detects 24-bit color, 256-color, Unicode support from environment variables (COLORTERM, TERM, WT_SESSION, TERM_PROGRAM)
+- **Three graphics modes** selectable via `--graphics <mode>`:
+  - `enhanced` - True-color, animations, procedural art (auto-selected on modern terminals)
+  - `classic` - Original 16-color ANSI art from 1999 (default for BBS/telnet)
+  - `ascii` - Plain text .ASC files (no colors)
+- npm script: `dev:enhanced` for quick enhanced mode testing
+
+### Changed
+- Game engine now accepts `graphicsMode` parameter
+- Title screen uses enhanced animated version when in enhanced mode, falls back to original ANSI art in classic mode
+- Telnet and BBS door connections default to classic mode (safe for all clients)
+- Local mode auto-detects terminal capabilities and selects best mode
+
 ## 0.3.1
 
 Complete remaining features: inn rooms, full criminal system, drughouse, ASCII fallback, and additional ANSI screen integration.

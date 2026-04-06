@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts --local",
+    "dev:enhanced": "tsx src/index.ts --local --graphics enhanced",
     "dev:telnet": "tsx src/index.ts --telnet 2323",
     "start": "node dist/index.js --local",
     "start:telnet": "node dist/index.js --telnet 2323",

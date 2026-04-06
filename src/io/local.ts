@@ -2,20 +2,26 @@ import { createInterface } from 'readline';
 import { PlayerSession, UserInfo } from './session.js';
 import { loadAnsiFile, ANSI } from './ansi.js';
 import { join } from 'path';
+import { type GraphicsMode } from './capabilities.js';
 
 /** Local terminal adapter for testing - uses stdin/stdout directly */
 export class LocalAdapter implements PlayerSession {
   private startTime: number;
-  private timeLimit: number; // minutes
+  private timeLimit: number;
   private ansiDir: string;
   private userName: string;
-  private asciiMode: boolean;
+  public graphicsMode: GraphicsMode;
 
-  constructor(options: { ansiDir: string; userName?: string; timeLimit?: number; asciiMode?: boolean }) {
+  constructor(options: {
+    ansiDir: string;
+    userName?: string;
+    timeLimit?: number;
+    graphicsMode?: GraphicsMode;
+  }) {
     this.ansiDir = options.ansiDir;
     this.userName = options.userName ?? 'Local Sysop';
     this.timeLimit = options.timeLimit ?? 60;
-    this.asciiMode = options.asciiMode ?? false;
+    this.graphicsMode = options.graphicsMode ?? 'classic';
     this.startTime = Date.now();
   }
 
@@ -49,7 +55,6 @@ export class LocalAdapter implements PlayerSession {
         }
         process.stdin.pause();
         const key = data.toString();
-        // Handle Ctrl+C
         if (key === '\x03') {
           this.writeln('\r\n\r\nExiting...');
           process.exit(0);
@@ -70,7 +75,8 @@ export class LocalAdapter implements PlayerSession {
   }
 
   async showAnsi(filename: string): Promise<void> {
-    const content = loadAnsiFile(this.ansiDir, filename, this.asciiMode);
+    const asciiMode = this.graphicsMode === 'ascii';
+    const content = loadAnsiFile(this.ansiDir, filename, asciiMode);
     if (content) {
       this.write(content);
     }

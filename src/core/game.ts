@@ -6,6 +6,8 @@ import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import type { PlayerRecord, MenuItem } from '../types/index.js';
 import { ANSI } from '../io/ansi.js';
+import type { GraphicsMode } from '../io/capabilities.js';
+import { enhancedTitleScreen } from '../io/enhanced-screens.js';
 import { showMenu } from './menus.js';
 import { createNewPlayer } from './player-creation.js';
 import { showStats } from './stats.js';
@@ -29,12 +31,16 @@ import { checkMessages } from '../systems/messaging.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
+  private graphicsMode: GraphicsMode;
 
   constructor(
     private session: PlayerSession,
     private db: GameDatabase,
-    private content: GameContent
-  ) {}
+    private content: GameContent,
+    graphicsMode?: GraphicsMode
+  ) {
+    this.graphicsMode = graphicsMode ?? 'classic';
+  }
 
   async start(): Promise<void> {
     await this.showTitle();
@@ -42,6 +48,12 @@ export class GameEngine {
   }
 
   private async showTitle(): Promise<void> {
+    if (this.graphicsMode === 'enhanced') {
+      await enhancedTitleScreen(this.session);
+      await this.session.pause();
+      return;
+    }
+
     this.session.clear();
     await this.session.showAnsi('OPEN.ANS');
     await this.session.pause();

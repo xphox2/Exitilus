@@ -8,6 +8,7 @@ import { loadGameContent } from './data/loader.js';
 import { GameEngine } from './core/game.js';
 import { runDailyMaintenance } from './systems/maintenance.js';
 import { generateBulletin } from './systems/bulletin.js';
+import { detectCapabilities, selectGraphicsMode, type GraphicsMode } from './io/capabilities.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
@@ -27,14 +28,20 @@ Modes:
 Options:
   --data <dir>         Data directory for database (default: project root)
   --time <minutes>     Session time limit (default: 60)
-  --ascii              Use ASCII art instead of ANSI (for non-ANSI terminals)
+  --graphics <mode>    Graphics mode: enhanced, classic, ascii (default: auto-detect)
   --help, -h           Show this help
 
+Graphics Modes:
+  enhanced             True-color (24-bit), animations, procedural art (modern terminals)
+  classic              Original 16-color ANSI art from 1999 (default for BBS)
+  ascii                Plain text with .ASC files (no colors/graphics)
+
 Examples:
-  exitilus --local                    Play locally
-  exitilus --local --ascii            Play with ASCII art (no colors)
-  exitilus --telnet 2323              Start telnet server on port 2323
-  exitilus --door C:\\BBS\\NODE1       Run as BBS door using drop file
+  exitilus --local                         Play locally (auto-detects best mode)
+  exitilus --local --graphics enhanced     Force enhanced graphics
+  exitilus --local --graphics classic      Force classic ANSI art
+  exitilus --telnet 2323                   Start telnet server on port 2323
+  exitilus --door C:\\BBS\\NODE1            Run as BBS door using drop file
 `);
 }
 
@@ -93,7 +100,8 @@ async function main() {
       ansiDir,
       timeLimit,
       onConnection: async (session: TelnetAdapter) => {
-        const engine = new GameEngine(session, db, content);
+        // Telnet clients default to classic mode (can't auto-detect capabilities)
+        const engine = new GameEngine(session, db, content, 'classic');
         await engine.start();
       },
     });
@@ -120,7 +128,8 @@ async function main() {
     console.log(`[Door] Player: ${dropInfo.userName}, Time: ${dropInfo.timeLeft}min, Node: ${dropInfo.nodeNumber}`);
 
     const session = new DoorAdapter(dropInfo, ansiDir);
-    const engine = new GameEngine(session, db, content);
+    // BBS doors always use classic mode
+    const engine = new GameEngine(session, db, content, 'classic');
 
     try {
       await engine.start();
@@ -132,14 +141,23 @@ async function main() {
 
   } else {
     // ── Local Mode (default) ──
-    const asciiMode = args.includes('--ascii');
+    const gfxIdx = args.indexOf('--graphics');
+    const userGfx = gfxIdx >= 0 ? args[gfxIdx + 1] as GraphicsMode : undefined;
+    // Legacy --ascii flag
+    const legacyAscii = args.includes('--ascii');
+
+    const caps = detectCapabilities();
+    const graphicsMode = legacyAscii ? 'ascii' as GraphicsMode : selectGraphicsMode(caps, userGfx);
+
+    console.log(`Graphics mode: ${graphicsMode} (terminal: ${caps.trueColor ? '24-bit' : caps.color256 ? '256-color' : '16-color'}, ${caps.width}x${caps.height})`);
+
     const session = new LocalAdapter({
       ansiDir,
       timeLimit,
-      asciiMode,
+      graphicsMode,
     });
 
-    const engine = new GameEngine(session, db, content);
+    const engine = new GameEngine(session, db, content, graphicsMode);
 
     try {
       await engine.start();
