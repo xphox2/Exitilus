@@ -1,3 +1,12 @@
+## 0.5.1
+
+Use original ANSI art for title screen in all modes.
+
+### Changed
+- Title screen now shows OPEN.ANS and OPEN2.ANS in all graphics modes (enhanced mode loads the true-color upscaled versions from enhanced/ folder automatically)
+- Removed the procedural animated title screen (starfield/fade-in logo) - original art is better
+- img2ansi converter now auto-detects terminal size when --width not specified
+
 ## 0.5.0
 
 Image-to-ANSI converter, ANSI art upscaler, and simplified enhanced mode.

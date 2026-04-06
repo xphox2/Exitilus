@@ -243,9 +243,13 @@ Supported formats: PNG, JPG, JPEG, WEBP, TIFF, GIF, BMP
     return idx >= 0 && args[idx + 1] ? args[idx + 1] : def;
   };
 
+  // Auto-detect terminal size if not specified
+  const defaultWidth = String(process.stdout.columns ?? 80);
+  const defaultHeight = String(process.stdout.rows ? process.stdout.rows - 2 : 24);
+
   const options: ConvertOptions = {
-    width: parseInt(getArg('--width', '80'), 10),
-    maxHeight: parseInt(getArg('--height', '24'), 10),
+    width: parseInt(getArg('--width', defaultWidth), 10),
+    maxHeight: parseInt(getArg('--height', defaultHeight), 10),
     classic: args.includes('--classic'),
     dither: args.includes('--dither'),
     brightness: parseInt(getArg('--brightness', '0'), 10),
