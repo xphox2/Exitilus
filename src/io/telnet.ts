@@ -12,6 +12,7 @@ export class TelnetAdapter implements PlayerSession {
   private inputResolve: ((value: string) => void) | null = null;
   private closed = false;
   private userName = '';
+  public graphicsMode: string = 'classic';
 
   constructor(socket: net.Socket, options: { ansiDir: string; timeLimit?: number }) {
     this.socket = socket;

@@ -1,3 +1,26 @@
+## 0.4.1
+
+Enhanced menus for all game locations - every screen now has a true-color procedural art header in enhanced mode.
+
+### Added
+- **Enhanced menu system** (`enhanced-menus.ts`): Reusable menu renderer that combines procedural art headers with styled true-color menu options below
+  - 15 unique themes: mainStreet, shops, weaponShop, shieldShop, armourShop, church, tavern, guilds, alleys, bank, training, library, manor, merchant, personal
+  - Each theme has its own color palette, procedural pattern, and accent colors
+  - Two-column layout for menus with many options, single-column for detail views
+  - Styled key indicators with accent/highlight colors per theme
+- All 14 menu locations now render in enhanced mode:
+  - Main Street (city night skyline, mountains)
+  - Shops hub (gold gradient), Weapon (flames), Shield (ice waves), Armour (shadow)
+  - Church (purple starfield), Tavern (warm wood tones), Guilds (magic stars)
+  - Back Alleys (dark shadows), Bank (gold waves), Training (fire gradient)
+  - Library (parchment tones), Manor (forest mountains), Merchants (purple waves)
+
+### Changed
+- PlayerSession interface now includes optional `graphicsMode` field
+- TelnetAdapter and DoorAdapter expose `graphicsMode` property (defaults to 'classic')
+- All system files check `session.graphicsMode` and branch between enhanced rendering and classic ANSI art
+- Classic mode behavior is completely unchanged - original 1999 ANSI art still works
+
 ## 0.4.0
 
 Enhanced graphics system: true-color rendering, animations, and procedural art.

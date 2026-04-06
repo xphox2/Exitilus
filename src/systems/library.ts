@@ -4,6 +4,7 @@ import type { GameContent } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { renderEnhancedMenu, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 export async function enterLibrary(
   session: PlayerSession,
@@ -13,14 +14,19 @@ export async function enterLibrary(
   const validKeys = ['h', 'm', 'n', 'd', 'i', 'e', 'r', 'q', 'y'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('LIBRARY.ANS');
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await renderEnhancedMenu(session, MENU_CONFIGS.library.theme, MENU_CONFIGS.library.title, [...MENU_CONFIGS.library.options]);
+    } else {
+      session.clear();
+      await session.showAnsi('LIBRARY.ANS');
 
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 

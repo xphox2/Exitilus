@@ -36,4 +36,7 @@ export interface PlayerSession {
 
   /** Cleanup on exit */
   close(): void;
+
+  /** Graphics mode: 'classic', 'enhanced', or 'ascii' */
+  graphicsMode?: string;
 }

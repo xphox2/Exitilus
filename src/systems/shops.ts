@@ -6,6 +6,7 @@ import { findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { renderEnhancedMenu, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
   player[slot] = value;
@@ -136,18 +137,41 @@ async function runShop(
   const config = SHOP_CONFIG[shopType];
   const shopItems = content.items.filter(i => i.type === shopType && i.price > 0);
 
+  const shopThemeMap: Record<ShopType, string> = {
+    weapon: 'weaponShop',
+    shield: 'shieldShop',
+    armour: 'armourShop',
+  };
+  const shopTitleMap: Record<ShopType, string> = {
+    weapon: '⚔  WEAPON SHOP  ⚔',
+    shield: '🛡  SHIELD SHOP  🛡',
+    armour: '🗡  ARMOUR SHOP  🗡',
+  };
+  const shopOptions = [
+    { key: 'B', label: 'Browse & Buy' },
+    { key: 'S', label: 'Sell Equipment' },
+    { key: 'A', label: 'Attempt to Steal' },
+    { key: 'T', label: 'Talk to Shopkeeper' },
+    { key: 'R', label: 'Return' },
+  ];
+
   const validKeys = ['b', 's', 'a', 't', 'r'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi(config.ansi);
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await renderEnhancedMenu(session, shopThemeMap[shopType], shopTitleMap[shopType], shopOptions);
+    } else {
+      session.clear();
+      await session.showAnsi(config.ansi);
 
-    // Individual shop ANSIs already show the menu and prompt - just read a key
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      // Individual shop ANSIs already show the menu and prompt - just read a key
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 
@@ -244,15 +268,20 @@ export async function enterShops(
   const validKeys = ['s', 'w', 'a', 'm', 'r', 'q', 'y'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('SHOPS.ANS');
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await renderEnhancedMenu(session, MENU_CONFIGS.shops.theme, MENU_CONFIGS.shops.title, [...MENU_CONFIGS.shops.options]);
+    } else {
+      session.clear();
+      await session.showAnsi('SHOPS.ANS');
 
-    // SHOPS.ANS already shows the menu and "Your Choice:" prompt - just read a key
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      // SHOPS.ANS already shows the menu and "Your Choice:" prompt - just read a key
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 
