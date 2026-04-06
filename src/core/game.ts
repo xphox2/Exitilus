@@ -6,6 +6,12 @@ import { ANSI } from '../io/ansi.js';
 import { showMenu } from './menus.js';
 import { createNewPlayer } from './player-creation.js';
 import { showStats } from './stats.js';
+import { walkOutside } from '../systems/combat.js';
+import { enterShops } from '../systems/shops.js';
+import { enterBank } from '../systems/bank.js';
+import { enterChurch } from '../systems/church.js';
+import { enterTavern } from '../systems/tavern.js';
+import { enterTraining } from '../systems/training.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -129,6 +135,36 @@ export class GameEngine {
       const choice = await showMenu(this.session, 'Main Street', items);
 
       switch (choice) {
+        case 's':
+          await enterShops(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'i':
+          await enterTavern(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'c':
+          await enterChurch(this.session, this.player, this.content, this.db);
+          break;
+
+        case 't':
+          await enterTraining(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'w':
+          await walkOutside(this.session, this.player, this.content, this.db);
+          if (!this.player.alive) {
+            this.session.writeln(`${ANSI.BRIGHT_RED}You are dead. Your adventure ends here...${ANSI.RESET}`);
+            this.db.updatePlayer(this.player);
+            await this.session.pause();
+            return;
+          }
+          break;
+
+        case 'k':
+          await enterBank(this.session, this.player, this.db);
+          break;
+
         case 'y':
           this.session.clear();
           showStats(this.session, this.player, this.content);
