@@ -5,7 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { renderEnhancedMenu, MENU_CONFIGS } from '../io/enhanced-menus.js';
+
 import { messageBoard } from '../systems/messaging.js';
 import { rentRoom } from '../systems/inn.js';
 
@@ -42,20 +42,15 @@ export async function enterTavern(
   const validKeys = ['m', 'd', 'g', 't', 'r', 'q', 'y'];
 
   while (true) {
-    let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
-      choice = await renderEnhancedMenu(session, MENU_CONFIGS.tavern.theme, MENU_CONFIGS.tavern.title, [...MENU_CONFIGS.tavern.options]);
-    } else {
-      session.clear();
-      await session.showAnsi('INN.ANS');
+    session.clear();
+    await session.showAnsi('INN.ANS');
 
-      // INN.ANS already shows the menu and "Your Choice:" prompt - just read a key
-      choice = '';
-      while (!choice) {
-        const key = await session.readKey();
-        if (validKeys.includes(key.toLowerCase())) {
-          choice = key.toLowerCase();
-        }
+    // INN.ANS already shows the menu and "Your Choice:" prompt - just read a key
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
       }
     }
 

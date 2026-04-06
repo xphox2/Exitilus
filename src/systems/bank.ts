@@ -3,7 +3,7 @@ import type { PlayerRecord } from '../types/index.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
-import { renderEnhancedMenu } from '../io/enhanced-menus.js';
+
 
 export async function enterBank(
   session: PlayerSession,
@@ -12,32 +12,16 @@ export async function enterBank(
 ): Promise<void> {
   while (true) {
     const validKeys = ['d', 'w', '.', '>', ',', '<', 't', 'r'];
-    let key: string;
 
-    if ((session as any).graphicsMode === 'enhanced') {
-      const extraInfo = [
-        `Gold on hand: $${formatGold(player.gold)}`,
-        `Bank balance: $${formatGold(player.bankGold)}`,
-      ];
-      key = await renderEnhancedMenu(session, 'bank', '💰  THE BANK  💰', [
-        { key: 'D', label: 'Deposit Gold' },
-        { key: 'W', label: 'Withdraw Gold' },
-        { key: '.', label: 'Deposit All' },
-        { key: ',', label: 'Withdraw All' },
-        { key: 'T', label: 'Transfer to Player' },
-        { key: 'R', label: 'Return' },
-      ], extraInfo);
-    } else {
-      session.clear();
-      await session.showAnsi('BANK.ANS');
+    session.clear();
+    await session.showAnsi('BANK.ANS');
 
-      // BANK.ANS already shows the menu and prompt - just read a key
-      key = '';
-      while (!key) {
-        const k = await session.readKey();
-        if (validKeys.includes(k.toLowerCase())) {
-          key = k.toLowerCase();
-        }
+    // BANK.ANS already shows the menu and prompt - just read a key
+    let key = '';
+    while (!key) {
+      const k = await session.readKey();
+      if (validKeys.includes(k.toLowerCase())) {
+        key = k.toLowerCase();
       }
     }
 

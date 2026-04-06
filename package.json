@@ -16,9 +16,12 @@
     "admin:list": "tsx src/tools/admin.ts list",
     "admin:bulletin": "tsx src/tools/admin.ts bulletin",
     "admin:maintenance": "tsx src/tools/admin.ts maintenance",
-    "admin:reset": "tsx src/tools/admin.ts reset"
+    "admin:reset": "tsx src/tools/admin.ts reset",
+    "img2ansi": "tsx src/tools/img2ansi.ts",
+    "upscale": "tsx src/tools/upscale-ansi.ts"
   },
   "dependencies": {
+    "sharp": "^0.34.5",
     "sql.js": "^1.10.0",
     "yaml": "^2.4.0"
   },

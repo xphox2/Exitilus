@@ -125,10 +125,28 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
 }
 
 /** Load an ANSI art file and return its Unicode content.
- *  If asciiMode is true, tries to load .ASC file instead for non-ANSI terminals. */
-export function loadAnsiFile(ansiDir: string, filename: string, asciiMode = false): string | null {
+ *  Mode: 'enhanced' tries enhanced/ subfolder first (true-color upscaled),
+ *         'ascii' tries .ASC file first,
+ *         'classic' or default loads the original .ANS */
+export function loadAnsiFile(ansiDir: string, filename: string, mode: string = 'classic'): string | null {
+  // In enhanced mode, try the enhanced/ subfolder first (pre-upscaled true-color)
+  if (mode === 'enhanced') {
+    const enhancedDir = join(ansiDir, 'enhanced');
+    const enhPath = join(enhancedDir, filename);
+    const enhUpper = join(enhancedDir, filename.toUpperCase());
+    if (existsSync(enhPath)) {
+      // Enhanced files are already true-color ANSI - read as UTF-8
+      // They may contain raw bytes from the upscaler, use CP437 decode
+      return cp437ToUnicode(readFileSync(enhPath));
+    }
+    if (existsSync(enhUpper)) {
+      return cp437ToUnicode(readFileSync(enhUpper));
+    }
+    // Fall through to original if no enhanced version
+  }
+
   // In ASCII mode, try the .ASC version first
-  if (asciiMode) {
+  if (mode === 'ascii') {
     const ascName = filename.replace(/\.ans$/i, '.ASC');
     const ascPath = join(ansiDir, ascName);
     const ascUpper = join(ansiDir, ascName.toUpperCase());

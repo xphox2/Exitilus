@@ -4,11 +4,11 @@ import { fileURLToPath } from 'url';
 import type { PlayerSession } from '../io/session.js';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
-import type { PlayerRecord, MenuItem } from '../types/index.js';
+import type { PlayerRecord } from '../types/index.js';
 import { ANSI } from '../io/ansi.js';
 import type { GraphicsMode } from '../io/capabilities.js';
 import { enhancedTitleScreen } from '../io/enhanced-screens.js';
-import { renderEnhancedMenu, MENU_CONFIGS } from '../io/enhanced-menus.js';
+
 import { showMenu } from './menus.js';
 import { createNewPlayer } from './player-creation.js';
 import { showStats } from './stats.js';
@@ -174,24 +174,15 @@ export class GameEngine {
     const validKeys = ['s', 'g', 'i', 'c', 't', 'm', 'b', 'u', 'w', 'a', 'y', 'l', 'f', 'p', 'r', 'v', 'k', '*', 'q'];
 
     while (true) {
-      let choice: string;
-      if (this.graphicsMode === 'enhanced') {
-        const options = [
-          ...MENU_CONFIGS.mainStreet.options,
-          { key: '*', label: 'Commit Suicide' },
-        ];
-        choice = await renderEnhancedMenu(this.session, 'mainStreet', MENU_CONFIGS.mainStreet.title, options);
-      } else {
-        this.session.clear();
-        await this.session.showAnsi('MAIN.ANS');
+      this.session.clear();
+      await this.session.showAnsi('MAIN.ANS');
 
-        // MAIN.ANS already shows the menu and "Your Choice:" prompt - just read a key
-        choice = '';
-        while (!choice) {
-          const key = await this.session.readKey();
-          if (validKeys.includes(key.toLowerCase())) {
-            choice = key.toLowerCase();
-          }
+      // MAIN.ANS already shows the menu and "Your Choice:" prompt - just read a key
+      let choice = '';
+      while (!choice) {
+        const key = await this.session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
         }
       }
 

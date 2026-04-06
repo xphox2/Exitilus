@@ -6,7 +6,7 @@ import { getSpellsForClass } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { renderEnhancedMenu, MENU_CONFIGS } from '../io/enhanced-menus.js';
+
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -135,19 +135,14 @@ export async function enterGuilds(
   const validKeys = ['s', 'a', 'f', 'm', 'p', 'c', 'r', 'q', 'y'];
 
   while (true) {
-    let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
-      choice = await renderEnhancedMenu(session, MENU_CONFIGS.guilds.theme, MENU_CONFIGS.guilds.title, [...MENU_CONFIGS.guilds.options]);
-    } else {
-      session.clear();
-      await session.showAnsi('GUILDS.ANS');
+    session.clear();
+    await session.showAnsi('GUILDS.ANS');
 
-      choice = '';
-      while (!choice) {
-        const key = await session.readKey();
-        if (validKeys.includes(key.toLowerCase())) {
-          choice = key.toLowerCase();
-        }
+    let choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) {
+        choice = key.toLowerCase();
       }
     }
 

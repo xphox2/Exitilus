@@ -1,3 +1,41 @@
+## 0.5.0
+
+Image-to-ANSI converter, ANSI art upscaler, and simplified enhanced mode.
+
+### Added
+- **img2ansi tool** (`src/tools/img2ansi.ts`): Convert any PNG/JPG/WEBP image into ANSI art
+  - True-color (24-bit) or classic 16-color output
+  - Floyd-Steinberg dithering for better 16-color gradients
+  - Adjustable width, height, brightness, contrast, saturation
+  - Batch mode for converting entire directories
+  - Uses sharp for high-quality Lanczos3 resampling
+  - Run with: `npm run img2ansi -- <image> [options]`
+- **upscale-ansi tool** (`src/tools/upscale-ansi.ts`): Enhance original 16-color ANSI art
+  - Maps 16-color palette to richer 24-bit equivalents
+  - Per-screen color themes (tavern=warm firelight, caves=dark, church=holy purple, etc.)
+  - 28 screen-specific themes defined
+  - Preserves original character layout and design completely
+  - Run with: `npm run upscale` to upscale all 55 screens at once
+- **Enhanced ANSI file loading**: `showAnsi()` automatically loads from `content/ansi/enhanced/` when in enhanced mode, falling back to originals
+
+### Changed
+- Enhanced mode now uses the upscaled ANSI art (richer colors, same designs) instead of procedural art
+- Removed procedural art generation from all menu screens - the original ANSI art with true-color enhancement is the visual identity
+- Simplified all 10 system files by removing renderEnhancedMenu branching
+- Animated title screen preserved for enhanced mode (starfield + fade-in logo)
+
+### How to Add New Art
+```bash
+# Convert a fantasy image to ANSI art for the main menu:
+npm run img2ansi -- castle.png --output content/ansi/enhanced/MAIN.ANS
+
+# Convert all images in a folder:
+npm run img2ansi -- art/ --batch --outdir content/ansi/enhanced/
+
+# Upscale all original ANSI screens with true-color:
+npm run upscale
+```
+
 ## 0.4.2
 
 Overhaul enhanced graphics - full-screen art, atmospheric title, no rainbow.
