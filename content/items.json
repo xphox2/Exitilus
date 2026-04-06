@@ -1,0 +1,22 @@
+[
+  { "id": "fists", "name": "Bare Fists", "description": "Your own two hands.", "type": "weapon", "slot": "rightHand", "price": 0, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "rusty_dagger", "name": "Rusty Dagger", "description": "A corroded blade, better than nothing.", "type": "weapon", "slot": "rightHand", "price": 50, "strengthBonus": 3, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "short_sword", "name": "Short Sword", "description": "A reliable blade for beginners.", "type": "weapon", "slot": "rightHand", "price": 200, "strengthBonus": 8, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "long_sword", "name": "Long Sword", "description": "A well-crafted steel sword.", "type": "weapon", "slot": "rightHand", "price": 800, "strengthBonus": 18, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "battle_axe", "name": "Battle Axe", "description": "A heavy double-bladed axe.", "type": "weapon", "slot": "rightHand", "price": 1500, "strengthBonus": 28, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "enchanted_blade", "name": "Enchanted Blade", "description": "A sword imbued with magical energy.", "type": "weapon", "slot": "rightHand", "price": 5000, "strengthBonus": 45, "defenseBonus": 0, "magicBonus": 10, "hpBonus": 0 },
+  { "id": "dragon_slayer", "name": "Dragon Slayer", "description": "A legendary weapon forged to slay dragons.", "type": "weapon", "slot": "rightHand", "price": 25000, "strengthBonus": 80, "defenseBonus": 5, "magicBonus": 15, "hpBonus": 0 },
+
+  { "id": "wooden_shield", "name": "Wooden Shield", "description": "A simple wooden buckler.", "type": "shield", "slot": "leftHand", "price": 100, "strengthBonus": 0, "defenseBonus": 4, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "iron_shield", "name": "Iron Shield", "description": "A sturdy iron shield.", "type": "shield", "slot": "leftHand", "price": 600, "strengthBonus": 0, "defenseBonus": 12, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "tower_shield", "name": "Tower Shield", "description": "A massive shield providing excellent protection.", "type": "shield", "slot": "leftHand", "price": 2500, "strengthBonus": 0, "defenseBonus": 25, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "enchanted_shield", "name": "Enchanted Shield", "description": "A shield glowing with protective magic.", "type": "shield", "slot": "leftHand", "price": 8000, "strengthBonus": 0, "defenseBonus": 40, "magicBonus": 5, "hpBonus": 10 },
+
+  { "id": "cloth_armour", "name": "Cloth Armour", "description": "Padded cloth offering minimal protection.", "type": "armour", "slot": "armour", "price": 75, "strengthBonus": 0, "defenseBonus": 3, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "leather_armour", "name": "Leather Armour", "description": "Hardened leather providing decent protection.", "type": "armour", "slot": "armour", "price": 400, "strengthBonus": 0, "defenseBonus": 10, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "chain_mail", "name": "Chain Mail", "description": "Interlocking metal rings forming a flexible armour.", "type": "armour", "slot": "armour", "price": 1200, "strengthBonus": 0, "defenseBonus": 20, "magicBonus": 0, "hpBonus": 5 },
+  { "id": "plate_armour", "name": "Plate Armour", "description": "Heavy plate offering superior protection.", "type": "armour", "slot": "armour", "price": 4000, "strengthBonus": 0, "defenseBonus": 35, "magicBonus": 0, "hpBonus": 10 },
+  { "id": "dragon_scale_armour", "name": "Dragon Scale Armour", "description": "Armour crafted from the scales of an ancient dragon.", "type": "armour", "slot": "armour", "price": 30000, "strengthBonus": 10, "defenseBonus": 60, "magicBonus": 10, "hpBonus": 25 },
+
+  { "id": "healing_potion", "name": "Healing Potion", "description": "Restores a portion of your health.", "type": "potion", "price": 100, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 50 }
+]

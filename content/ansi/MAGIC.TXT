@@ -1,0 +1,79 @@
+                               Mage Spells
+                              -------------
+Magic Sparks:
+Not much more than a cantrip, this is the first spell learned by young
+students of magic. It costs the caster 10 mana, so although not all of their
+mana pool, at least a considerable amount. It is likely that they will not be
+able to cast it a second time in the same bought of combat.
+
+Flame Spear:
+This offensive mage spell is still not a gang busting spell, but it can help
+out now and then.  It is learned by the young dilogent mage striving
+to master their craft.
+
+Ice Storm:
+The first area affect spell learned by wizards in the realm of Exitilus.
+Does a lot of damage to all monsters, but is a initially a major drain on
+the spell caster.
+
+Lightning Bolt:
+An advanced spell to get that one tough mob. It's the first major offensive
+ability available to the magician in some time, and can be a real life
+saver (only cherry).
+
+Frost Spray:
+A low level mage spell, it does more damage to your enemy than magic sparks,
+but not much. Some think it's useful, but others find it a waste; each spell
+caster will have to decide for themselves.
+
+Teleport:
+A great spell to bail yourself out when you know the monster your fighting is
+getting the best of you.  However, Keveen has heard of some reports, though
+questionable, that excessive use of this spell by inexperienced spell casters
+has resulted in missing body parts.
+
+Transient Shield:
+A magical shield to help deflect enemy blows, though as the name suggests,
+it isn't permanent.
+
+Alchemy:
+Most people thought wizards only learned offensive spells. But when they
+started being killed by the meanest of monsters in the realm of Exitilus,
+they began to experiment with new spell components, and came up with a potion
+for healing. The original caster of the Alchemy spell was nominated for the
+Nobel prize in magic, but the committee found the spell very close to the
+first prayer learned by acolytes.
+
+Frigid Blast:
+Mages were finding that as they got more powerful, Ice Storm wasn't cutting
+it. They needed something against those dragons. It's not an area affect
+spell, but it's great at removing the worst of the bunch out of the way.
+
+Shockwave:
+This is about as close to mass destruction as it gets. A warrior would rather
+spend all day hacking a bunch of monsters, but the seasoned wizard finds it
+much easier to just cast one spell and get rid of them all in one foul swoop.
+
+                             Cleric Spells
+                            ---------------
+Heal:
+While still in the cemanary, young acolytes begin to pray to the God for
+their first event of grace.  This seems to the acolyte to be the most
+unobtainable, because it is the first; but rarely are they not rewarded.
+The heal spell, although not strong at low levels, will grow with the wisdom
+of the cleric and is probably their most beneficial favor from their God,
+as it often is their only chance of survival.
+
+Spiritual Shield:
+Next to the ability of healing, this unearthly shield against harm is the
+next most important for the young clerics who fight against their enemies in
+the physical realm.  Upon successful completion of this prayer, a shimmering
+shield of florrescent light collesses in front of the young cleric and
+absorbs some of the wrath of their enemies attack.  It is not the strongest
+of spells, but it does last for the durration of the fight.
+
+Sticks to Snakes:
+Although a relatively low leveled spell, Sticks to Snakes adds some real
+punch to a cleric's offense.  Although this rare offensive prayer does low
+amounts of damage to monsters individually, it is the only area affect spell
+clerics ever learn.

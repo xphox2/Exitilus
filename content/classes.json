@@ -1,0 +1,128 @@
+[
+  {
+    "id": "alchemist",
+    "name": "Alchemist",
+    "description": "Weak in combat but very good with poisons. Can't fight well; need good weapons.",
+    "statBonuses": { "wisdom": 8, "mp": 10, "strength": -3, "defense": -2 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["poison_craft", "potion_brew"]
+  },
+  {
+    "id": "warrior",
+    "name": "Warrior",
+    "description": "Most popular class. Strong, powerful, more intelligence than brute force characters.",
+    "statBonuses": { "strength": 6, "defense": 4, "hp": 8 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["weapon_mastery"]
+  },
+  {
+    "id": "barbarian",
+    "name": "Barbarian",
+    "description": "Very powerful, huge fighters, but slow. Good at guarding places.",
+    "statBonuses": { "strength": 10, "hp": 12, "defense": 3, "agility": -4, "wisdom": -3 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["berserker_rage"]
+  },
+  {
+    "id": "sorcerer",
+    "name": "Sorcerer",
+    "description": "Perfect for magic users. Snap your fingers and watch monsters burst into flames.",
+    "statBonuses": { "wisdom": 10, "mp": 15, "strength": -4, "hp": -5 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["fire_magic", "arcane_mastery"]
+  },
+  {
+    "id": "sage",
+    "name": "Sage",
+    "description": "Like Sorcerers but with white magic. Turn a frog into a prince.",
+    "statBonuses": { "wisdom": 12, "mp": 12, "strength": -5, "hp": -3 },
+    "canBeEvil": false,
+    "canBeGood": true,
+    "specialAbilities": ["white_magic", "transformation"]
+  },
+  {
+    "id": "assassin",
+    "name": "Assassin",
+    "description": "Quick and fast thieves/fighters. Good fighters from distance, can be hired to kill.",
+    "statBonuses": { "agility": 10, "strength": 5, "leadership": -3 },
+    "canBeEvil": true,
+    "canBeGood": false,
+    "specialAbilities": ["stealth", "critical_strike"]
+  },
+  {
+    "id": "paladin",
+    "name": "Paladin",
+    "description": "Average fighters who promote good. Good warriors who make kings and princes.",
+    "statBonuses": { "strength": 4, "defense": 5, "leadership": 8, "hp": 5 },
+    "canBeEvil": false,
+    "canBeGood": true,
+    "specialAbilities": ["holy_strike", "leadership_aura"]
+  },
+  {
+    "id": "cleric",
+    "name": "Cleric",
+    "description": "Perfect magical class. Can heal themselves. Supposed to be good; evil clerics suffer.",
+    "statBonuses": { "wisdom": 8, "mp": 10, "hp": 4, "defense": 2 },
+    "canBeEvil": false,
+    "canBeGood": true,
+    "specialAbilities": ["heal", "bless", "resurrect"]
+  },
+  {
+    "id": "thief",
+    "name": "Thief",
+    "description": "Quick, smart, no conscience. Just the right class for those qualities.",
+    "statBonuses": { "agility": 12, "wisdom": 3, "strength": -2 },
+    "canBeEvil": true,
+    "canBeGood": false,
+    "specialAbilities": ["pickpocket", "lockpick", "stealth"]
+  },
+  {
+    "id": "peddler",
+    "name": "Peddler",
+    "description": "Outlets of anger for everybody. Not a good profession.",
+    "statBonuses": { "agility": 2, "wisdom": 2 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["barter"]
+  },
+  {
+    "id": "soldier",
+    "name": "Soldier",
+    "description": "Swift and decent fighters. Slaves of Paladins, usually middle alignment.",
+    "statBonuses": { "strength": 5, "defense": 5, "hp": 5, "leadership": 3 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["formation_fighting"]
+  },
+  {
+    "id": "ninja",
+    "name": "Ninja",
+    "description": "Quick fighters who may easily become evil. No good ninjas exist.",
+    "statBonuses": { "agility": 12, "strength": 6, "wisdom": -2, "leadership": -4 },
+    "canBeEvil": true,
+    "canBeGood": false,
+    "specialAbilities": ["stealth", "dual_wield", "critical_strike"]
+  },
+  {
+    "id": "ranger",
+    "name": "Ranger",
+    "description": "Well-rounded fighters with healing abilities. A safe default choice.",
+    "statBonuses": { "strength": 3, "defense": 3, "agility": 4, "hp": 3, "wisdom": 3 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["tracking", "minor_heal"]
+  },
+  {
+    "id": "monk",
+    "name": "Monk",
+    "description": "Average fighters, healers, and spell-casters. All-around average class.",
+    "statBonuses": { "wisdom": 5, "mp": 5, "strength": 3, "defense": 2, "hp": 3 },
+    "canBeEvil": true,
+    "canBeGood": true,
+    "specialAbilities": ["martial_arts", "meditation", "minor_heal"]
+  }
+]

@@ -1,0 +1,41 @@
+# Exitilus Game Configuration
+# Modify these values to customize your game
+
+game:
+  minMonsterFights: 10
+  maxMonsterFights: 20
+  playerFightsPerDay: 3
+  bankInterest: 5          # percent
+  inactivityDeleteDays: 0  # 0 = disabled
+  inactivityTimeoutSecs: 0 # 0 = disabled
+  numKingdoms: 4
+  questReplay: false
+  deathStyle: new           # 'old' = unlimited deaths, 'new' = once per day
+  deathMatches: true
+  startingGold: 2000
+  fightLevelDifference: 30  # percent - can only attack players within this % of your level
+  maxStatValue: 30000
+
+kingdoms:
+  - id: chocolate
+    name: The Kingdom of Chocolate
+    description: A sweet realm ruled by indulgence.
+  - id: brute_strength
+    name: The Kingdom of Brute Strength
+    description: A realm where might makes right.
+  - id: fields
+    name: The Kingdom in the Fields
+    description: A pastoral kingdom of farmers and fighters.
+  - id: trees
+    name: The Kingdom in the Trees
+    description: A woodland kingdom of elves and rangers.
+
+player:
+  baseStats:
+    strength: 20
+    defense: 15
+    agility: 15
+    leadership: 10
+    wisdom: 10
+    hp: 100
+    mp: 30

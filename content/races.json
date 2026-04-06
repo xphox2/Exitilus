@@ -1,0 +1,72 @@
+[
+  {
+    "id": "human",
+    "name": "Human",
+    "description": "No race bonus or weakness. Well rounded and adaptable.",
+    "statBonuses": {},
+    "traits": ["adaptable"]
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "description": "Small, bright, quick. Afraid most of the time but surprisingly capable.",
+    "statBonuses": { "agility": 6, "wisdom": 4, "strength": -3, "hp": -2 },
+    "traits": ["quick", "magic_affinity"]
+  },
+  {
+    "id": "troll",
+    "name": "Troll",
+    "description": "Big and strong, incredibly dumb. Might try to stab a dragon with a club.",
+    "statBonuses": { "strength": 10, "hp": 10, "wisdom": -8, "mp": -5 },
+    "traits": ["regeneration", "thick_skin"]
+  },
+  {
+    "id": "orc",
+    "name": "Orc",
+    "description": "Like trolls but stronger. Incredibly stupid, prefer forests and caves.",
+    "statBonuses": { "strength": 12, "hp": 8, "wisdom": -10, "mp": -6, "agility": -2 },
+    "traits": ["brute_force", "forest_dweller"]
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "description": "High resistance to drugs. Quick, very wise, hang around mountain tops.",
+    "statBonuses": { "wisdom": 8, "agility": 4, "mp": 5, "strength": -4, "hp": -3 },
+    "traits": ["poison_resist", "mountain_dweller"]
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "description": "Stout, love ale, good fighters, respectable with magic.",
+    "statBonuses": { "strength": 5, "defense": 6, "hp": 4, "agility": -3 },
+    "traits": ["alcohol_resist", "mining_expertise"]
+  },
+  {
+    "id": "gnoll",
+    "name": "Gnoll",
+    "description": "Pretty weak, not bright, but extremely powerful poisons. Combat at distance.",
+    "statBonuses": { "agility": 6, "wisdom": -4, "strength": -3 },
+    "traits": ["poison_master", "ranged_combat"]
+  },
+  {
+    "id": "gargoyle",
+    "name": "Gargoyle",
+    "description": "Only come out at night. Powerful, can fly, possess magical capabilities.",
+    "statBonuses": { "strength": 6, "defense": 8, "mp": 4, "agility": -2 },
+    "traits": ["flight", "night_power", "stone_skin"]
+  },
+  {
+    "id": "hobbit",
+    "name": "Hobbit",
+    "description": "Small, brave, quick, intelligent. Out-smart enemies like Bilbo Baggins.",
+    "statBonuses": { "agility": 8, "wisdom": 5, "strength": -4, "hp": -3 },
+    "traits": ["lucky", "stealth"]
+  },
+  {
+    "id": "mutant",
+    "name": "Mutant",
+    "description": "Chaos theory in the flesh. Unpredictable hit/miss rates.",
+    "statBonuses": { "strength": 3, "agility": 3, "wisdom": 3, "hp": 3 },
+    "traits": ["chaos", "unpredictable"]
+  }
+]

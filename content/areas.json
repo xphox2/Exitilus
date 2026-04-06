@@ -1,0 +1,58 @@
+[
+  {
+    "id": "calm_woods",
+    "name": "Bright, Calm Woods",
+    "description": "A peaceful woodland near town, home to weaker creatures.",
+    "ansiScreen": "cwoods.ans",
+    "minLevel": 1,
+    "monsterIds": ["forest_rat", "wild_boar", "bandit"]
+  },
+  {
+    "id": "country",
+    "name": "The Country",
+    "description": "Rolling farmlands stretching out from the city walls.",
+    "ansiScreen": "country.ans",
+    "minLevel": 3,
+    "monsterIds": ["highway_robber", "wolf_pack", "scarecrow"]
+  },
+  {
+    "id": "plains",
+    "name": "The Plains",
+    "description": "Vast open grasslands where danger lurks with no cover.",
+    "ansiScreen": "plains.ans",
+    "minLevel": 5,
+    "monsterIds": ["plains_lion", "centaur", "dust_devil"]
+  },
+  {
+    "id": "seashore",
+    "name": "The Seashore",
+    "description": "Rocky coastline battered by waves, hiding aquatic threats.",
+    "ansiScreen": "seashore.ans",
+    "minLevel": 8,
+    "monsterIds": ["sea_serpent", "pirate", "siren"]
+  },
+  {
+    "id": "lost_caves",
+    "name": "The Lost Caves",
+    "description": "Dark twisting caverns beneath the mountains. Many enter, few return.",
+    "ansiScreen": "lostcave.ans",
+    "minLevel": 12,
+    "monsterIds": ["cave_troll", "dark_spider", "shadow_wyrm"]
+  },
+  {
+    "id": "jagged_peaks",
+    "name": "The Jagged Peaks",
+    "description": "Treacherous mountain passes where only the bravest dare climb.",
+    "ansiScreen": "jagpeaks.ans",
+    "minLevel": 18,
+    "monsterIds": ["mountain_giant", "griffin", "ice_drake"]
+  },
+  {
+    "id": "kings_garden",
+    "name": "The King's Garden",
+    "description": "An enchanted garden hiding ancient and powerful creatures.",
+    "ansiScreen": "kgarden.ans",
+    "minLevel": 25,
+    "monsterIds": ["enchanted_knight", "garden_golem", "ancient_dragon"]
+  }
+]
