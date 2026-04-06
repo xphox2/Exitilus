@@ -1,14 +1,9 @@
-/** Enhanced menu system - replaces ANSI art menus with true-color
- *  procedural art headers + styled menu options below. */
+/** Enhanced menu system - full-screen true-color menus with large
+ *  procedural art, decorative borders, and atmospheric styling. */
 
 import type { PlayerSession } from './session.js';
-import type { PlayerRecord } from '../types/index.js';
 import { fg, bg, RESET, type RGB, lerpColor, PALETTE, generateSceneArt } from './truecolor.js';
 import { formatGold } from '../core/menus.js';
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 interface MenuOption {
   key: string;
@@ -20,285 +15,101 @@ interface MenuTheme {
   palette: RGB[];
   pattern: 'mountains' | 'waves' | 'flames' | 'stars' | 'gradient';
   titleColor: RGB;
+  subtitleColor: RGB;
   accentColor: RGB;
   keyColor: RGB;
   labelColor: RGB;
   disabledColor: RGB;
-  borderColor: RGB;
-  headerHeight?: number; // pixel rows (will be halved for half-blocks)
+  borderChars: { h: string; v: string; tl: string; tr: string; bl: string; br: string; cross: string; t: string; b: string };
+  borderGradient: RGB[];
+  icon: string;
+}
+
+function gradientText(text: string, from: RGB, to: RGB): string {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    const t = text.length > 1 ? i / (text.length - 1) : 0;
+    const c = lerpColor(from, to, t);
+    out += fg(c.r, c.g, c.b) + text[i];
+  }
+  return out + RESET;
+}
+
+function borderLine(width: number, gradient: RGB[], char = '═'): string {
+  let out = '';
+  for (let i = 0; i < width; i++) {
+    const t = width > 1 ? i / (width - 1) : 0;
+    const idx = Math.min(gradient.length - 1, Math.floor(t * (gradient.length - 1)));
+    const c = lerpColor(gradient[idx], gradient[Math.min(gradient.length - 1, idx + 1)],
+      (t * (gradient.length - 1)) - idx);
+    out += fg(c.r, c.g, c.b) + char;
+  }
+  return out + RESET;
+}
+
+const DOUBLE_BORDER = { h: '═', v: '║', tl: '╔', tr: '╗', bl: '╚', br: '╝', cross: '╬', t: '╦', b: '╩' };
+
+function makeTheme(
+  palette: RGB[],
+  pattern: MenuTheme['pattern'],
+  icon: string,
+  primary: RGB,
+  secondary: RGB
+): MenuTheme {
+  return {
+    palette,
+    pattern,
+    icon,
+    titleColor: primary,
+    subtitleColor: { r: Math.floor(primary.r * 0.6), g: Math.floor(primary.g * 0.6), b: Math.floor(primary.b * 0.6) },
+    accentColor: secondary,
+    keyColor: { r: 255, g: 255, b: 255 },
+    labelColor: { r: Math.floor(secondary.r * 0.8 + 50), g: Math.floor(secondary.g * 0.8 + 50), b: Math.floor(secondary.b * 0.8 + 50) },
+    disabledColor: { r: 60, g: 60, b: 70 },
+    borderChars: DOUBLE_BORDER,
+    borderGradient: [
+      { r: Math.floor(primary.r * 0.3), g: Math.floor(primary.g * 0.3), b: Math.floor(primary.b * 0.3) },
+      primary,
+      { r: Math.floor(primary.r * 0.3), g: Math.floor(primary.g * 0.3), b: Math.floor(primary.b * 0.3) },
+    ],
+  };
 }
 
 const THEMES: Record<string, MenuTheme> = {
-  mainStreet: {
-    palette: [
-      { r: 10, g: 15, b: 35 },
-      { r: 20, g: 30, b: 60 },
-      { r: 35, g: 50, b: 90 },
-      { r: 50, g: 70, b: 120 },
-      { r: 70, g: 100, b: 160 },
-      { r: 120, g: 150, b: 200 },
-    ],
-    pattern: 'mountains',
-    titleColor: { r: 255, g: 220, b: 100 },
-    accentColor: { r: 100, g: 180, b: 255 },
-    keyColor: { r: 255, g: 255, b: 255 },
-    labelColor: { r: 160, g: 210, b: 160 },
-    disabledColor: { r: 70, g: 70, b: 80 },
-    borderColor: { r: 80, g: 120, b: 180 },
-    headerHeight: 10,
-  },
-  shops: {
-    palette: PALETTE.gold,
-    pattern: 'gradient',
-    titleColor: { r: 255, g: 220, b: 80 },
-    accentColor: { r: 220, g: 180, b: 60 },
-    keyColor: { r: 255, g: 255, b: 220 },
-    labelColor: { r: 200, g: 180, b: 120 },
-    disabledColor: { r: 80, g: 70, b: 50 },
-    borderColor: { r: 180, g: 140, b: 40 },
-    headerHeight: 8,
-  },
-  weaponShop: {
-    palette: PALETTE.fire,
-    pattern: 'flames',
-    titleColor: { r: 255, g: 150, b: 50 },
-    accentColor: { r: 255, g: 100, b: 30 },
-    keyColor: { r: 255, g: 255, b: 200 },
-    labelColor: { r: 220, g: 160, b: 100 },
-    disabledColor: { r: 80, g: 50, b: 30 },
-    borderColor: { r: 200, g: 80, b: 20 },
-    headerHeight: 6,
-  },
-  shieldShop: {
-    palette: PALETTE.ice,
-    pattern: 'waves',
-    titleColor: { r: 150, g: 220, b: 255 },
-    accentColor: { r: 100, g: 180, b: 240 },
-    keyColor: { r: 255, g: 255, b: 255 },
-    labelColor: { r: 140, g: 190, b: 220 },
-    disabledColor: { r: 50, g: 60, b: 70 },
-    borderColor: { r: 60, g: 120, b: 180 },
-    headerHeight: 6,
-  },
-  armourShop: {
-    palette: PALETTE.shadow,
-    pattern: 'gradient',
-    titleColor: { r: 200, g: 200, b: 220 },
-    accentColor: { r: 150, g: 150, b: 180 },
-    keyColor: { r: 255, g: 255, b: 255 },
-    labelColor: { r: 160, g: 160, b: 180 },
-    disabledColor: { r: 60, g: 60, b: 70 },
-    borderColor: { r: 100, g: 100, b: 130 },
-    headerHeight: 6,
-  },
-  church: {
-    palette: [
-      { r: 15, g: 10, b: 30 },
-      { r: 40, g: 20, b: 60 },
-      { r: 80, g: 40, b: 100 },
-      { r: 140, g: 80, b: 160 },
-      { r: 200, g: 150, b: 220 },
-      { r: 255, g: 230, b: 255 },
-    ],
-    pattern: 'stars',
-    titleColor: { r: 255, g: 240, b: 200 },
-    accentColor: { r: 200, g: 180, b: 255 },
-    keyColor: { r: 255, g: 255, b: 255 },
-    labelColor: { r: 180, g: 160, b: 220 },
-    disabledColor: { r: 60, g: 50, b: 70 },
-    borderColor: { r: 150, g: 120, b: 200 },
-    headerHeight: 8,
-  },
-  tavern: {
-    palette: [
-      { r: 30, g: 15, b: 5 },
-      { r: 60, g: 30, b: 10 },
-      { r: 100, g: 55, b: 20 },
-      { r: 140, g: 80, b: 30 },
-      { r: 180, g: 120, b: 50 },
-      { r: 220, g: 170, b: 90 },
-    ],
-    pattern: 'gradient',
-    titleColor: { r: 255, g: 200, b: 100 },
-    accentColor: { r: 200, g: 150, b: 60 },
-    keyColor: { r: 255, g: 240, b: 200 },
-    labelColor: { r: 200, g: 170, b: 120 },
-    disabledColor: { r: 70, g: 55, b: 35 },
-    borderColor: { r: 160, g: 100, b: 40 },
-    headerHeight: 8,
-  },
-  guilds: {
-    palette: PALETTE.magic,
-    pattern: 'stars',
-    titleColor: { r: 220, g: 150, b: 255 },
-    accentColor: { r: 180, g: 100, b: 255 },
-    keyColor: { r: 255, g: 220, b: 255 },
-    labelColor: { r: 180, g: 140, b: 220 },
-    disabledColor: { r: 60, g: 40, b: 80 },
-    borderColor: { r: 140, g: 80, b: 200 },
-    headerHeight: 8,
-  },
-  alleys: {
-    palette: PALETTE.shadow,
-    pattern: 'gradient',
-    titleColor: { r: 200, g: 50, b: 50 },
-    accentColor: { r: 150, g: 40, b: 40 },
-    keyColor: { r: 200, g: 180, b: 180 },
-    labelColor: { r: 150, g: 120, b: 120 },
-    disabledColor: { r: 50, g: 40, b: 40 },
-    borderColor: { r: 100, g: 40, b: 40 },
-    headerHeight: 8,
-  },
-  bank: {
-    palette: PALETTE.gold,
-    pattern: 'waves',
-    titleColor: { r: 255, g: 220, b: 80 },
-    accentColor: { r: 200, g: 170, b: 50 },
-    keyColor: { r: 255, g: 255, b: 200 },
-    labelColor: { r: 200, g: 180, b: 100 },
-    disabledColor: { r: 70, g: 60, b: 30 },
-    borderColor: { r: 180, g: 150, b: 40 },
-    headerHeight: 6,
-  },
-  training: {
-    palette: PALETTE.fire,
-    pattern: 'gradient',
-    titleColor: { r: 255, g: 180, b: 60 },
-    accentColor: { r: 220, g: 120, b: 30 },
-    keyColor: { r: 255, g: 255, b: 200 },
-    labelColor: { r: 220, g: 160, b: 80 },
-    disabledColor: { r: 70, g: 50, b: 20 },
-    borderColor: { r: 200, g: 100, b: 20 },
-    headerHeight: 6,
-  },
-  library: {
-    palette: [
-      { r: 20, g: 10, b: 5 },
-      { r: 50, g: 30, b: 15 },
-      { r: 80, g: 50, b: 25 },
-      { r: 120, g: 80, b: 40 },
-      { r: 160, g: 120, b: 70 },
-      { r: 200, g: 170, b: 110 },
-    ],
-    pattern: 'gradient',
-    titleColor: { r: 240, g: 220, b: 160 },
-    accentColor: { r: 180, g: 150, b: 80 },
-    keyColor: { r: 255, g: 245, b: 220 },
-    labelColor: { r: 200, g: 180, b: 140 },
-    disabledColor: { r: 70, g: 60, b: 40 },
-    borderColor: { r: 150, g: 120, b: 60 },
-    headerHeight: 8,
-  },
-  manor: {
-    palette: PALETTE.forest,
-    pattern: 'mountains',
-    titleColor: { r: 100, g: 255, b: 100 },
-    accentColor: { r: 60, g: 200, b: 80 },
-    keyColor: { r: 220, g: 255, b: 220 },
-    labelColor: { r: 140, g: 200, b: 140 },
-    disabledColor: { r: 40, g: 60, b: 40 },
-    borderColor: { r: 60, g: 140, b: 60 },
-    headerHeight: 8,
-  },
-  merchant: {
-    palette: [
-      { r: 20, g: 15, b: 40 },
-      { r: 40, g: 30, b: 70 },
-      { r: 70, g: 50, b: 110 },
-      { r: 110, g: 80, b: 150 },
-      { r: 160, g: 120, b: 190 },
-      { r: 210, g: 180, b: 230 },
-    ],
-    pattern: 'waves',
-    titleColor: { r: 220, g: 180, b: 255 },
-    accentColor: { r: 180, g: 140, b: 220 },
-    keyColor: { r: 255, g: 240, b: 255 },
-    labelColor: { r: 190, g: 170, b: 210 },
-    disabledColor: { r: 60, g: 50, b: 70 },
-    borderColor: { r: 140, g: 100, b: 180 },
-    headerHeight: 6,
-  },
-  personal: {
-    palette: PALETTE.ice,
-    pattern: 'stars',
-    titleColor: { r: 180, g: 220, b: 255 },
-    accentColor: { r: 120, g: 180, b: 240 },
-    keyColor: { r: 255, g: 255, b: 255 },
-    labelColor: { r: 160, g: 200, b: 230 },
-    disabledColor: { r: 50, g: 60, b: 70 },
-    borderColor: { r: 80, g: 140, b: 200 },
-    headerHeight: 6,
-  },
-  combat: {
-    palette: PALETTE.fire,
-    pattern: 'flames',
-    titleColor: { r: 255, g: 100, b: 50 },
-    accentColor: { r: 220, g: 60, b: 20 },
-    keyColor: { r: 255, g: 255, b: 200 },
-    labelColor: { r: 220, g: 150, b: 100 },
-    disabledColor: { r: 80, g: 40, b: 20 },
-    borderColor: { r: 200, g: 60, b: 20 },
-    headerHeight: 6,
-  },
+  mainStreet: makeTheme(
+    [{ r: 5, g: 8, b: 25 }, { r: 10, g: 20, b: 50 }, { r: 20, g: 35, b: 80 }, { r: 35, g: 55, b: 110 }, { r: 60, g: 90, b: 150 }, { r: 100, g: 140, b: 200 }],
+    'mountains', '⚔', { r: 255, g: 200, b: 80 }, { r: 100, g: 180, b: 255 }
+  ),
+  shops: makeTheme(PALETTE.gold, 'gradient', '🛡', { r: 255, g: 210, b: 60 }, { r: 200, g: 170, b: 80 }),
+  weaponShop: makeTheme(PALETTE.fire, 'flames', '⚔', { r: 255, g: 120, b: 30 }, { r: 220, g: 160, b: 80 }),
+  shieldShop: makeTheme(PALETTE.ice, 'waves', '🛡', { r: 130, g: 200, b: 255 }, { r: 120, g: 170, b: 220 }),
+  armourShop: makeTheme(PALETTE.shadow, 'gradient', '🗡', { r: 180, g: 180, b: 200 }, { r: 140, g: 140, b: 170 }),
+  church: makeTheme(
+    [{ r: 10, g: 5, b: 25 }, { r: 30, g: 15, b: 55 }, { r: 60, g: 30, b: 90 }, { r: 100, g: 60, b: 140 }, { r: 160, g: 110, b: 200 }, { r: 230, g: 200, b: 255 }],
+    'stars', '✦', { r: 255, g: 230, b: 180 }, { r: 180, g: 150, b: 230 }
+  ),
+  tavern: makeTheme(
+    [{ r: 25, g: 12, b: 5 }, { r: 55, g: 28, b: 10 }, { r: 90, g: 50, b: 18 }, { r: 130, g: 75, b: 28 }, { r: 170, g: 110, b: 45 }, { r: 210, g: 160, b: 80 }],
+    'gradient', '🍺', { r: 255, g: 200, b: 100 }, { r: 200, g: 160, b: 90 }
+  ),
+  guilds: makeTheme(PALETTE.magic, 'stars', '✧', { r: 200, g: 140, b: 255 }, { r: 160, g: 120, b: 220 }),
+  alleys: makeTheme(PALETTE.shadow, 'gradient', '🗡', { r: 180, g: 50, b: 50 }, { r: 140, g: 90, b: 90 }),
+  bank: makeTheme(PALETTE.gold, 'waves', '💰', { r: 255, g: 210, b: 60 }, { r: 200, g: 170, b: 80 }),
+  training: makeTheme(PALETTE.fire, 'gradient', '⚔', { r: 255, g: 160, b: 40 }, { r: 220, g: 140, b: 70 }),
+  library: makeTheme(
+    [{ r: 18, g: 10, b: 4 }, { r: 45, g: 28, b: 12 }, { r: 75, g: 48, b: 22 }, { r: 110, g: 75, b: 38 }, { r: 150, g: 110, b: 60 }, { r: 195, g: 160, b: 100 }],
+    'gradient', '📖', { r: 230, g: 210, b: 150 }, { r: 180, g: 155, b: 100 }
+  ),
+  manor: makeTheme(PALETTE.forest, 'mountains', '🏰', { r: 80, g: 230, b: 80 }, { r: 100, g: 180, b: 100 }),
+  merchant: makeTheme(
+    [{ r: 15, g: 10, b: 35 }, { r: 35, g: 25, b: 65 }, { r: 60, g: 42, b: 100 }, { r: 95, g: 70, b: 140 }, { r: 140, g: 105, b: 180 }, { r: 195, g: 165, b: 225 }],
+    'waves', '💎', { r: 200, g: 160, b: 255 }, { r: 170, g: 140, b: 210 }
+  ),
+  personal: makeTheme(PALETTE.ice, 'stars', '👤', { r: 150, g: 210, b: 255 }, { r: 130, g: 180, b: 230 }),
+  combat: makeTheme(PALETTE.fire, 'flames', '⚔', { r: 255, g: 80, b: 30 }, { r: 220, g: 120, b: 60 }),
 };
 
-/** Render a single horizontal border line */
-function renderBorder(width: number, color: RGB): string {
-  return fg(color.r, color.g, color.b) + '═'.repeat(width) + RESET;
-}
-
-/** Render the title within a styled box */
-function renderTitle(title: string, theme: MenuTheme, width = 80): string {
-  const bc = theme.borderColor;
-  const tc = theme.titleColor;
-  const padLen = Math.max(0, Math.floor((width - title.length - 4) / 2));
-  const border = fg(bc.r, bc.g, bc.b);
-  const titleStr = fg(tc.r, tc.g, tc.b);
-
-  let out = '';
-  out += `${border}╔${'═'.repeat(width - 2)}╗${RESET}\r\n`;
-  out += `${border}║${' '.repeat(padLen)}${titleStr}${title}${border}${' '.repeat(width - 2 - padLen - title.length)}║${RESET}\r\n`;
-  out += `${border}╚${'═'.repeat(width - 2)}╝${RESET}\r\n`;
-  return out;
-}
-
-/** Render menu options in two columns with styled colors */
-function renderOptions(options: MenuOption[], theme: MenuTheme, columns = 2): string {
-  let out = '';
-  const colWidth = columns === 1 ? 76 : 37;
-
-  for (let i = 0; i < options.length; i++) {
-    const opt = options[i];
-    const enabled = opt.enabled !== false;
-    const kc = enabled ? theme.keyColor : theme.disabledColor;
-    const lc = enabled ? theme.labelColor : theme.disabledColor;
-    const ac = enabled ? theme.accentColor : theme.disabledColor;
-
-    const item = `${fg(ac.r, ac.g, ac.b)}[${fg(kc.r, kc.g, kc.b)}${opt.key}${fg(ac.r, ac.g, ac.b)}] ${fg(lc.r, lc.g, lc.b)}${opt.label}${RESET}`;
-
-    if (columns === 1) {
-      out += `  ${item}\r\n`;
-    } else {
-      if (i % 2 === 0) {
-        // ANSI codes don't count for visible length - pad based on visible chars
-        const visLen = opt.key.length + opt.label.length + 4; // [X] Label
-        const padding = Math.max(1, colWidth - visLen);
-        out += `  ${item}${' '.repeat(padding)}`;
-      } else {
-        out += `${item}\r\n`;
-      }
-    }
-  }
-
-  // If odd number of options, close the last line
-  if (columns > 1 && options.length % 2 === 1) {
-    out += '\r\n';
-  }
-
-  return out;
-}
-
-/** Render a full enhanced menu screen: art header + title + options + prompt */
+/** Render a full-screen enhanced menu that fills the terminal */
 export async function renderEnhancedMenu(
   session: PlayerSession,
   themeName: string,
@@ -308,34 +119,65 @@ export async function renderEnhancedMenu(
   columns?: number
 ): Promise<string> {
   const theme = THEMES[themeName] ?? THEMES['mainStreet'];
+  const cols = columns ?? (options.length > 8 ? 2 : 1);
   session.clear();
 
-  // 1. Procedural art header
-  const headerH = theme.headerHeight ?? 8;
-  const art = generateSceneArt(80, headerH, theme.palette, theme.pattern);
+  // ── 1. Large procedural art section (12 rows = 24 pixel rows) ──
+  const art = generateSceneArt(80, 24, theme.palette, theme.pattern);
   session.write(art);
 
-  // 2. Title bar
-  session.write(renderTitle(title, theme));
+  // ── 2. Title bar with gradient border ──
+  session.write(borderLine(80, theme.borderGradient));
   session.writeln('');
 
-  // 3. Extra info (player stats, gold, etc.)
-  if (extraInfo) {
+  const titlePad = Math.max(0, Math.floor((78 - title.length) / 2));
+  const tc = theme.titleColor;
+  const bc = theme.borderGradient[1];
+  session.writeln(
+    `${fg(bc.r, bc.g, bc.b)}║${RESET}` +
+    ' '.repeat(titlePad) +
+    gradientText(title, tc, { r: Math.min(255, tc.r + 50), g: Math.min(255, tc.g + 50), b: Math.min(255, tc.b + 50) }) +
+    ' '.repeat(Math.max(0, 78 - titlePad - title.length)) +
+    `${fg(bc.r, bc.g, bc.b)}║${RESET}`
+  );
+
+  session.write(borderLine(80, theme.borderGradient));
+  session.writeln('');
+
+  // ── 3. Extra info section ──
+  if (extraInfo && extraInfo.length > 0) {
     for (const line of extraInfo) {
-      session.writeln(`  ${fg(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b)}${line}${RESET}`);
+      const sc = theme.subtitleColor;
+      session.writeln(`  ${fg(sc.r, sc.g, sc.b)}${line}${RESET}`);
     }
     session.writeln('');
   }
 
-  // 4. Menu options
-  session.write(renderOptions(options, theme, columns));
+  // ── 4. Menu options ──
+  if (cols === 2) {
+    for (let i = 0; i < options.length; i += 2) {
+      const left = renderOption(options[i], theme);
+      const right = i + 1 < options.length ? renderOption(options[i + 1], theme) : '';
+      const leftVis = options[i].key.length + options[i].label.length + 5;
+      const pad = Math.max(1, 38 - leftVis);
+      session.writeln(`  ${left}${' '.repeat(pad)}${right}`);
+    }
+  } else {
+    for (const opt of options) {
+      session.writeln(`  ${renderOption(opt, theme)}`);
+    }
+  }
+
+  // ── 5. Bottom border ──
+  session.writeln('');
+  session.write(borderLine(80, theme.borderGradient, '─'));
   session.writeln('');
 
-  // 5. Prompt
+  // ── 6. Prompt ──
   const pc = theme.accentColor;
-  session.write(`  ${fg(pc.r, pc.g, pc.b)}Your Choice: ${fg(255, 255, 255)}`);
+  session.write(`  ${fg(pc.r, pc.g, pc.b)}${theme.icon} Your Choice: ${fg(255, 255, 255)}`);
 
-  // 6. Read key
+  // ── 7. Read key ──
   const validKeys = options.filter(o => o.enabled !== false).map(o => o.key.toLowerCase());
   while (true) {
     const key = await session.readKey();
@@ -346,7 +188,15 @@ export async function renderEnhancedMenu(
   }
 }
 
-/** Pre-built menu configurations for each game location */
+function renderOption(opt: MenuOption, theme: MenuTheme): string {
+  const enabled = opt.enabled !== false;
+  const kc = enabled ? theme.keyColor : theme.disabledColor;
+  const lc = enabled ? theme.labelColor : theme.disabledColor;
+  const ac = enabled ? theme.accentColor : theme.disabledColor;
+  return `${fg(ac.r, ac.g, ac.b)}[${fg(kc.r, kc.g, kc.b)}${opt.key}${fg(ac.r, ac.g, ac.b)}]${fg(lc.r, lc.g, lc.b)} ${opt.label}${RESET}`;
+}
+
+/** Pre-built menu configurations */
 export const MENU_CONFIGS = {
   mainStreet: {
     theme: 'mainStreet',

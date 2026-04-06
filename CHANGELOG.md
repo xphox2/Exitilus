@@ -1,3 +1,14 @@
+## 0.4.2
+
+Overhaul enhanced graphics - full-screen art, atmospheric title, no rainbow.
+
+### Changed
+- **Title screen**: Replaced gaudy rainbow color-cycling animation with atmospheric fade-in. Full-screen dark starfield, logo fades from dim red to bright gold in 3 steps, subtle dramatic text reveal for credits
+- **All enhanced menus**: Art headers expanded from tiny 4-5 row strips to full 12-row (24 pixel-row) procedural landscapes that dominate the screen. Gradient borders between art and menu. Themed prompt with location icon
+- **Menu layout**: Options rendered below substantial art section with proper gradient borders and themed accent colors. Two-column layout for large menus (18+ options), single column for smaller ones
+- Removed `particleEffect` call from title screen (was slow and looked cheap)
+- Removed `animatedBanner` rainbow cycling from title
+
 ## 0.4.1
 
 Enhanced menus for all game locations - every screen now has a true-color procedural art header in enhanced mode.
