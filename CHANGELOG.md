@@ -1,3 +1,16 @@
+## 0.1.5
+
+Add PvP combat, guilds/magic, back alleys, library, ratings, and personal commands - nearly all main street options now functional.
+
+### Added
+- **Player Fight** (`pvp.ts`): Challenge other players to combat with attack/heal/run, level-range restrictions, gold/XP rewards for winning, death for losing
+- **Guilds** (`guilds.ts`): 6 guild halls (Sorcerers, Alchemists, Fighters, Monks, Peddlers, Clerics) with 7 spells (Minor/Major Heal, Fortify, Empower, Enlighten, Full Restore, Alchemy) costing MP
+- **Back Alleys** (`alleys.ts`): Pickpocketing (agility-based), Black Market (rotating random deals), Curses (pay to curse other players - weaken stats, steal gold, deal damage)
+- **Grand Library** (`library.ts`): History, Merchant Knowledge (item/price catalog), Noble Arts (combat guide), Death rules, Hints, Hall of Emperors - all using original ANSI screens where available
+- **View Ratings** (`ratings.ts`): Full leaderboard showing top players by level, wealthiest, and strongest fighters
+- **Personal Commands** (`personal.ts`): Change profession (class swap for gold), Level-up status check, Announcements, News
+- **Commit Suicide** (`*` key): Permanent character death with confirmation
+
 ## 0.1.4
 
 Fix ANSI art rendering on terminals wider than 80 columns.

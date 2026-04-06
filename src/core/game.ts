@@ -12,6 +12,12 @@ import { enterBank } from '../systems/bank.js';
 import { enterChurch } from '../systems/church.js';
 import { enterTavern } from '../systems/tavern.js';
 import { enterTraining } from '../systems/training.js';
+import { playerFight } from '../systems/pvp.js';
+import { enterGuilds } from '../systems/guilds.js';
+import { enterAlleys } from '../systems/alleys.js';
+import { enterLibrary } from '../systems/library.js';
+import { viewRatings } from '../systems/ratings.js';
+import { personalCommands } from '../systems/personal.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -184,6 +190,51 @@ export class GameEngine {
 
         case 'k':
           await enterBank(this.session, this.player, this.db);
+          break;
+
+        case 'g':
+          await enterGuilds(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'b':
+          await enterAlleys(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'f':
+          await playerFight(this.session, this.player, this.content, this.db);
+          if (!this.player.alive) {
+            this.session.writeln(`${ANSI.BRIGHT_RED}You are dead. Your adventure ends here...${ANSI.RESET}`);
+            this.db.updatePlayer(this.player);
+            await this.session.pause();
+            return;
+          }
+          break;
+
+        case 'p':
+          await personalCommands(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'r':
+          await enterLibrary(this.session, this.player, this.content);
+          break;
+
+        case 'v':
+          await viewRatings(this.session, this.player, this.content, this.db);
+          break;
+
+        case '*':
+          this.session.writeln('');
+          this.session.writeln(`${ANSI.BRIGHT_RED}  Are you sure you want to end it all?${ANSI.RESET}`);
+          const confirm = await this.session.readLine(`${ANSI.BRIGHT_RED}  Type YES to confirm: ${ANSI.BRIGHT_WHITE}`);
+          if (confirm.toUpperCase() === 'YES') {
+            this.player.alive = false;
+            this.player.hp = 0;
+            this.db.updatePlayer(this.player);
+            this.session.writeln(`${ANSI.BRIGHT_RED}  You end your adventure permanently...${ANSI.RESET}`);
+            await this.session.showAnsi('DEAD.ANS');
+            await this.session.pause();
+            return;
+          }
           break;
 
         case 'y':
