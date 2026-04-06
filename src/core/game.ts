@@ -60,16 +60,16 @@ export class GameEngine {
     while (true) {
       this.session.clear();
 
-      // Show game title
-      this.session.writeln(`${ANSI.BRIGHT_RED}  ███████╗██╗  ██╗██╗████████╗██╗██╗     ██╗   ██╗███████╗`);
-      this.session.writeln(`  ██╔════╝╚██╗██╔╝██║╚══██╔══╝██║██║     ██║   ██║██╔════╝`);
-      this.session.writeln(`  █████╗   ╚███╔╝ ██║   ██║   ██║██║     ██║   ██║███████╗`);
-      this.session.writeln(`  ██╔══╝   ██╔██╗ ██║   ██║   ██║██║     ██║   ██║╚════██║`);
-      this.session.writeln(`  ███████╗██╔╝ ██╗██║   ██║   ██║███████╗╚██████╔╝███████║`);
-      this.session.writeln(`  ╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚═╝╚══════╝ ╚═════╝ ╚══════╝${ANSI.RESET}`);
+      // Show game title - centered
+      this.session.writeln(`${ANSI.BRIGHT_RED}           ███████╗██╗  ██╗██╗████████╗██╗██╗     ██╗   ██╗███████╗`);
+      this.session.writeln(`           ██╔════╝╚██╗██╔╝██║╚══██╔══╝██║██║     ██║   ██║██╔════╝`);
+      this.session.writeln(`           █████╗   ╚███╔╝ ██║   ██║   ██║██║     ██║   ██║███████╗`);
+      this.session.writeln(`           ██╔══╝   ██╔██╗ ██║   ██║   ██║██║     ██║   ██║╚════██║`);
+      this.session.writeln(`           ███████╗██╔╝ ██╗██║   ██║   ██║███████╗╚██████╔╝███████║`);
+      this.session.writeln(`           ╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝   ╚═╝╚══════╝ ╚═════╝ ╚══════╝${ANSI.RESET}`);
       this.session.writeln('');
-      this.session.writeln(`  ${ANSI.BRIGHT_CYAN}Version 4.0 - Reborn${ANSI.RESET}`);
-      this.session.writeln(`  ${ANSI.CYAN}Originally (C) 1999 ECI Software, LLC${ANSI.RESET}`);
+      this.session.writeln(`                        ${ANSI.BRIGHT_CYAN}Version 4.0 - Reborn${ANSI.RESET}`);
+      this.session.writeln(`                   ${ANSI.CYAN}Originally (C) 1999 ECI Software, LLC${ANSI.RESET}`);
       this.session.writeln('');
 
       const choice = await showMenu(this.session, 'Welcome to Exitilus', [
