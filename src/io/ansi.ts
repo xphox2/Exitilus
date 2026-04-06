@@ -31,27 +31,96 @@ const CP437_MAP: Record<number, string> = {
   253: '\u00B2', 254: '\u25A0', 255: '\u00A0'
 };
 
-/** Convert CP437 bytes to a Unicode string preserving ANSI escape sequences */
-export function cp437ToUnicode(buffer: Buffer): string {
+/** Convert CP437 bytes to a Unicode string preserving ANSI escape sequences.
+ *  Inserts line breaks at 80 columns to emulate a BBS terminal. */
+export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
   let result = '';
-  for (let i = 0; i < buffer.length; i++) {
+  let col = 0;
+  let i = 0;
+
+  while (i < buffer.length) {
     const byte = buffer[i];
+
     if (byte === 0x1B) {
-      // Start of ANSI escape sequence - pass through as-is
+      // ANSI escape sequence - pass through entirely, don't count toward column
       result += '\x1B';
-    } else if (byte === 0x0A) {
-      result += '\n';
-    } else if (byte === 0x0D) {
-      result += '\r';
-    } else if (byte < 32) {
-      // Other control characters - skip most, keep tab
-      if (byte === 0x09) result += '\t';
-    } else if (byte < 128) {
-      result += String.fromCharCode(byte);
-    } else {
-      result += CP437_MAP[byte] || '?';
+      i++;
+      // Copy the rest of the escape sequence until we hit a letter (the terminator)
+      while (i < buffer.length) {
+        const seqByte = buffer[i];
+        result += String.fromCharCode(seqByte);
+        i++;
+        // CSI sequences end with a letter (A-Z, a-z) after the `[`
+        // Other sequences (like `ESC(B`) also end with a letter
+        if (seqByte >= 0x40 && seqByte <= 0x7E && seqByte !== 0x5B /* [ */) {
+          // Handle cursor movement that affects our column tracking
+          const seq = result.slice(result.lastIndexOf('\x1B'));
+          const cursorMatch = seq.match(/\x1B\[(\d*)D/); // move left
+          if (cursorMatch) {
+            const n = parseInt(cursorMatch[1] || '1', 10);
+            col = Math.max(0, col - n);
+          }
+          const cursorRightMatch = seq.match(/\x1B\[(\d*)C/); // move right
+          if (cursorRightMatch) {
+            col += parseInt(cursorRightMatch[1] || '1', 10);
+          }
+          const cursorPosMatch = seq.match(/\x1B\[(\d*);?(\d*)H/); // absolute position
+          if (cursorPosMatch) {
+            col = Math.max(0, (parseInt(cursorPosMatch[2] || '1', 10)) - 1);
+          }
+          const clearMatch = seq.match(/\x1B\[2J/); // clear screen
+          if (clearMatch) {
+            col = 0;
+          }
+          break;
+        }
+      }
+      continue;
     }
+
+    if (byte === 0x0D) {
+      result += '\r';
+      col = 0;
+      i++;
+      continue;
+    }
+
+    if (byte === 0x0A) {
+      result += '\n';
+      col = 0;
+      i++;
+      continue;
+    }
+
+    if (byte < 32) {
+      if (byte === 0x09) {
+        result += '\t';
+        col = (col + 8) & ~7; // tab stops every 8
+      }
+      i++;
+      continue;
+    }
+
+    // Printable character - check for column wrap
+    let ch: string;
+    if (byte < 128) {
+      ch = String.fromCharCode(byte);
+    } else {
+      ch = CP437_MAP[byte] || '?';
+    }
+
+    result += ch;
+    col++;
+
+    // Wrap at column boundary (BBS terminal behavior)
+    if (col >= columns) {
+      result += '\r\n';
+      col = 0;
+    }
+
+    i++;
   }
+
   return result;
 }
 

@@ -1,3 +1,12 @@
+## 0.1.4
+
+Fix ANSI art rendering on terminals wider than 80 columns.
+
+### Fixed
+- ANSI art screens were designed for 80-column BBS terminals and relied on line wrapping at column 80. On modern terminals (120+ columns), everything piled onto too few lines, corrupting the display
+- CP437-to-Unicode converter now tracks column position and inserts line breaks at column 80, emulating proper BBS terminal wrapping
+- Converter also tracks cursor movement escape sequences (left, right, absolute position) to maintain accurate column count
+
 ## 0.1.3
 
 Fix character login for standalone/local mode.

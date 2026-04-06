@@ -71,7 +71,6 @@ export class LocalAdapter implements PlayerSession {
     const content = loadAnsiFile(this.ansiDir, filename);
     if (content) {
       this.write(content);
-      this.writeln('');
     }
   }
 
