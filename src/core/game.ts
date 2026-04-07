@@ -75,6 +75,7 @@ export class GameEngine {
       this.session.writeln('');
       this.session.writeln(`                        ${ANSI.BRIGHT_CYAN}Version 4.0 - Reborn${ANSI.RESET}`);
       this.session.writeln(`                   ${ANSI.CYAN}Originally (C) 1999 ECI Software, LLC${ANSI.RESET}`);
+      this.session.writeln(`                       ${ANSI.BRIGHT_MAGENTA}Ported by Xphox in 2026${ANSI.RESET}`);
       this.session.writeln('');
 
       const choice = await showMenu(this.session, 'Welcome to Exitilus', [
