@@ -79,6 +79,11 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
     }
 
     if (byte === 0x0D) {
+      // Skip CR if followed by LF (we'll emit \r\n on the LF)
+      if (i + 1 < buffer.length && buffer[i + 1] === 0x0A) {
+        i++;
+        continue;
+      }
       result += '\r';
       col = 0;
       i++;
@@ -86,7 +91,7 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
     }
 
     if (byte === 0x0A) {
-      result += '\n';
+      result += '\r\n';
       col = 0;
       i++;
       continue;
