@@ -4,39 +4,87 @@ import type { GameContent } from '../data/loader.js';
 import { findClass, findRace, findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from './menus.js';
-import { fg, bg, RESET, type RGB } from '../io/truecolor.js';
+import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/** Generate a colored bar (like HP or XP) */
-function bar(current: number, max: number, width: number, fullColor: RGB, emptyColor: RGB, critColor: RGB): string {
-  const ratio = Math.max(0, Math.min(1, current / max));
-  const filled = Math.round(ratio * width);
-  const empty = width - filled;
-  const color = ratio < 0.25 ? critColor : fullColor;
-  return fg(color.r, color.g, color.b) + '█'.repeat(filled) +
-    fg(emptyColor.r, emptyColor.g, emptyColor.b) + '░'.repeat(empty) + RESET;
+// ── Color palette ──
+const GOLD: RGB = { r: 230, g: 190, b: 60 };
+const GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
+const SILVER: RGB = { r: 180, g: 190, b: 210 };
+const WHITE: RGB = { r: 245, g: 245, b: 255 };
+const CYAN: RGB = { r: 90, g: 210, b: 230 };
+const GREEN: RGB = { r: 70, g: 230, b: 90 };
+const RED: RGB = { r: 230, g: 55, b: 55 };
+const BLUE: RGB = { r: 70, g: 110, b: 230 };
+const YELLOW: RGB = { r: 230, g: 210, b: 60 };
+const MAGENTA: RGB = { r: 190, g: 90, b: 230 };
+const DIM: RGB = { r: 50, g: 50, b: 60 };
+const BG_DARK: RGB = { r: 10, g: 10, b: 20 };
+
+const c = (color: RGB) => fg(color.r, color.g, color.b);
+const bgc = (color: RGB) => bg(color.r, color.g, color.b);
+
+// ── Gradient border builders ──
+function gradientBorder(left: string, fill: string, right: string, width: number, from: RGB, to: RGB): string {
+  let s = '';
+  for (let i = 0; i < width; i++) {
+    const t = width > 1 ? i / (width - 1) : 0;
+    const color = lerpColor(from, to, Math.sin(t * Math.PI));
+    s += fg(color.r, color.g, color.b);
+    if (i === 0) s += left;
+    else if (i === width - 1) s += right;
+    else s += fill;
+  }
+  return s + RESET;
 }
 
-/** Classic stats display (unchanged for non-enhanced mode) */
-export function showStatsClassic(
-  session: PlayerSession,
-  player: PlayerRecord,
-  content: GameContent
-): void {
+/** Animated progress bar with gradient fill */
+function progressBar(current: number, max: number, width: number, fillFrom: RGB, fillTo: RGB, empty: RGB, crit: RGB): string {
+  const ratio = Math.max(0, Math.min(1, max > 0 ? current / max : 0));
+  const filled = Math.round(ratio * width);
+  let s = '';
+  for (let i = 0; i < width; i++) {
+    if (i < filled) {
+      const t = filled > 1 ? i / (filled - 1) : 0;
+      const color = ratio < 0.25 ? lerpColor(crit, RED, t) : lerpColor(fillFrom, fillTo, t);
+      s += fg(color.r, color.g, color.b) + '█';
+    } else {
+      s += fg(empty.r, empty.g, empty.b) + '░';
+    }
+  }
+  return s + RESET;
+}
+
+/** Stat bar - small inline bar for individual stats */
+function statBar(value: number, maxVal: number, width: number, color: RGB): string {
+  const ratio = Math.max(0, Math.min(1, maxVal > 0 ? value / maxVal : 0));
+  const filled = Math.round(ratio * width);
+  let s = '';
+  for (let i = 0; i < width; i++) {
+    if (i < filled) {
+      const brightness = 0.5 + 0.5 * (i / width);
+      s += fg(Math.round(color.r * brightness), Math.round(color.g * brightness), Math.round(color.b * brightness)) + '▮';
+    } else {
+      s += fg(DIM.r, DIM.g, DIM.b) + '▯';
+    }
+  }
+  return s + RESET;
+}
+
+// ── Classic stats (unchanged) ──
+export function showStatsClassic(session: PlayerSession, player: PlayerRecord, content: GameContent): void {
   const cls = findClass(content, player.classId);
   const race = findRace(content, player.raceId);
   const rh = player.rightHand ? findItem(content, player.rightHand) : null;
   const lh = player.leftHand ? findItem(content, player.leftHand) : null;
   const arm = player.armour ? findItem(content, player.armour) : null;
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
-
   const C = ANSI.BRIGHT_CYAN; const W = ANSI.BRIGHT_WHITE; const G = ANSI.BRIGHT_GREEN;
   const Y = ANSI.BRIGHT_YELLOW; const R = ANSI.BRIGHT_RED; const RST = ANSI.RESET;
   const hpColor = player.hp < player.maxHp * 0.25 ? R : player.hp < player.maxHp * 0.5 ? Y : G;
-
   session.writeln(`${Y}╔════════════════════════════════════════════════════╗`);
   session.writeln(`║              ${W}CHARACTER STATISTICS${Y}                  ║`);
   session.writeln(`╚════════════════════════════════════════════════════╝${RST}`);
@@ -69,25 +117,8 @@ export function showStatsClassic(
   session.writeln(`${RST}`);
 }
 
-// Colors for enhanced mode
-const GOLD: RGB = { r: 220, g: 180, b: 50 };
-const GOLD_DIM: RGB = { r: 120, g: 90, b: 20 };
-const CYAN_B: RGB = { r: 80, g: 200, b: 220 };
-const WHITE: RGB = { r: 240, g: 240, b: 250 };
-const GREEN: RGB = { r: 60, g: 220, b: 80 };
-const RED: RGB = { r: 220, g: 50, b: 50 };
-const YELLOW: RGB = { r: 220, g: 200, b: 50 };
-const BLUE: RGB = { r: 80, g: 120, b: 220 };
-const MAGENTA: RGB = { r: 180, g: 80, b: 220 };
-const DIM: RGB = { r: 60, g: 60, b: 70 };
-const BG_DARK: RGB = { r: 8, g: 8, b: 18 };
-
-/** Enhanced stats display with true-color, bars, and animated border */
-export async function showStatsEnhanced(
-  session: PlayerSession,
-  player: PlayerRecord,
-  content: GameContent
-): Promise<void> {
+// ── Enhanced stats ──
+export async function showStatsEnhanced(session: PlayerSession, player: PlayerRecord, content: GameContent): Promise<void> {
   const cls = findClass(content, player.classId);
   const race = findRace(content, player.raceId);
   const rh = player.rightHand ? findItem(content, player.rightHand) : null;
@@ -95,118 +126,158 @@ export async function showStatsEnhanced(
   const arm = player.armour ? findItem(content, player.armour) : null;
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
   const xpForNext = player.level * 100 + player.level * player.level * 50;
+  const maxStat = content.config.maxStatValue;
 
-  const W = 60; // box width
-  const d = 20; // animation delay per line
+  const d = 15; // animation delay
+  const W = 72; // box width
+  const bgd = bgc(BG_DARK);
 
-  const gc = (c: RGB) => fg(c.r, c.g, c.b);
-  const bgd = bg(BG_DARK.r, BG_DARK.g, BG_DARK.b);
+  // Box line helpers
+  const topBorder = gradientBorder('╔', '═', '╗', W, GOLD_DIM, GOLD);
+  const midBorder = gradientBorder('╠', '═', '╣', W, GOLD_DIM, GOLD);
+  const thinBorder = gradientBorder('╟', '─', '╢', W, GOLD_DIM, GOLD);
+  const botBorder = gradientBorder('╚', '═', '╝', W, GOLD_DIM, GOLD);
 
-  // Animated border line
-  function borderTop() {
-    let s = gc(GOLD) + '╔';
-    for (let i = 0; i < W - 2; i++) {
-      const t = i / (W - 3);
-      const r = Math.round(GOLD_DIM.r + (GOLD.r - GOLD_DIM.r) * Math.sin(t * Math.PI));
-      const g = Math.round(GOLD_DIM.g + (GOLD.g - GOLD_DIM.g) * Math.sin(t * Math.PI));
-      const b = Math.round(GOLD_DIM.b + (GOLD.b - GOLD_DIM.b) * Math.sin(t * Math.PI));
-      s += fg(r, g, b) + '═';
+  function row(content: string): string {
+    return c(GOLD) + '║' + bgd + content + RESET + c(GOLD) + '║' + RESET;
+  }
+
+  function padRow(left: string, right: string = ''): string {
+    const lVis = left.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length;
+    const rVis = right.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length;
+    const innerW = W - 2;
+    if (right) {
+      const gap = Math.max(1, innerW - lVis - rVis);
+      return row(' ' + left + ' '.repeat(gap) + right + ' '.repeat(Math.max(0, innerW - lVis - gap - rVis - 1)));
     }
-    return s + gc(GOLD) + '╗' + RESET;
-  }
-
-  function borderMid() {
-    let s = gc(GOLD) + '╟';
-    for (let i = 0; i < W - 2; i++) {
-      const t = i / (W - 3);
-      const r = Math.round(GOLD_DIM.r + (GOLD.r - GOLD_DIM.r) * Math.sin(t * Math.PI));
-      const g = Math.round(GOLD_DIM.g + (GOLD.g - GOLD_DIM.g) * Math.sin(t * Math.PI));
-      const b = Math.round(GOLD_DIM.b + (GOLD.b - GOLD_DIM.b) * Math.sin(t * Math.PI));
-      s += fg(r, g, b) + '─';
-    }
-    return s + gc(GOLD) + '╢' + RESET;
-  }
-
-  function borderBot() {
-    let s = gc(GOLD) + '╚';
-    for (let i = 0; i < W - 2; i++) {
-      const t = i / (W - 3);
-      const r = Math.round(GOLD_DIM.r + (GOLD.r - GOLD_DIM.r) * Math.sin(t * Math.PI));
-      const g = Math.round(GOLD_DIM.g + (GOLD.g - GOLD_DIM.g) * Math.sin(t * Math.PI));
-      const b = Math.round(GOLD_DIM.b + (GOLD.b - GOLD_DIM.b) * Math.sin(t * Math.PI));
-      s += fg(r, g, b) + '═';
-    }
-    return s + gc(GOLD) + '╝' + RESET;
-  }
-
-  function row(left: string, right: string = ''): string {
-    // Pad content inside the box
-    const vis = left.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length +
-      right.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length;
-    const pad = Math.max(0, W - 4 - vis);
-    const midPad = right ? Math.max(1, pad) : pad;
-    return gc(GOLD) + '║' + bgd + ' ' + left + ' '.repeat(midPad) + right + ' ' + RESET + gc(GOLD) + '║' + RESET;
-  }
-
-  function sectionHeader(title: string): string {
-    const titleLen = title.length;
-    const leftPad = Math.floor((W - 4 - titleLen) / 2);
-    const rightPad = W - 4 - titleLen - leftPad;
-    return gc(GOLD) + '║' + bgd +
-      gc(GOLD_DIM) + ' ' + '─'.repeat(leftPad - 1) + ' ' +
-      gc(GOLD) + title +
-      gc(GOLD_DIM) + ' ' + '─'.repeat(rightPad - 1) + ' ' +
-      RESET + gc(GOLD) + '║' + RESET;
+    return row(' ' + left + ' '.repeat(Math.max(0, innerW - lVis - 1)));
   }
 
   function emptyRow(): string {
-    return gc(GOLD) + '║' + bgd + ' '.repeat(W - 2) + RESET + gc(GOLD) + '║' + RESET;
+    return row(' '.repeat(W - 2));
   }
 
-  // Status indicator
-  const statusText = player.alive
-    ? gc(GREEN) + '● ALIVE'
-    : gc(RED) + '✖ DEAD';
+  function headerRow(icon: string, title: string): string {
+    const titleLen = icon.length + 1 + title.length;
+    const leftDash = Math.floor((W - 4 - titleLen) / 2);
+    const rightDash = W - 4 - titleLen - leftDash;
+    return row(
+      ' ' + c(GOLD_DIM) + '─'.repeat(leftDash) + ' ' +
+      c(GOLD) + icon + ' ' + c(WHITE) + title +
+      c(GOLD_DIM) + ' ' + '─'.repeat(rightDash) + ' '
+    );
+  }
 
-  // HP and MP bars
-  const hpBar = bar(player.hp, player.maxHp, 20,
-    { r: 50, g: 200, b: 60 }, DIM, RED);
-  const mpBar = bar(player.mp, player.maxMp, 20,
-    { r: 60, g: 100, b: 220 }, DIM, YELLOW);
-  const xpBar = bar(player.xp, xpForNext, 20, GOLD, DIM, GOLD_DIM);
+  // Status
+  const alive = player.alive;
+  const statusIcon = alive ? c(GREEN) + '♥' : c(RED) + '✖';
+  const statusText = alive ? c(GREEN) + 'ALIVE' : c(RED) + 'DEAD';
 
-  // Build and animate
-  const lines = [
-    borderTop(),
-    row(gc(WHITE) + '⚔  ' + player.name + '  ⚔', statusText),
-    row(gc(CYAN_B) + 'Level ' + gc(WHITE) + player.level + gc(CYAN_B) + '  ' + (cls?.name ?? '') + '  ' + (race?.name ?? ''), gc(DIM) + (kingdom?.name ?? '')),
-    borderMid(),
-    sectionHeader('⚔ Combat'),
-    row(gc(CYAN_B) + 'HP  ' + hpBar + gc(CYAN_B) + ' ' + player.hp + '/' + player.maxHp),
-    row(gc(BLUE) + 'MP  ' + mpBar + gc(BLUE) + ' ' + player.mp + '/' + player.maxMp),
-    emptyRow(),
-    row(gc(CYAN_B) + 'STR ' + gc(WHITE) + String(player.strength).padEnd(8) +
-      gc(CYAN_B) + 'DEF ' + gc(WHITE) + String(player.defense).padEnd(8) +
-      gc(CYAN_B) + 'AGI ' + gc(WHITE) + player.agility),
-    row(gc(CYAN_B) + 'WIS ' + gc(WHITE) + String(player.wisdom).padEnd(8) +
-      gc(CYAN_B) + 'LDR ' + gc(WHITE) + player.leadership),
-    borderMid(),
-    sectionHeader('🛡 Equipment'),
-    row(gc(CYAN_B) + 'Weapon  ' + gc(WHITE) + (rh?.name ?? 'Bare Fists')),
-    row(gc(CYAN_B) + 'Shield  ' + gc(WHITE) + (lh?.name ?? 'Nothing')),
-    row(gc(CYAN_B) + 'Armour  ' + gc(WHITE) + (arm?.name ?? 'None')),
-    borderMid(),
-    sectionHeader('💰 Wealth & XP'),
-    row(gc(YELLOW) + 'Gold  $' + formatGold(player.gold), gc(YELLOW) + 'Bank  $' + formatGold(player.bankGold)),
-    row(gc(GREEN) + 'XP  ' + xpBar + gc(GREEN) + ' ' + formatGold(player.xp) + '/' + formatGold(xpForNext)),
-    borderMid(),
-    sectionHeader('📊 Activity'),
-    row(gc(CYAN_B) + 'Monster Fights ' + gc(WHITE) + player.monsterFights, gc(CYAN_B) + 'Player Fights ' + gc(WHITE) + player.playerFights),
-    row(gc(CYAN_B) + 'Evil Deeds     ' + gc(WHITE) + player.evilDeeds, gc(CYAN_B) + 'Potions       ' + gc(WHITE) + player.healingPotions),
-    row(gc(CYAN_B) + 'Quests Done    ' + gc(WHITE) + player.questsCompleted.length),
-    borderBot(),
+  // Build all lines
+  const lines: string[] = [];
+
+  // Title
+  lines.push(topBorder);
+  lines.push(emptyRow());
+  lines.push(padRow(
+    c(GOLD) + '  ⚔  ' + c(WHITE) + player.name + c(GOLD) + '  ⚔',
+    statusIcon + ' ' + statusText + '  '
+  ));
+  lines.push(padRow(
+    c(SILVER) + '  Level ' + c(WHITE) + player.level + c(SILVER) + '  •  ' + c(CYAN) + (cls?.name ?? '?') + c(SILVER) + '  •  ' + c(CYAN) + (race?.name ?? '?'),
+    c(DIM) + (kingdom?.name ?? '') + '  '
+  ));
+  lines.push(emptyRow());
+
+  // HP / MP
+  lines.push(midBorder);
+  lines.push(headerRow('⚔', 'VITALS'));
+
+  const hpBar = progressBar(player.hp, player.maxHp, 30, GREEN, { r: 40, g: 180, b: 60 }, DIM, RED);
+  const mpBar = progressBar(player.mp, player.maxMp, 30, BLUE, { r: 50, g: 90, b: 200 }, DIM, YELLOW);
+
+  lines.push(padRow(
+    c(GREEN) + '  ♥ HP  ' + hpBar + c(WHITE) + '  ' + player.hp + c(DIM) + '/' + c(WHITE) + player.maxHp
+  ));
+  lines.push(padRow(
+    c(BLUE) + '  ✦ MP  ' + mpBar + c(WHITE) + '  ' + player.mp + c(DIM) + '/' + c(WHITE) + player.maxMp
+  ));
+
+  // Stats
+  lines.push(thinBorder);
+  lines.push(headerRow('📊', 'ATTRIBUTES'));
+
+  const stats = [
+    { name: 'STR', value: player.strength, color: RED, icon: '⚔' },
+    { name: 'DEF', value: player.defense, color: CYAN, icon: '🛡' },
+    { name: 'AGI', value: player.agility, color: GREEN, icon: '⚡' },
+    { name: 'WIS', value: player.wisdom, color: MAGENTA, icon: '✧' },
+    { name: 'LDR', value: player.leadership, color: YELLOW, icon: '👑' },
   ];
 
+  // Two stats per row
+  for (let i = 0; i < stats.length; i += 2) {
+    const s1 = stats[i];
+    const bar1 = statBar(s1.value, maxStat, 12, s1.color);
+    const left = `  ${s1.icon} ${c(s1.color)}${s1.name} ${c(WHITE)}${String(s1.value).padStart(5)} ${bar1}`;
+
+    let right = '';
+    if (i + 1 < stats.length) {
+      const s2 = stats[i + 1];
+      const bar2 = statBar(s2.value, maxStat, 12, s2.color);
+      right = `${s2.icon} ${c(s2.color)}${s2.name} ${c(WHITE)}${String(s2.value).padStart(5)} ${bar2}  `;
+    }
+    lines.push(padRow(left, right));
+  }
+
+  // Equipment
+  lines.push(thinBorder);
+  lines.push(headerRow('🛡', 'EQUIPMENT'));
+  lines.push(padRow(
+    c(CYAN) + '  ⚔ Weapon  ' + c(WHITE) + (rh?.name ?? 'Bare Fists'),
+    rh ? c(GREEN) + '+' + rh.strengthBonus + ' STR  ' : ''
+  ));
+  lines.push(padRow(
+    c(CYAN) + '  🛡 Shield  ' + c(WHITE) + (lh?.name ?? 'Nothing'),
+    lh ? c(GREEN) + '+' + lh.defenseBonus + ' DEF  ' : ''
+  ));
+  lines.push(padRow(
+    c(CYAN) + '  ⛓ Armour  ' + c(WHITE) + (arm?.name ?? 'None'),
+    arm ? c(GREEN) + '+' + arm.defenseBonus + ' DEF  ' : ''
+  ));
+
+  // Wealth & XP
+  lines.push(thinBorder);
+  lines.push(headerRow('💰', 'WEALTH & EXPERIENCE'));
+
+  const xpBar = progressBar(player.xp, xpForNext, 25, GOLD, YELLOW, DIM, GOLD_DIM);
+  lines.push(padRow(
+    c(YELLOW) + '  💰 Gold    ' + c(WHITE) + '$' + formatGold(player.gold),
+    c(YELLOW) + 'Bank  $' + formatGold(player.bankGold) + '  '
+  ));
+  lines.push(padRow(
+    c(GREEN) + '  ✦ XP     ' + xpBar + c(WHITE) + '  ' + formatGold(player.xp) + c(DIM) + '/' + c(WHITE) + formatGold(xpForNext)
+  ));
+
+  // Activity
+  lines.push(thinBorder);
+  lines.push(headerRow('📋', 'ACTIVITY'));
+  lines.push(padRow(
+    c(CYAN) + '  ⚔ Monsters  ' + c(WHITE) + player.monsterFights,
+    c(CYAN) + 'PvP  ' + c(WHITE) + player.playerFights + '  '
+  ));
+  lines.push(padRow(
+    c(CYAN) + '  📜 Quests    ' + c(WHITE) + player.questsCompleted.length,
+    c(CYAN) + 'Potions  ' + c(WHITE) + player.healingPotions + '  '
+  ));
+  lines.push(padRow(
+    c(CYAN) + '  😈 Evil      ' + c(WHITE) + player.evilDeeds
+  ));
+
+  lines.push(emptyRow());
+  lines.push(botBorder);
+
+  // Render with animation
   session.clear();
   for (const line of lines) {
     session.writeln(line);
@@ -215,11 +286,7 @@ export async function showStatsEnhanced(
 }
 
 /** Show stats - picks enhanced or classic based on session mode */
-export async function showStats(
-  session: PlayerSession,
-  player: PlayerRecord,
-  content: GameContent
-): Promise<void> {
+export async function showStats(session: PlayerSession, player: PlayerRecord, content: GameContent): Promise<void> {
   if ((session as any).graphicsMode === 'enhanced') {
     await showStatsEnhanced(session, player, content);
   } else {
