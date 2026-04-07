@@ -115,6 +115,7 @@ export class WebSocketAdapter implements PlayerSession {
   }
 
   async readPassword(prompt: string): Promise<string> {
+    this.flushInput();
     this.write(prompt);
     let password = '';
     while (true) {

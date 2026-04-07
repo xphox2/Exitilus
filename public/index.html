@@ -194,13 +194,14 @@
         document.getElementById('status').textContent = 'Error';
         document.getElementById('status').className = 'status disconnected';
       };
-
-      term.onData((data) => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(data);
-        }
-      });
     }
+
+    // Register onData ONCE outside connect() to prevent duplicate listeners
+    term.onData((data) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      }
+    });
 
     document.getElementById('connect-btn').addEventListener('click', connect);
     document.getElementById('reconnect-btn').addEventListener('click', () => {
