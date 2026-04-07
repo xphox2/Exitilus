@@ -212,98 +212,98 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   lines.push(topBorder);
   lines.push(emptyRow());
   lines.push(padRow(
-    c(GOLD) + '  ⚔  ' + c(WHITE) + player.name + c(GOLD) + '  ⚔',
+    c(GOLD) + '  +  ' + c(WHITE) + player.name + c(GOLD) + '  +',
     statusIcon + ' ' + statusText + '  '
   ));
   lines.push(padRow(
-    c(SILVER) + '  Level ' + c(WHITE) + player.level + c(SILVER) + '  •  ' + c(CYAN) + (cls?.name ?? '?') + c(SILVER) + '  •  ' + c(CYAN) + (race?.name ?? '?'),
+    c(SILVER) + '  Level ' + c(WHITE) + player.level + c(SILVER) + '  -  ' + c(CYAN) + (cls?.name ?? '?') + c(SILVER) + '  -  ' + c(CYAN) + (race?.name ?? '?'),
     c(DIM) + (kingdom?.name ?? '') + '  '
   ));
   lines.push(emptyRow());
 
   // HP / MP
   lines.push(midBorder);
-  lines.push(headerRow('⚔', 'VITALS'));
+  lines.push(headerRow('+', 'VITALS'));
 
   const hpBar = progressBar(player.hp, player.maxHp, 30, GREEN, { r: 40, g: 180, b: 60 }, DIM, RED);
   const mpBar = progressBar(player.mp, player.maxMp, 30, BLUE, { r: 50, g: 90, b: 200 }, DIM, YELLOW);
 
   lines.push(padRow(
-    c(GREEN) + '  ♥ HP  ' + hpBar + c(WHITE) + '  ' + player.hp + c(DIM) + '/' + c(WHITE) + player.maxHp
+    c(GREEN) + '  * HP  ' + hpBar + c(WHITE) + '  ' + player.hp + c(DIM) + '/' + c(WHITE) + player.maxHp
   ));
   lines.push(padRow(
-    c(BLUE) + '  ✦ MP  ' + mpBar + c(WHITE) + '  ' + player.mp + c(DIM) + '/' + c(WHITE) + player.maxMp
+    c(BLUE) + '  * MP  ' + mpBar + c(WHITE) + '  ' + player.mp + c(DIM) + '/' + c(WHITE) + player.maxMp
   ));
 
   // Stats
   lines.push(thinBorder);
-  lines.push(headerRow('📊', 'ATTRIBUTES'));
+  lines.push(headerRow('+', 'ATTRIBUTES'));
 
   const stats = [
-    { name: 'STR', value: player.strength, color: RED, icon: '⚔' },
-    { name: 'DEF', value: player.defense, color: CYAN, icon: '🛡' },
-    { name: 'AGI', value: player.agility, color: GREEN, icon: '⚡' },
-    { name: 'WIS', value: player.wisdom, color: MAGENTA, icon: '✧' },
-    { name: 'LDR', value: player.leadership, color: YELLOW, icon: '👑' },
+    { name: 'STR', value: player.strength, color: RED, icon: '*' },
+    { name: 'DEF', value: player.defense, color: CYAN, icon: '*' },
+    { name: 'AGI', value: player.agility, color: GREEN, icon: '*' },
+    { name: 'WIS', value: player.wisdom, color: MAGENTA, icon: '*' },
+    { name: 'LDR', value: player.leadership, color: YELLOW, icon: '*' },
   ];
 
   // Two stats per row
   for (let i = 0; i < stats.length; i += 2) {
     const s1 = stats[i];
     const bar1 = statBar(s1.value, maxStat, 12, s1.color);
-    const left = `  ${s1.icon} ${c(s1.color)}${s1.name} ${c(WHITE)}${String(s1.value).padStart(5)} ${bar1}`;
+    const left = `  ${c(s1.color)}${s1.icon} ${s1.name} ${c(WHITE)}${String(s1.value).padStart(5)} ${bar1}`;
 
     let right = '';
     if (i + 1 < stats.length) {
       const s2 = stats[i + 1];
       const bar2 = statBar(s2.value, maxStat, 12, s2.color);
-      right = `${s2.icon} ${c(s2.color)}${s2.name} ${c(WHITE)}${String(s2.value).padStart(5)} ${bar2}  `;
+      right = `${c(s2.color)}${s2.icon} ${s2.name} ${c(WHITE)}${String(s2.value).padStart(5)} ${bar2}  `;
     }
     lines.push(padRow(left, right));
   }
 
   // Equipment
   lines.push(thinBorder);
-  lines.push(headerRow('🛡', 'EQUIPMENT'));
+  lines.push(headerRow('+', 'EQUIPMENT'));
   lines.push(padRow(
-    c(CYAN) + '  ⚔ Weapon  ' + c(WHITE) + (rh?.name ?? 'Bare Fists'),
+    c(CYAN) + '  Weapon  ' + c(WHITE) + (rh?.name ?? 'Bare Fists'),
     rh ? c(GREEN) + '+' + rh.strengthBonus + ' STR  ' : ''
   ));
   lines.push(padRow(
-    c(CYAN) + '  🛡 Shield  ' + c(WHITE) + (lh?.name ?? 'Nothing'),
+    c(CYAN) + '  Shield  ' + c(WHITE) + (lh?.name ?? 'Nothing'),
     lh ? c(GREEN) + '+' + lh.defenseBonus + ' DEF  ' : ''
   ));
   lines.push(padRow(
-    c(CYAN) + '  ⛓ Armour  ' + c(WHITE) + (arm?.name ?? 'None'),
+    c(CYAN) + '  Armour  ' + c(WHITE) + (arm?.name ?? 'None'),
     arm ? c(GREEN) + '+' + arm.defenseBonus + ' DEF  ' : ''
   ));
 
   // Wealth & XP
   lines.push(thinBorder);
-  lines.push(headerRow('💰', 'WEALTH & EXPERIENCE'));
+  lines.push(headerRow('$', 'WEALTH & EXPERIENCE'));
 
   const xpBar = progressBar(player.xp, xpForNext, 25, GOLD, YELLOW, DIM, GOLD_DIM);
   lines.push(padRow(
-    c(YELLOW) + '  💰 Gold    ' + c(WHITE) + '$' + formatGold(player.gold),
+    c(YELLOW) + '  Gold     ' + c(WHITE) + '$' + formatGold(player.gold),
     c(YELLOW) + 'Bank  $' + formatGold(player.bankGold) + '  '
   ));
   lines.push(padRow(
-    c(GREEN) + '  ✦ XP     ' + xpBar + c(WHITE) + '  ' + formatGold(player.xp) + c(DIM) + '/' + c(WHITE) + formatGold(xpForNext)
+    c(GREEN) + '  XP       ' + xpBar + c(WHITE) + '  ' + formatGold(player.xp) + c(DIM) + '/' + c(WHITE) + formatGold(xpForNext)
   ));
 
   // Activity
   lines.push(thinBorder);
-  lines.push(headerRow('📋', 'ACTIVITY'));
+  lines.push(headerRow('+', 'ACTIVITY'));
   lines.push(padRow(
-    c(CYAN) + '  ⚔ Monsters  ' + c(WHITE) + player.monsterFights,
+    c(CYAN) + '  Monsters  ' + c(WHITE) + player.monsterFights,
     c(CYAN) + 'PvP  ' + c(WHITE) + player.playerFights + '  '
   ));
   lines.push(padRow(
-    c(CYAN) + '  📜 Quests    ' + c(WHITE) + player.questsCompleted.length,
+    c(CYAN) + '  Quests    ' + c(WHITE) + player.questsCompleted.length,
     c(CYAN) + 'Potions  ' + c(WHITE) + player.healingPotions + '  '
   ));
   lines.push(padRow(
-    c(CYAN) + '  😈 Evil      ' + c(WHITE) + player.evilDeeds
+    c(CYAN) + '  Evil      ' + c(WHITE) + player.evilDeeds
   ));
 
   lines.push(emptyRow());
