@@ -4,9 +4,13 @@
 # Run this on a fresh Ubuntu server to get the game running
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/xphox2/Exitilus/master/setup.sh | bash
-#   or:
-#   chmod +x setup.sh && ./setup.sh
+#   ./setup.sh [port]        (default port: 3000)
+#   ./setup.sh 4200          (run on port 4200)
+#
+#   Or download and run:
+#   curl -fsSL https://raw.githubusercontent.com/xphox2/Exitilus/master/setup.sh -o setup.sh
+#   chmod +x setup.sh
+#   ./setup.sh 4200
 # ============================================================================
 
 set -e
@@ -38,7 +42,7 @@ fi
 
 # ── Configuration ──
 INSTALL_DIR="/opt/Exitilus"
-WEB_PORT=8080
+WEB_PORT="${1:-3000}"  # Pass port as first argument, default 3000
 SERVICE_USER="$USER"
 
 echo -e "${CYAN}Configuration:${NC}"
