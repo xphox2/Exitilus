@@ -74,6 +74,16 @@ async function main() {
   const content = loadGameContent(contentDir);
   console.log(`Loaded ${content.classes.length} classes, ${content.races.length} races, ${content.monsters.length} monsters, ${content.items.length} items, ${content.areas.length} areas`);
 
+  // Check for enhanced ANSI art
+  const enhancedDir = join(ansiDir, 'enhanced');
+  const { existsSync, readdirSync } = await import('fs');
+  if (existsSync(enhancedDir)) {
+    const enhancedFiles = readdirSync(enhancedDir).filter(f => f.endsWith('.ANS') || f.endsWith('.ans'));
+    console.log(`Enhanced ANSI art: ${enhancedFiles.length} files in ${enhancedDir}`);
+  } else {
+    console.log(`Enhanced ANSI art: none (${enhancedDir} not found)`);
+  }
+
   // Initialize database
   console.log('Initializing database...');
   const db = new GameDatabase(dataDir);
