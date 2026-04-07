@@ -18,7 +18,8 @@
     "admin:maintenance": "tsx src/tools/admin.ts maintenance",
     "admin:reset": "tsx src/tools/admin.ts reset",
     "img2ansi": "tsx src/tools/img2ansi.ts",
-    "upscale": "tsx src/tools/upscale-ansi.ts"
+    "upscale": "tsx src/tools/upscale-ansi.ts",
+    "art": "tsx src/tools/art-replacer.ts"
   },
   "dependencies": {
     "sharp": "^0.34.5",
