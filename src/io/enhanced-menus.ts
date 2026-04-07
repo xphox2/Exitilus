@@ -1,8 +1,12 @@
-/** Enhanced menu overlay - renders styled menu options on top of
- *  enhanced ANSI art images that don't have built-in menus. */
+/** Enhanced menu overlay - renders animated menu options ON TOP of
+ *  enhanced ANSI art images using cursor positioning. */
 
 import type { PlayerSession } from './session.js';
 import { fg, bg, RESET, type RGB } from './truecolor.js';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export interface MenuOption {
   key: string;
@@ -11,35 +15,44 @@ export interface MenuOption {
 }
 
 interface OverlayStyle {
-  /** Background color for the menu bar area */
   barBg: RGB;
-  /** Key letter color (the letter you press) */
   keyColor: RGB;
-  /** Bracket color around the key */
   bracketColor: RGB;
-  /** Label text color */
   labelColor: RGB;
-  /** Disabled option color */
   disabledColor: RGB;
-  /** Prompt text color */
   promptColor: RGB;
-  /** Separator line color */
-  separatorColor: RGB;
+  titleColor: RGB;
+  borderColor: RGB;
+  animDelay: number;
 }
 
 const DEFAULT_STYLE: OverlayStyle = {
-  barBg: { r: 10, g: 10, b: 15 },
+  barBg: { r: 5, g: 5, b: 12 },
   keyColor: { r: 255, g: 255, b: 255 },
-  bracketColor: { r: 180, g: 140, b: 60 },
-  labelColor: { r: 170, g: 190, b: 170 },
+  bracketColor: { r: 200, g: 160, b: 60 },
+  labelColor: { r: 170, g: 195, b: 170 },
   disabledColor: { r: 60, g: 60, b: 65 },
   promptColor: { r: 120, g: 180, b: 220 },
-  separatorColor: { r: 80, g: 70, b: 40 },
+  titleColor: { r: 255, g: 220, b: 100 },
+  borderColor: { r: 100, g: 80, b: 40 },
+  animDelay: 35,
 };
 
-/** Render menu options as a styled overlay below the current screen content.
- *  Shows the image via showAnsi(), then draws menu options below it.
- *  Returns the selected key (lowercase). */
+/** Move cursor to absolute position (1-based) */
+function moveTo(row: number, col: number): string {
+  return `\x1B[${row};${col}H`;
+}
+
+/** Draw a single line at a specific row, overwriting the image beneath.
+ *  Pads to full width so the background covers the art. */
+function drawLineAt(row: number, content: string, width: number, bgColor: RGB): string {
+  const bgStr = bg(bgColor.r, bgColor.g, bgColor.b);
+  // We can't easily measure visible length with ANSI codes, so just pad generously
+  return moveTo(row, 1) + bgStr + content + ' '.repeat(width) + RESET;
+}
+
+/** Render menu options as an animated overlay ON TOP of the image.
+ *  The image fills the screen, then the menu fades in over the bottom portion. */
 export async function showEnhancedMenuOverlay(
   session: PlayerSession,
   ansiFile: string,
@@ -50,96 +63,111 @@ export async function showEnhancedMenuOverlay(
 ): Promise<string> {
   const s = { ...DEFAULT_STYLE, ...style };
 
-  // 1. Show the enhanced image
+  // 1. Show the full image
   session.clear();
   await session.showAnsi(ansiFile);
 
-  // 2. Separator line
-  const sepColor = s.separatorColor;
-  session.writeln(fg(sepColor.r, sepColor.g, sepColor.b) + '─'.repeat(80) + RESET);
+  // 2. Calculate how many rows we need for the overlay
+  const cols = options.length > 6 ? 2 : 1;
+  const optionRows = cols === 2 ? Math.ceil(options.length / 2) : options.length;
+  const extraRows = extraInfo ? extraInfo.length : 0;
+  const totalOverlayRows = 1 + 1 + extraRows + optionRows + 1 + 1; // border + title + extra + options + spacer + prompt
 
-  // 3. Title bar with semi-transparent background
-  const barBg = bg(s.barBg.r, s.barBg.g, s.barBg.b);
-  const titlePad = Math.max(0, Math.floor((78 - title.length) / 2));
-  session.writeln(
-    barBg +
-    ' '.repeat(titlePad) +
-    fg(s.keyColor.r, s.keyColor.g, s.keyColor.b) + title +
-    ' '.repeat(Math.max(0, 78 - titlePad - title.length)) + '  ' +
-    RESET
-  );
+  // 3. Start drawing from bottom of screen upward
+  //    We assume ~25 rows for 80-col or detect from image height
+  //    Position overlay at the bottom portion of the screen
+  const termHeight = (process.stdout.rows ?? 25);
+  const startRow = Math.max(1, termHeight - totalOverlayRows);
 
-  // 4. Extra info line (gold, HP, etc.)
-  if (extraInfo && extraInfo.length > 0) {
+  const barBg = s.barBg;
+  const width = (process.stdout.columns ?? 80);
+
+  // 4. Animate: draw each line with a delay
+
+  // Top border - thin line
+  const borderStr = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '▄'.repeat(width);
+  session.write(drawLineAt(startRow, borderStr, 0, barBg));
+  await sleep(s.animDelay);
+
+  let row = startRow + 1;
+
+  // Title
+  const titlePad = Math.max(0, Math.floor((width - title.length) / 2));
+  const titleStr = ' '.repeat(titlePad) + fg(s.titleColor.r, s.titleColor.g, s.titleColor.b) + title;
+  session.write(drawLineAt(row, titleStr, width, barBg));
+  await sleep(s.animDelay * 2);
+  row++;
+
+  // Extra info
+  if (extraInfo) {
     for (const line of extraInfo) {
-      session.writeln(
-        barBg + '  ' +
-        fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + line +
-        ' '.repeat(Math.max(0, 76 - line.length)) + '  ' +
-        RESET
-      );
+      const infoStr = '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + line;
+      session.write(drawLineAt(row, infoStr, width, barBg));
+      await sleep(s.animDelay);
+      row++;
     }
   }
 
-  // 5. Menu options in two columns
-  const cols = options.length > 6 ? 2 : 1;
-  const colWidth = cols === 2 ? 39 : 78;
-
+  // Options
   if (cols === 2) {
+    const colWidth = Math.floor(width / 2) - 2;
     for (let i = 0; i < options.length; i += 2) {
-      let line = barBg + '  ';
-      line += renderOpt(options[i], s, colWidth);
+      let line = '  ' + renderOpt(options[i], s);
       if (i + 1 < options.length) {
-        line += renderOpt(options[i + 1], s, colWidth);
+        const leftLen = options[i].key.length + options[i].label.length + 5;
+        const gap = Math.max(2, colWidth - leftLen);
+        line += ' '.repeat(gap) + renderOpt(options[i + 1], s);
       }
-      session.writeln(line + RESET);
+      session.write(drawLineAt(row, line, width, barBg));
+      await sleep(s.animDelay);
+      row++;
     }
   } else {
     for (const opt of options) {
-      session.writeln(barBg + '  ' + renderOpt(opt, s, colWidth) + RESET);
+      const line = '  ' + renderOpt(opt, s);
+      session.write(drawLineAt(row, line, width, barBg));
+      await sleep(s.animDelay);
+      row++;
     }
   }
 
-  // 6. Prompt
-  session.writeln(barBg + ' '.repeat(80) + RESET);
-  session.write(
-    barBg + '  ' +
-    fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) +
-    'Your Choice: ' +
-    fg(255, 255, 255)
-  );
+  // Empty spacer
+  session.write(drawLineAt(row, '', width, barBg));
+  row++;
 
-  // 7. Read valid key
+  // Prompt
+  const promptStr = '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + '› Your Choice: ' + fg(255, 255, 255);
+  session.write(drawLineAt(row, promptStr, width, barBg));
+
+  // Position cursor right after the prompt text
+  session.write(moveTo(row, 19));
+
+  // 5. Read valid key
   const validKeys = options.filter(o => o.enabled !== false).map(o => o.key.toLowerCase());
   while (true) {
     const key = await session.readKey();
     if (validKeys.includes(key.toLowerCase())) {
-      session.writeln(key + RESET);
+      session.write(key + RESET + '\r\n');
       return key.toLowerCase();
     }
   }
 }
 
-function renderOpt(opt: MenuOption, s: OverlayStyle, colWidth: number): string {
+function renderOpt(opt: MenuOption, s: OverlayStyle): string {
   const enabled = opt.enabled !== false;
   const kc = enabled ? s.keyColor : s.disabledColor;
   const bc = enabled ? s.bracketColor : s.disabledColor;
   const lc = enabled ? s.labelColor : s.disabledColor;
 
-  const text = `[${opt.key}] ${opt.label}`;
-  const visLen = text.length;
-  const padding = Math.max(1, colWidth - visLen - 2);
-
   return (
     fg(bc.r, bc.g, bc.b) + '[' +
     fg(kc.r, kc.g, kc.b) + opt.key +
     fg(bc.r, bc.g, bc.b) + '] ' +
-    fg(lc.r, lc.g, lc.b) + opt.label +
-    ' '.repeat(padding)
+    fg(lc.r, lc.g, lc.b) + opt.label
   );
 }
 
-/** Pre-built menu configurations for each game location */
+/** Pre-built menu configurations for each game screen */
 export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[] }> = {
   MAIN: {
     title: '⚔  MAIN STREET  ⚔',
@@ -305,7 +333,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
   },
   MERCHANT: {
     title: '💎  MERCHANTS  💎',
-    options: [],  // Merchant uses its own listing format
+    options: [],
   },
   PERSONAL: {
     title: '👤  PERSONAL  👤',
@@ -320,21 +348,13 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
   },
   FIGHT: {
     title: '⚔  PLAYER FIGHT  ⚔',
-    options: [],  // Fight uses its own player listing
+    options: [],
   },
   MAGICIAN: {
-    title: '✧  MAGICIAN\'S SHOP  ✧',
+    title: "✧  MAGICIAN'S SHOP  ✧",
     options: [
       { key: 'B', label: 'Browse & Buy' },
       { key: 'R', label: 'Return' },
     ],
   },
 };
-
-/** Check if an enhanced image exists for this screen */
-export function hasEnhancedImage(ansiDir: string, filename: string): boolean {
-  const { existsSync } = require('fs');
-  const { join } = require('path');
-  const enhDir = join(ansiDir, 'enhanced');
-  return existsSync(join(enhDir, filename)) || existsSync(join(enhDir, filename.toUpperCase()));
-}
