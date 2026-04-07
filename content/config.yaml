@@ -18,7 +18,7 @@ game:
 
 kingdoms:
   - id: chocolate
-    name: The Kingdom in the Sea
+    name: The Kingdom in the Seas
     description: A coastal realm of sailors and traders.
   - id: brute_strength
     name: The Kingdom in the Mountains
