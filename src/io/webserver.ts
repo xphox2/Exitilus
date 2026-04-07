@@ -70,7 +70,24 @@ export function createWebServer(options: {
   // WebSocket server for game connections
   const wss = new WebSocketServer({ server });
 
+  // Ping all clients every 30 seconds to keep connections alive
+  const pingInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if ((ws as any).isAlive === false) {
+        ws.terminate();
+        return;
+      }
+      (ws as any).isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
+
+  wss.on('close', () => clearInterval(pingInterval));
+
   wss.on('connection', (ws: WebSocket, req) => {
+    (ws as any).isAlive = true;
+    ws.on('pong', () => { (ws as any).isAlive = true; });
+
     const remoteAddr = req.socket.remoteAddress ?? 'unknown';
     console.log(`[Web] Connection from ${remoteAddr}`);
 
@@ -86,6 +103,10 @@ export function createWebServer(options: {
       session.close();
     });
   });
+
+  // Set long timeouts for game sessions
+  server.keepAliveTimeout = 600000; // 10 minutes
+  server.headersTimeout = 600000;
 
   const bindHost = host ?? '0.0.0.0';
   server.listen(port, bindHost, () => {
