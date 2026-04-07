@@ -207,10 +207,11 @@
           const newRows = parseInt(resizeMatch[1], 10);
           const newCols = parseInt(resizeMatch[2], 10);
           // Calculate font size to fit the requested columns
+          // Cap at 14px max so 80-col mode doesn't overflow
           const containerWidth = document.getElementById('terminal-container').clientWidth - 10;
-          const charWidthEstimate = 7.8; // px per char at font size 1
+          const charWidthEstimate = 7.8;
           const idealFontSize = Math.floor(containerWidth / (newCols * charWidthEstimate) * 10);
-          const newFontSize = Math.max(8, Math.min(18, idealFontSize));
+          const newFontSize = Math.max(8, Math.min(14, idealFontSize));
           term.options.fontSize = newFontSize;
           term.resize(newCols, newRows);
           // Strip the resize command from the data before writing

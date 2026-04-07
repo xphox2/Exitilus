@@ -173,11 +173,14 @@ export function loadAnsiFile(ansiDir: string, filename: string, mode: string = '
 
   if (!buf) return null;
 
-  // Files that use absolute cursor positioning (ESC[row;colH) cannot have
-  // 80-col wrapping applied because the inserted newlines shift row numbers.
-  // Detect this and disable wrapping for those files.
-  const usesAbsolutePositioning = hasAbsolutePositioning(buf);
-  const wrapCols = usesAbsolutePositioning ? 0 : 80;
+  // For enhanced mode (web/xterm.js): never wrap. xterm.js handles wrapping
+  // and cursor positioning natively. Our wrapping breaks absolute positioning.
+  // For classic/local mode: wrap at 80 unless the file uses absolute positioning.
+  let wrapCols = 0;
+  if (mode !== 'enhanced') {
+    const usesAbsolutePositioning = hasAbsolutePositioning(buf);
+    wrapCols = usesAbsolutePositioning ? 0 : 80;
+  }
 
   return cp437ToUnicode(buf, wrapCols);
 }
