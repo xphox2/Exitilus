@@ -43,6 +43,16 @@ function moveTo(row: number, col: number): string {
   return `\x1B[${row};${col}H`;
 }
 
+/** Count how many visible rows an ANSI art string occupies */
+function countAnsiRows(content: string): number {
+  // Count \n characters - each represents a row
+  let rows = 0;
+  for (const ch of content) {
+    if (ch === '\n') rows++;
+  }
+  return Math.max(1, rows);
+}
+
 /** Draw a single line at a specific row, overwriting the image beneath.
  *  Pads to full width so the background covers the art. */
 function drawLineAt(row: number, content: string, width: number, bgColor: RGB): string {
@@ -63,24 +73,33 @@ export async function showEnhancedMenuOverlay(
 ): Promise<string> {
   const s = { ...DEFAULT_STYLE, ...style };
 
-  // 1. Show the full image
+  // 1. Show the full image and figure out how tall it is
   session.clear();
   await session.showAnsi(ansiFile);
+
+  // Count image height by reading the file content
+  const { loadAnsiFile } = require('./ansi.js');
+  const ansiContent = loadAnsiFile(
+    require('path').join(require('path').dirname(require('url').fileURLToPath(import.meta.url)), '..', '..', 'content', 'ansi'),
+    ansiFile,
+    (session as any).graphicsMode ?? 'classic'
+  );
+  const imageRows = ansiContent ? countAnsiRows(ansiContent) : 22;
 
   // 2. Calculate overlay dimensions
   const cols = options.length > 6 ? 2 : 1;
   const optionRows = cols === 2 ? Math.ceil(options.length / 2) : options.length;
   const extraRows = extraInfo ? extraInfo.length : 0;
-  // border + title + blank + extra + options + blank + prompt + border
+  // border + title + sep + extra + options + blank + prompt + border
   const totalRows = 1 + 1 + 1 + extraRows + optionRows + 1 + 1 + 1;
 
-  const termHeight = (process.stdout.rows ?? 25);
   const termWidth = (process.stdout.columns ?? 80);
 
-  // 3. Position overlay at bottom-right with 2-line buffer from bottom
-  const overlayWidth = Math.min(termWidth - 6, 72); // leave room on left side
-  const marginLeft = Math.max(1, termWidth - overlayWidth - 2); // right-aligned with 2 char margin
-  const startRow = Math.max(1, termHeight - totalRows - 2); // 2-line buffer from bottom
+  // 3. Position overlay at bottom-right of the IMAGE (not terminal)
+  //    2-line buffer from the bottom of the image
+  const overlayWidth = Math.min(termWidth - 6, 72);
+  const marginLeft = Math.max(1, termWidth - overlayWidth - 2); // right-aligned
+  const startRow = Math.max(1, imageRows - totalRows - 1); // within the image, 2 lines from bottom
 
   // 4. Pause briefly to let the user see the full image
   await sleep(200);
