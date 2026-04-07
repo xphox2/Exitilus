@@ -133,7 +133,18 @@ export class WebSocketAdapter implements PlayerSession {
 
   async showAnsi(filename: string): Promise<void> {
     const content = loadAnsiFile(this.ansiDir, filename, this.graphicsMode);
-    if (content) this.write(content);
+    if (!content) return;
+
+    // Send in chunks for large files to prevent xterm.js rendering issues
+    if (content.length > 50000) {
+      const chunkSize = 8192;
+      for (let i = 0; i < content.length; i += chunkSize) {
+        this.write(content.slice(i, i + chunkSize));
+        await new Promise(resolve => setTimeout(resolve, 2));
+      }
+    } else {
+      this.write(content);
+    }
   }
 
   getTimeRemaining(): number {
