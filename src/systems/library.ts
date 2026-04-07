@@ -4,7 +4,7 @@ import type { GameContent } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 export async function enterLibrary(
@@ -16,7 +16,7 @@ export async function enterLibrary(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'LIBRARY.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'LIBRARY.ANS', MENU_CONFIGS.LIBRARY.title, MENU_CONFIGS.LIBRARY.options);
     } else {
       session.clear();

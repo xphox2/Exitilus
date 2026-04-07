@@ -5,7 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 import { messageBoard } from '../systems/messaging.js';
 import { rentRoom } from '../systems/inn.js';
@@ -44,7 +44,7 @@ export async function enterTavern(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'INN.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'INN.ANS', MENU_CONFIGS.INN.title, MENU_CONFIGS.INN.options);
     } else {
       session.clear();

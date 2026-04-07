@@ -6,7 +6,7 @@ import { getSpellsForClass } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 function randomInt(min: number, max: number): number {
@@ -137,7 +137,7 @@ export async function enterGuilds(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'GUILDS.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'GUILDS.ANS', MENU_CONFIGS.GUILDS.title, MENU_CONFIGS.GUILDS.options);
     } else {
       session.clear();

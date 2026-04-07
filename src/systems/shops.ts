@@ -6,7 +6,7 @@ import { findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
@@ -144,7 +144,7 @@ async function runShop(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, config.ansi)) {
       choice = await showEnhancedMenuOverlay(session, config.ansi, MENU_CONFIGS[configKey].title, MENU_CONFIGS[configKey].options);
     } else {
       session.clear();
@@ -254,7 +254,7 @@ export async function enterShops(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'SHOPS.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'SHOPS.ANS', MENU_CONFIGS.SHOPS.title, MENU_CONFIGS.SHOPS.options);
     } else {
       session.clear();

@@ -4,11 +4,24 @@
 import type { PlayerSession } from './session.js';
 import { fg, bg, RESET, type RGB } from './truecolor.js';
 import { loadAnsiFile } from './ansi.js';
+import { existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ansiDir = join(__dirname, '..', '..', 'content', 'ansi');
+
+/** Check if an enhanced image exists for this ANSI file */
+export function hasEnhancedArt(filename: string): boolean {
+  const enhDir = join(ansiDir, 'enhanced');
+  return existsSync(join(enhDir, filename)) || existsSync(join(enhDir, filename.toUpperCase()));
+}
+
+/** Returns true if the session is in enhanced mode AND has an enhanced image for this file.
+ *  Use this to decide whether to show the overlay menu or the classic ANSI with built-in menu. */
+export function shouldUseOverlay(session: PlayerSession, filename: string): boolean {
+  return (session as any).graphicsMode === 'enhanced' && hasEnhancedArt(filename);
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));

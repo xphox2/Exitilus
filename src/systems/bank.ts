@@ -3,7 +3,7 @@ import type { PlayerRecord } from '../types/index.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 export async function enterBank(
@@ -15,7 +15,7 @@ export async function enterBank(
     const validKeys = ['d', 'w', '.', ',', 't', 'r'];
 
     let key: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'BANK.ANS')) {
       key = await showEnhancedMenuOverlay(session, 'BANK.ANS', MENU_CONFIGS.BANK.title, MENU_CONFIGS.BANK.options, undefined, [`Gold: $${player.gold}  Bank: $${player.bankGold}`]);
     } else {
       session.clear();

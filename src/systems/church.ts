@@ -5,7 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 function randomInt(min: number, max: number): number {
@@ -22,7 +22,7 @@ export async function enterChurch(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'CHURCH.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'CHURCH.ANS', MENU_CONFIGS.CHURCH.title, MENU_CONFIGS.CHURCH.options);
     } else {
       session.clear();

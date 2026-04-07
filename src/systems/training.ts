@@ -5,7 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 
 function trainingCost(currentValue: number, level: number): number {
@@ -30,7 +30,7 @@ export async function enterTraining(
     const validKeys = ['1', '2', '3', '4', '5', 'r', 'y'];
 
     let key: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'TRAIN.ANS')) {
       key = await showEnhancedMenuOverlay(session, 'TRAIN.ANS', MENU_CONFIGS.TRAIN.title, MENU_CONFIGS.TRAIN.options, undefined, [
         `STR: ${player.strength}  DEF: ${player.defense}  AGI: ${player.agility}  LDR: ${player.leadership}  WIS: ${player.wisdom}`,
         `Gold: $${formatGold(player.gold)}`,

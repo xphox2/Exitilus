@@ -5,7 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 import { thievesGuild, drughouse } from '../systems/criminal.js';
 
@@ -164,7 +164,7 @@ export async function enterAlleys(
 
   while (true) {
     let choice: string;
-    if ((session as any).graphicsMode === 'enhanced') {
+    if (shouldUseOverlay(session, 'ALLEYS.ANS')) {
       choice = await showEnhancedMenuOverlay(session, 'ALLEYS.ANS', MENU_CONFIGS.ALLEYS.title, MENU_CONFIGS.ALLEYS.options);
     } else {
       session.clear();

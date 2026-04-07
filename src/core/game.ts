@@ -9,7 +9,7 @@ import { ANSI } from '../io/ansi.js';
 import type { GraphicsMode } from '../io/capabilities.js';
 
 import { showMenu } from './menus.js';
-import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 import { createNewPlayer } from './player-creation.js';
 import { verifyPassword } from './auth.js';
 import { showStats } from './stats.js';
@@ -186,7 +186,7 @@ export class GameEngine {
 
     while (true) {
       let choice: string;
-      if (this.graphicsMode === 'enhanced') {
+      if (shouldUseOverlay(this.session, 'MAIN.ANS')) {
         choice = await showEnhancedMenuOverlay(this.session, 'MAIN.ANS', MENU_CONFIGS.MAIN.title, MENU_CONFIGS.MAIN.options);
       } else {
         this.session.clear();
