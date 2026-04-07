@@ -129,18 +129,17 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
  *         'ascii' tries .ASC file first,
  *         'classic' or default loads the original .ANS */
 export function loadAnsiFile(ansiDir: string, filename: string, mode: string = 'classic'): string | null {
-  // In enhanced mode, try the enhanced/ subfolder first (pre-upscaled true-color)
+  // In enhanced mode, try the enhanced/ subfolder first
+  // Enhanced files are already UTF-8 true-color ANSI from the converter - read as-is
   if (mode === 'enhanced') {
     const enhancedDir = join(ansiDir, 'enhanced');
     const enhPath = join(enhancedDir, filename);
     const enhUpper = join(enhancedDir, filename.toUpperCase());
     if (existsSync(enhPath)) {
-      // Enhanced files are already true-color ANSI - read as UTF-8
-      // They may contain raw bytes from the upscaler, use CP437 decode
-      return cp437ToUnicode(readFileSync(enhPath));
+      return readFileSync(enhPath, 'utf-8');
     }
     if (existsSync(enhUpper)) {
-      return cp437ToUnicode(readFileSync(enhUpper));
+      return readFileSync(enhUpper, 'utf-8');
     }
     // Fall through to original if no enhanced version
   }
