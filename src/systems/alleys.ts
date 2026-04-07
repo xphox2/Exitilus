@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 import { thievesGuild, drughouse } from '../systems/criminal.js';
 
@@ -162,14 +163,19 @@ export async function enterAlleys(
   const validKeys = ['d', 't', 'b', 'c', 'r', 'q', 'y'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('ALLEYS.ANS');
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await showEnhancedMenuOverlay(session, 'ALLEYS.ANS', MENU_CONFIGS.ALLEYS.title, MENU_CONFIGS.ALLEYS.options);
+    } else {
+      session.clear();
+      await session.showAnsi('ALLEYS.ANS');
 
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 

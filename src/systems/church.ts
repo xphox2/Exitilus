@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 
 function randomInt(min: number, max: number): number {
@@ -20,15 +21,20 @@ export async function enterChurch(
   const validKeys = ['b', 'c', 'g', 'a', 's', 'r', 'q', 'y'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('CHURCH.ANS');
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await showEnhancedMenuOverlay(session, 'CHURCH.ANS', MENU_CONFIGS.CHURCH.title, MENU_CONFIGS.CHURCH.options);
+    } else {
+      session.clear();
+      await session.showAnsi('CHURCH.ANS');
 
-    // CHURCH.ANS already shows the menu and "Your Choice:" prompt - just read a key
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      // CHURCH.ANS already shows the menu and "Your Choice:" prompt - just read a key
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 

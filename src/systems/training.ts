@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 
 function trainingCost(currentValue: number, level: number): number {
@@ -28,15 +29,23 @@ export async function enterTraining(
 
     const validKeys = ['1', '2', '3', '4', '5', '6', '7', 'r', 'y'];
 
-    session.clear();
-    await session.showAnsi('TRAIN.ANS');
+    let key: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      key = await showEnhancedMenuOverlay(session, 'TRAIN.ANS', MENU_CONFIGS.TRAIN.title, MENU_CONFIGS.TRAIN.options, undefined, [
+        `STR: ${player.strength}  DEF: ${player.defense}  AGI: ${player.agility}  LDR: ${player.leadership}  WIS: ${player.wisdom}`,
+        `Gold: $${formatGold(player.gold)}`,
+      ]);
+    } else {
+      session.clear();
+      await session.showAnsi('TRAIN.ANS');
 
-    // TRAIN.ANS already shows the menu and prompt - just read a key
-    let key = '';
-    while (!key) {
-      const k = await session.readKey();
-      if (validKeys.includes(k.toLowerCase())) {
-        key = k.toLowerCase();
+      // TRAIN.ANS already shows the menu and prompt - just read a key
+      key = '';
+      while (!key) {
+        const k = await session.readKey();
+        if (validKeys.includes(k.toLowerCase())) {
+          key = k.toLowerCase();
+        }
       }
     }
 

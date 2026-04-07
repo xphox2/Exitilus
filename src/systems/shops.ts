@@ -6,6 +6,7 @@ import { findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
 
 
 function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
@@ -139,16 +140,23 @@ async function runShop(
 
   const validKeys = ['b', 's', 'a', 't', 'r'];
 
-  while (true) {
-    session.clear();
-    await session.showAnsi(config.ansi);
+  const configKey = shopType.toUpperCase() as keyof typeof MENU_CONFIGS;
 
-    // Individual shop ANSIs already show the menu and prompt - just read a key
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+  while (true) {
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await showEnhancedMenuOverlay(session, config.ansi, MENU_CONFIGS[configKey].title, MENU_CONFIGS[configKey].options);
+    } else {
+      session.clear();
+      await session.showAnsi(config.ansi);
+
+      // Individual shop ANSIs already show the menu and prompt - just read a key
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 
@@ -245,15 +253,20 @@ export async function enterShops(
   const validKeys = ['s', 'w', 'a', 'm', 'r', 'q', 'y'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('SHOPS.ANS');
+    let choice: string;
+    if ((session as any).graphicsMode === 'enhanced') {
+      choice = await showEnhancedMenuOverlay(session, 'SHOPS.ANS', MENU_CONFIGS.SHOPS.title, MENU_CONFIGS.SHOPS.options);
+    } else {
+      session.clear();
+      await session.showAnsi('SHOPS.ANS');
 
-    // SHOPS.ANS already shows the menu and "Your Choice:" prompt - just read a key
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      // SHOPS.ANS already shows the menu and "Your Choice:" prompt - just read a key
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 
