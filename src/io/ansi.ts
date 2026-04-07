@@ -159,24 +159,46 @@ export function loadAnsiFile(ansiDir: string, filename: string, mode: string = '
     // Fall through to ANSI if no ASCII version
   }
 
-  // Always wrap original ANSI files at 80 columns (they were designed for 80-col BBS).
-  // Enhanced files from the converter are read as UTF-8 and handle their own line breaks.
-  const wrapCols = 80;
-
   const filepath = join(ansiDir, filename);
-  if (!existsSync(filepath)) {
-    // Try case-insensitive lookup
+  let buf: Buffer | null = null;
+
+  if (existsSync(filepath)) {
+    buf = readFileSync(filepath);
+  } else {
     const upper = join(ansiDir, filename.toUpperCase());
     const lower = join(ansiDir, filename.toLowerCase());
-    if (existsSync(upper)) {
-      return cp437ToUnicode(readFileSync(upper), wrapCols);
-    }
-    if (existsSync(lower)) {
-      return cp437ToUnicode(readFileSync(lower), wrapCols);
-    }
-    return null;
+    if (existsSync(upper)) buf = readFileSync(upper);
+    else if (existsSync(lower)) buf = readFileSync(lower);
   }
-  return cp437ToUnicode(readFileSync(filepath), wrapCols);
+
+  if (!buf) return null;
+
+  // Files that use absolute cursor positioning (ESC[row;colH) cannot have
+  // 80-col wrapping applied because the inserted newlines shift row numbers.
+  // Detect this and disable wrapping for those files.
+  const usesAbsolutePositioning = hasAbsolutePositioning(buf);
+  const wrapCols = usesAbsolutePositioning ? 0 : 80;
+
+  return cp437ToUnicode(buf, wrapCols);
+}
+
+/** Check if an ANSI file uses absolute cursor positioning (ESC[row;colH) */
+function hasAbsolutePositioning(buf: Buffer): boolean {
+  for (let i = 0; i < buf.length - 3; i++) {
+    if (buf[i] === 0x1B && buf[i + 1] === 0x5B) {
+      let seq = '';
+      let j = i + 2;
+      while (j < buf.length && buf[j] >= 0x20 && buf[j] < 0x40) {
+        seq += String.fromCharCode(buf[j]);
+        j++;
+      }
+      // ESC[row;colH - the 'H' terminator with a semicolon in params
+      if (j < buf.length && buf[j] === 0x48 && seq.includes(';')) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /** ANSI color escape code helpers */
