@@ -10,6 +10,38 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/** Count display width of a string, accounting for wide characters (emoji).
+ *  Strips ANSI codes first, then counts each char as 1 or 2 columns. */
+function displayWidth(str: string): number {
+  const stripped = str.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '');
+  let width = 0;
+  for (const ch of stripped) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (isWideChar(code)) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+}
+
+function isWideChar(code: number): boolean {
+  // Emoji ranges that render as 2 columns in terminals
+  if (code >= 0x1F300 && code <= 0x1F9FF) return true; // Misc Symbols, Emoticons, etc
+  if (code >= 0x2600 && code <= 0x27BF) return true;   // Misc symbols, Dingbats
+  if (code >= 0x1F600 && code <= 0x1F64F) return true;  // Emoticons
+  if (code >= 0x1F680 && code <= 0x1F6FF) return true;  // Transport symbols
+  if (code >= 0x2702 && code <= 0x27B0) return true;    // Dingbats
+  if (code >= 0xFE00 && code <= 0xFE0F) return false;   // Variation selectors
+  if (code >= 0x200D && code <= 0x200D) return false;    // ZWJ
+  // CJK
+  if (code >= 0x4E00 && code <= 0x9FFF) return true;
+  if (code >= 0x3000 && code <= 0x303F) return true;
+  if (code >= 0xFF00 && code <= 0xFFEF) return true;
+  return false;
+}
+
 // ── Color palette ──
 const GOLD: RGB = { r: 230, g: 190, b: 60 };
 const GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
@@ -143,8 +175,8 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   }
 
   function padRow(left: string, right: string = ''): string {
-    const lVis = left.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length;
-    const rVis = right.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').length;
+    const lVis = displayWidth(left);
+    const rVis = displayWidth(right);
     const innerW = W - 2;
     if (right) {
       const gap = Math.max(1, innerW - lVis - rVis);
@@ -158,7 +190,7 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   }
 
   function headerRow(icon: string, title: string): string {
-    const titleLen = icon.length + 1 + title.length;
+    const titleLen = displayWidth(icon) + 1 + title.length;
     const leftDash = Math.floor((W - 4 - titleLen) / 2);
     const rightDash = W - 4 - titleLen - leftDash;
     return row(
