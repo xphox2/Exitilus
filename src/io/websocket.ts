@@ -1,8 +1,6 @@
 /** WebSocket adapter - bridges xterm.js in the browser to a game session */
 
 import { WebSocket } from 'ws';
-import { existsSync } from 'fs';
-import { join } from 'path';
 import { PlayerSession, UserInfo } from './session.js';
 import { loadAnsiFile, ANSI } from './ansi.js';
 
@@ -119,24 +117,7 @@ export class WebSocketAdapter implements PlayerSession {
 
   async showAnsi(filename: string): Promise<void> {
     const content = loadAnsiFile(this.ansiDir, filename, this.graphicsMode);
-    if (!content) return;
-
-    // Check if this is an enhanced (wide) image or an original 80-col file
-    const isEnhanced = this.graphicsMode === 'enhanced' &&
-      (() => {
-        const enhDir = join(this.ansiDir, 'enhanced');
-        return existsSync(join(enhDir, filename)) || existsSync(join(enhDir, filename.toUpperCase()));
-      })();
-
-    if (!isEnhanced) {
-      // Original 80-col art: tell xterm.js to resize to 80 cols
-      this.write('\x1B[8;25;80t');
-    } else {
-      // Enhanced art: resize to match image width
-      this.write(`\x1B[8;50;160t`);
-    }
-
-    this.write(content);
+    if (content) this.write(content);
   }
 
   getTimeRemaining(): number {

@@ -173,14 +173,11 @@ export function loadAnsiFile(ansiDir: string, filename: string, mode: string = '
 
   if (!buf) return null;
 
-  // For enhanced mode (web/xterm.js): never wrap. xterm.js handles wrapping
-  // and cursor positioning natively. Our wrapping breaks absolute positioning.
-  // For classic/local mode: wrap at 80 unless the file uses absolute positioning.
-  let wrapCols = 0;
-  if (mode !== 'enhanced') {
-    const usesAbsolutePositioning = hasAbsolutePositioning(buf);
-    wrapCols = usesAbsolutePositioning ? 0 : 80;
-  }
+  // Always wrap original ANSI files at 80 columns. The converter tracks cursor
+  // positioning (ESC[row;colH, ESC[nC, etc.) so wrapping only triggers when
+  // content actually reaches column 80. This works for files that use absolute
+  // positioning AND files that rely on wrapping.
+  const wrapCols = 80;
 
   return cp437ToUnicode(buf, wrapCols);
 }

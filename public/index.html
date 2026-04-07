@@ -29,13 +29,7 @@
       flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 16px;
-      color: #ffd966;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-
+    header h1 { font-size: 16px; color: #ffd966; letter-spacing: 3px; text-transform: uppercase; }
     header .status { font-size: 12px; color: #666; }
     header .status.connected { color: #4caf50; }
     header .status.disconnected { color: #f44336; }
@@ -43,61 +37,32 @@
     #terminal-container {
       flex: 1;
       display: flex;
-      align-items: stretch;
+      align-items: center;
       justify-content: center;
       padding: 4px;
       background: #0a0a12;
       overflow: hidden;
     }
 
-    #terminal {
-      width: 100%;
-      height: 100%;
-    }
+    #terminal { width: 100%; height: 100%; }
 
     .overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       z-index: 100;
     }
-
     .overlay.hidden { display: none; }
-
     .overlay-content { text-align: center; max-width: 500px; }
-
-    .overlay-content h2 {
-      color: #ffd966;
-      font-size: 28px;
-      margin-bottom: 15px;
-      letter-spacing: 4px;
-    }
-
-    .overlay-content p {
-      color: #888;
-      margin-bottom: 20px;
-      line-height: 1.6;
-    }
-
+    .overlay-content h2 { color: #ffd966; font-size: 28px; margin-bottom: 15px; letter-spacing: 4px; }
+    .overlay-content p { color: #888; margin-bottom: 20px; line-height: 1.6; }
     .overlay-content button {
       background: linear-gradient(135deg, #c9962b, #ffd966);
-      color: #1a1a2e;
-      border: none;
-      padding: 12px 40px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      color: #1a1a2e; border: none; padding: 12px 40px;
+      font-size: 16px; font-weight: bold; border-radius: 4px;
+      cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
     }
-
-    .overlay-content button:hover {
-      background: linear-gradient(135deg, #ffd966, #ffe599);
-    }
+    .overlay-content button:hover { background: linear-gradient(135deg, #ffd966, #ffe599); }
   </style>
 </head>
 <body>
@@ -132,7 +97,9 @@
   <script>
     const term = new Terminal({
       cursorBlink: true,
-      fontSize: 13,
+      cols: 80,
+      rows: 25,
+      fontSize: 14,
       fontFamily: '"Cascadia Code", "Fira Code", "Consolas", "Courier New", monospace',
       theme: {
         background: '#0a0a12',
@@ -156,7 +123,6 @@
         brightCyan: '#55ffff',
         brightWhite: '#ffffff',
       },
-      allowTransparency: false,
       scrollback: 1000,
     });
 
@@ -166,24 +132,10 @@
 
     const termEl = document.getElementById('terminal');
     term.open(termEl);
+    fitAddon.fit();
+    window.addEventListener('resize', () => fitAddon.fit());
 
     let ws = null;
-
-    function fitTerminal() {
-      fitAddon.fit();
-      // Report size to server so it knows our dimensions
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
-      }
-    }
-
-    fitTerminal();
-    window.addEventListener('resize', fitTerminal);
-    term.onResize(({ cols, rows }) => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send('\x1b[RESIZE:' + cols + ':' + rows);
-      }
-    });
 
     function connect() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -194,32 +146,12 @@
         document.getElementById('status').className = 'status connected';
         document.getElementById('connect-overlay').classList.add('hidden');
         document.getElementById('disconnect-overlay').classList.add('hidden');
-        ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
         term.clear();
         term.focus();
       };
 
       ws.onmessage = (event) => {
-        const data = event.data;
-        // Intercept terminal resize commands: ESC[8;rows;colst
-        const resizeMatch = data.match(/\x1b\[8;(\d+);(\d+)t/);
-        if (resizeMatch) {
-          const newRows = parseInt(resizeMatch[1], 10);
-          const newCols = parseInt(resizeMatch[2], 10);
-          // Calculate font size to fit the requested columns
-          // Cap at 14px max so 80-col mode doesn't overflow
-          const containerWidth = document.getElementById('terminal-container').clientWidth - 10;
-          const charWidthEstimate = 7.8;
-          const idealFontSize = Math.floor(containerWidth / (newCols * charWidthEstimate) * 10);
-          const newFontSize = Math.max(8, Math.min(14, idealFontSize));
-          term.options.fontSize = newFontSize;
-          term.resize(newCols, newRows);
-          // Strip the resize command from the data before writing
-          const cleaned = data.replace(/\x1b\[8;\d+;\d+t/g, '');
-          if (cleaned) term.write(cleaned);
-        } else {
-          term.write(data);
-        }
+        term.write(event.data);
       };
 
       ws.onclose = () => {
@@ -245,7 +177,6 @@
       if (ws) ws.close();
       connect();
     });
-
     termEl.addEventListener('click', () => term.focus());
   </script>
 </body>
