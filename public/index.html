@@ -200,7 +200,25 @@
       };
 
       ws.onmessage = (event) => {
-        term.write(event.data);
+        const data = event.data;
+        // Intercept terminal resize commands: ESC[8;rows;colst
+        const resizeMatch = data.match(/\x1b\[8;(\d+);(\d+)t/);
+        if (resizeMatch) {
+          const newRows = parseInt(resizeMatch[1], 10);
+          const newCols = parseInt(resizeMatch[2], 10);
+          // Calculate font size to fit the requested columns
+          const containerWidth = document.getElementById('terminal-container').clientWidth - 10;
+          const charWidthEstimate = 7.8; // px per char at font size 1
+          const idealFontSize = Math.floor(containerWidth / (newCols * charWidthEstimate) * 10);
+          const newFontSize = Math.max(8, Math.min(18, idealFontSize));
+          term.options.fontSize = newFontSize;
+          term.resize(newCols, newRows);
+          // Strip the resize command from the data before writing
+          const cleaned = data.replace(/\x1b\[8;\d+;\d+t/g, '');
+          if (cleaned) term.write(cleaned);
+        } else {
+          term.write(data);
+        }
       };
 
       ws.onclose = () => {
