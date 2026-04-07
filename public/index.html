@@ -94,9 +94,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.min.js"></script>
   <script>
     const term = new Terminal({
       cursorBlink: true,
+      customGlyphs: true,
       fontSize: 11,
       fontFamily: '"Cascadia Code", "Fira Code", "Consolas", "Courier New", monospace',
       theme: {
@@ -130,6 +132,14 @@
 
     const termEl = document.getElementById('terminal');
     term.open(termEl);
+
+    // Use WebGL renderer for pixel-perfect block character rendering
+    try {
+      const webglAddon = new WebglAddon.WebglAddon();
+      term.loadAddon(webglAddon);
+    } catch (e) {
+      console.warn('WebGL renderer not available, using canvas fallback');
+    }
 
     function fitToWidth() {
       // Start fresh each time
