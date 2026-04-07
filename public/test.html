@@ -5,7 +5,7 @@
   <title>ANSI Rendering Test</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
   <style>
-    body { margin: 0; background: #000; color: #fff; font-family: monospace; }
+    body { margin: 0; padding: 0; background: #000; overflow: hidden; }
     #terminal { width: 100vw; height: 100vh; }
   </style>
 </head>
@@ -15,9 +15,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.18.0/lib/addon-webgl.min.js"></script>
   <script>
+    // Start small, we'll resize after measuring
     const term = new Terminal({
       customGlyphs: true,
-      fontSize: 9,
+      fontSize: 5,
       fontFamily: 'monospace',
       theme: { background: '#000000' },
     });
@@ -25,14 +26,40 @@
     term.loadAddon(fit);
     term.open(document.getElementById('terminal'));
     try { term.loadAddon(new WebglAddon.WebglAddon()); } catch(e) {}
-    fit.fit();
 
-    term.write('Terminal: ' + term.cols + 'x' + term.rows + '\r\n\r\n');
+    // Fit and ensure 160+ cols
+    fit.fit();
+    while (term.cols < 160 && term.options.fontSize < 20) {
+      // Font is too small if cols > 160, too big if cols < 160
+      // We started at 5, so cols should be way more than 160
+      // Just fit and check
+      break;
+    }
+    // If somehow less than 160, force it
+    if (term.cols < 160) {
+      term.resize(160, term.rows);
+    }
+
+    console.log('Terminal: ' + term.cols + 'x' + term.rows + ' font: ' + term.options.fontSize);
+    term.write('Terminal: ' + term.cols + 'x' + term.rows + ' font: ' + term.options.fontSize + 'px\r\n');
     term.write('Loading enhanced MAIN.ANS...\r\n');
 
     fetch('/test-ansi').then(r => r.text()).then(data => {
-      term.write('\x1B[2J\x1B[H');
-      term.write(data);
+      const lines = data.split('\n');
+      const vis = lines[0].replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').replace(/\r/g, '');
+      console.log('Image width: ' + vis.length + ' cols, terminal: ' + term.cols + ' cols');
+
+      if (vis.length > term.cols) {
+        console.warn('IMAGE WIDER THAN TERMINAL! ' + vis.length + ' > ' + term.cols);
+        term.write('\x1B[31mWARNING: Image is ' + vis.length + ' cols but terminal is ' + term.cols + ' cols!\x1B[0m\r\n');
+        term.write('Forcing resize to ' + vis.length + '...\r\n');
+        term.resize(vis.length, term.rows);
+      }
+
+      setTimeout(() => {
+        term.write('\x1B[2J\x1B[H');
+        term.write(data);
+      }, 500);
     }).catch(e => {
       term.write('Error: ' + e.message + '\r\n');
     });
