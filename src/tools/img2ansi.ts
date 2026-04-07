@@ -111,14 +111,20 @@ async function convertImage(inputPath: string, options: ConvertOptions): Promise
 
   // Resize and extract raw pixels
   pipeline = sharp(inputPath)
-    .resize(targetW, targetPixelH, { fit: 'fill', kernel: 'lanczos3' })
-    .modulate({
+    .resize(targetW, targetPixelH, { fit: 'fill', kernel: 'lanczos3' });
+
+  // Only apply adjustments if user specified non-default values
+  if (options.brightness !== 0 || options.saturation !== 1.0) {
+    pipeline = pipeline.modulate({
       brightness: 1 + options.brightness / 100,
       saturation: options.saturation,
-    })
-    .linear(options.contrast, -(128 * options.contrast - 128)) // contrast
-    .removeAlpha()
-    .raw();
+    });
+  }
+  if (options.contrast !== 1.0) {
+    pipeline = pipeline.linear(options.contrast, -(128 * options.contrast - 128));
+  }
+
+  pipeline = pipeline.removeAlpha().raw();
 
   const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
   const pixels: RGB[][] = [];

@@ -109,8 +109,6 @@ async function downloadAndConvert(url: string, outputPath: string, width: number
     // Convert with sharp
     const { data, info } = await sharp(buffer)
       .resize(width, height * 2, { fit: 'fill', kernel: 'lanczos3' })
-      .modulate({ brightness: 1.1, saturation: 1.3 })
-      .linear(1.2, -(128 * 1.2 - 128))
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
