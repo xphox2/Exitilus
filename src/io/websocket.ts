@@ -14,6 +14,8 @@ export class WebSocketAdapter implements PlayerSession {
   private closed = false;
   private userName = '';
   public graphicsMode: string = 'enhanced';
+  public termCols: number = 160;
+  public termRows: number = 50;
 
   constructor(ws: WebSocket, options: { ansiDir: string; timeLimit?: number }) {
     this.ws = ws;
@@ -23,6 +25,14 @@ export class WebSocketAdapter implements PlayerSession {
 
     ws.on('message', (data: Buffer | string) => {
       const str = typeof data === 'string' ? data : data.toString();
+
+      // Check for resize messages from xterm.js: "\x1b[RESIZE:cols:rows"
+      if (str.startsWith('\x1b[RESIZE:')) {
+        const parts = str.slice(9).split(':');
+        this.termCols = parseInt(parts[0], 10) || 160;
+        this.termRows = parseInt(parts[1], 10) || 50;
+        return;
+      }
 
       for (const ch of str) {
         if (this.inputResolve) {

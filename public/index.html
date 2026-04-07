@@ -189,17 +189,30 @@
 
     function fitTerminal() {
       fitAddon.fit();
-      // Ensure minimum 160 columns - resize font if needed
-      if (term.cols < targetCols) {
+      // Ensure minimum 160 columns - shrink font until it fits
+      let attempts = 0;
+      while (term.cols < targetCols && attempts < 10) {
         const currentFontSize = term.options.fontSize || 14;
         const newFontSize = Math.max(6, currentFontSize - 1);
+        if (newFontSize === currentFontSize) break;
         term.options.fontSize = newFontSize;
         fitAddon.fit();
+        attempts++;
+      }
+      // Report size to server
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
       }
     }
 
     fitTerminal();
     window.addEventListener('resize', fitTerminal);
+    // Also report size when terminal itself resizes
+    term.onResize(({ cols, rows }) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send('\x1b[RESIZE:' + cols + ':' + rows);
+      }
+    });
 
     let ws = null;
 
@@ -212,6 +225,8 @@
         document.getElementById('status').className = 'status connected';
         document.getElementById('connect-overlay').classList.add('hidden');
         document.getElementById('disconnect-overlay').classList.add('hidden');
+        // Send initial terminal size
+        ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
         term.clear();
         term.focus();
       };
