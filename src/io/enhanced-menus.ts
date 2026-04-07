@@ -53,6 +53,14 @@ function countLines(content: string): number {
   return Math.max(1, n);
 }
 
+/** Measure visible width of an ANSI string (first line) */
+function measureWidth(content: string): number {
+  const firstLine = content.split('\n')[0] ?? '';
+  // Strip all ANSI escape sequences and CR
+  const stripped = firstLine.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').replace(/\r/g, '');
+  return stripped.length;
+}
+
 /** Build a box line: ║ + content padded to exact BOX_WIDTH + ║ */
 function boxLine(content: string, visibleLen: number, s: OverlayStyle): string {
   const pad = Math.max(0, BOX_WIDTH - 2 - visibleLen);
@@ -146,12 +154,12 @@ export async function showEnhancedMenuOverlay(
   // Bottom border
   lines.push(bc + '╚' + '═'.repeat(BOX_WIDTH - 2) + '╝');
 
-  // 4. Calculate position
+  // 4. Calculate position within the IMAGE bounds (not terminal)
   const overlayHeight = lines.length;
-  // Position: bottom-right of image, 2 lines buffer from bottom
+  const imageWidth = ansiContent ? measureWidth(ansiContent) : 80;
+  // Bottom-right of the image, 2 lines buffer from bottom
   const startRow = Math.max(1, imageRows - overlayHeight - 1);
-  const termWidth = process.stdout.columns ?? 80;
-  const startCol = Math.max(1, termWidth - BOX_WIDTH - 1);
+  const startCol = Math.max(1, imageWidth - BOX_WIDTH - 2);
 
   // 5. Brief pause to see the full image
   await sleep(150);
