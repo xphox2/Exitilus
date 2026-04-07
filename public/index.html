@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exitilus Reborn</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>⚔</text></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -187,6 +188,8 @@
     const termEl = document.getElementById('terminal');
     term.open(termEl);
 
+    let ws = null;
+
     function fitTerminal() {
       fitAddon.fit();
       // Ensure minimum 160 columns - shrink font until it fits
@@ -213,8 +216,6 @@
         ws.send('\x1b[RESIZE:' + cols + ':' + rows);
       }
     });
-
-    let ws = null;
 
     function connect() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
