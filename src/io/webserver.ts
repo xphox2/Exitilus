@@ -37,7 +37,9 @@ export function createWebServer(options: {
     if (req.url === '/test-ansi') {
       const testFile = join(ansiDir, 'enhanced', 'MAIN.ANS');
       if (existsSync(testFile)) {
-        const data = readFileSync(testFile, 'utf-8');
+        let data = readFileSync(testFile, 'utf-8');
+        // Ensure \r\n line endings (git on Linux converts to \n)
+        data = data.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end(data);
       } else {

@@ -1,0 +1,3 @@
+# Keep CRLF line endings in ANSI art files (required for xterm.js)
+content/ansi/enhanced/*.ANS binary
+content/ansi/enhanced/*.ans binary

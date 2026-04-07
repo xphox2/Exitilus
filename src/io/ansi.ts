@@ -141,11 +141,15 @@ export function loadAnsiFile(ansiDir: string, filename: string, mode: string = '
     const enhancedDir = join(ansiDir, 'enhanced');
     const enhPath = join(enhancedDir, filename);
     const enhUpper = join(enhancedDir, filename.toUpperCase());
+    let enhContent: string | null = null;
     if (existsSync(enhPath)) {
-      return readFileSync(enhPath, 'utf-8');
+      enhContent = readFileSync(enhPath, 'utf-8');
+    } else if (existsSync(enhUpper)) {
+      enhContent = readFileSync(enhUpper, 'utf-8');
     }
-    if (existsSync(enhUpper)) {
-      return readFileSync(enhUpper, 'utf-8');
+    if (enhContent) {
+      // Ensure \r\n line endings (git on Linux may convert to \n)
+      return enhContent.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
     }
     // Fall through to original if no enhanced version
   }
