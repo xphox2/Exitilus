@@ -135,7 +135,7 @@ export class TelnetAdapter implements PlayerSession {
   }
 
   async showAnsi(filename: string): Promise<void> {
-    const content = loadAnsiFile(this.ansiDir, filename);
+    const content = loadAnsiFile(this.ansiDir, filename, this.graphicsMode);
     if (content) {
       this.write(content);
     }

@@ -27,7 +27,7 @@ export async function enterTraining(
       { key: '5', stat: 'wisdom' as const, label: 'Wisdom', value: player.wisdom },
     ];
 
-    const validKeys = ['1', '2', '3', '4', '5', '6', '7', 'r', 'y'];
+    const validKeys = ['1', '2', '3', '4', '5', 'r', 'y'];
 
     let key: string;
     if ((session as any).graphicsMode === 'enhanced') {

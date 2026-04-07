@@ -47,7 +47,7 @@ async function shopBrowse(
 
   session.writeln('');
   session.writeln(`  ${ANSI.BRIGHT_YELLOW}Your Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
-  const currentItem = player[config.slot] ? findItem({ items } as GameContent, player[config.slot]!) : null;
+  const currentItem = player[config.slot] ? items.find(i => i.id === player[config.slot]) : null;
   session.writeln(`  ${ANSI.BRIGHT_CYAN}Currently equipped: ${ANSI.BRIGHT_WHITE}${currentItem?.name ?? 'Nothing'}${ANSI.RESET}`);
   session.writeln('');
 

@@ -12,7 +12,7 @@ export async function enterBank(
   db: GameDatabase
 ): Promise<void> {
   while (true) {
-    const validKeys = ['d', 'w', '.', '>', ',', '<', 't', 'r'];
+    const validKeys = ['d', 'w', '.', ',', 't', 'r'];
 
     let key: string;
     if ((session as any).graphicsMode === 'enhanced') {
@@ -68,8 +68,7 @@ export async function enterBank(
         break;
       }
 
-      case '.':
-      case '>': {
+      case '.': {
         if (player.gold <= 0) {
           session.writeln(`${ANSI.BRIGHT_RED}  You have no gold to deposit!${ANSI.RESET}`);
           break;
@@ -82,8 +81,7 @@ export async function enterBank(
         break;
       }
 
-      case ',':
-      case '<': {
+      case ',': {
         if (player.bankGold <= 0) {
           session.writeln(`${ANSI.BRIGHT_RED}  Your bank account is empty!${ANSI.RESET}`);
           break;
