@@ -118,9 +118,6 @@ Environment=NODE_ENV=production
 
 # Security hardening
 NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=$INSTALL_DIR
 
 [Install]
 WantedBy=multi-user.target
