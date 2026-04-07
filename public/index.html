@@ -21,7 +21,7 @@
 
     header {
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      padding: 8px 20px;
+      padding: 6px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -30,17 +30,13 @@
     }
 
     header h1 {
-      font-size: 18px;
+      font-size: 16px;
       color: #ffd966;
       letter-spacing: 3px;
       text-transform: uppercase;
     }
 
-    header .status {
-      font-size: 13px;
-      color: #666;
-    }
-
+    header .status { font-size: 12px; color: #666; }
     header .status.connected { color: #4caf50; }
     header .status.disconnected { color: #f44336; }
 
@@ -49,15 +45,12 @@
       display: flex;
       align-items: stretch;
       justify-content: center;
-      padding: 5px;
+      padding: 4px;
       background: #0a0a12;
-      overflow: auto;
+      overflow: hidden;
     }
 
     #terminal {
-      border: 1px solid #2a2a4a;
-      border-radius: 4px;
-      overflow: hidden;
       width: 100%;
       height: 100%;
     }
@@ -74,10 +67,7 @@
 
     .overlay.hidden { display: none; }
 
-    .overlay-content {
-      text-align: center;
-      max-width: 500px;
-    }
+    .overlay-content { text-align: center; max-width: 500px; }
 
     .overlay-content h2 {
       color: #ffd966;
@@ -111,7 +101,6 @@
   </style>
 </head>
 <body>
-  <!-- Connect overlay -->
   <div id="connect-overlay" class="overlay">
     <div class="overlay-content">
       <h2>⚔ Exitilus Reborn ⚔</h2>
@@ -120,7 +109,6 @@
     </div>
   </div>
 
-  <!-- Disconnect overlay -->
   <div id="disconnect-overlay" class="overlay hidden">
     <div class="overlay-content">
       <h2>Disconnected</h2>
@@ -142,19 +130,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.min.js"></script>
   <script>
-    // Calculate font size to fit 160 columns in the window
-    const targetCols = 160;
-    const availWidth = window.innerWidth - 30; // padding
-    const charWidth = 7.2; // approximate px per char at fontSize 1
-    const idealFontSize = Math.floor(availWidth / (targetCols * charWidth) * 10);
-    const fontSize = Math.max(8, Math.min(14, idealFontSize));
-
     const term = new Terminal({
       cursorBlink: true,
-      cols: targetCols,
-      rows: 50,
-      fontSize: fontSize,
-      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
+      fontSize: 13,
+      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", "Courier New", monospace',
       theme: {
         background: '#0a0a12',
         foreground: '#cccccc',
@@ -192,17 +171,7 @@
 
     function fitTerminal() {
       fitAddon.fit();
-      // Ensure minimum 160 columns - shrink font until it fits
-      let attempts = 0;
-      while (term.cols < targetCols && attempts < 10) {
-        const currentFontSize = term.options.fontSize || 14;
-        const newFontSize = Math.max(6, currentFontSize - 1);
-        if (newFontSize === currentFontSize) break;
-        term.options.fontSize = newFontSize;
-        fitAddon.fit();
-        attempts++;
-      }
-      // Report size to server
+      // Report size to server so it knows our dimensions
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
       }
@@ -210,7 +179,6 @@
 
     fitTerminal();
     window.addEventListener('resize', fitTerminal);
-    // Also report size when terminal itself resizes
     term.onResize(({ cols, rows }) => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send('\x1b[RESIZE:' + cols + ':' + rows);
@@ -226,7 +194,6 @@
         document.getElementById('status').className = 'status connected';
         document.getElementById('connect-overlay').classList.add('hidden');
         document.getElementById('disconnect-overlay').classList.add('hidden');
-        // Send initial terminal size
         ws.send('\x1b[RESIZE:' + term.cols + ':' + term.rows);
         term.clear();
         term.focus();
@@ -247,7 +214,6 @@
         document.getElementById('status').className = 'status disconnected';
       };
 
-      // Send keyboard input to server
       term.onData((data) => {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(data);
@@ -261,7 +227,6 @@
       connect();
     });
 
-    // Focus terminal on click
     termEl.addEventListener('click', () => term.focus());
   </script>
 </body>

@@ -113,7 +113,8 @@ export function cp437ToUnicode(buffer: Buffer, columns = 80): string {
     col++;
 
     // Wrap at column boundary (BBS terminal behavior)
-    if (col >= columns) {
+    // columns=0 disables wrapping (for xterm.js which handles its own wrapping)
+    if (columns > 0 && col >= columns) {
       result += '\r\n';
       col = 0;
     }
@@ -158,20 +159,24 @@ export function loadAnsiFile(ansiDir: string, filename: string, mode: string = '
     // Fall through to ANSI if no ASCII version
   }
 
+  // Always wrap original ANSI files at 80 columns (they were designed for 80-col BBS).
+  // Enhanced files from the converter are read as UTF-8 and handle their own line breaks.
+  const wrapCols = 80;
+
   const filepath = join(ansiDir, filename);
   if (!existsSync(filepath)) {
     // Try case-insensitive lookup
     const upper = join(ansiDir, filename.toUpperCase());
     const lower = join(ansiDir, filename.toLowerCase());
     if (existsSync(upper)) {
-      return cp437ToUnicode(readFileSync(upper));
+      return cp437ToUnicode(readFileSync(upper), wrapCols);
     }
     if (existsSync(lower)) {
-      return cp437ToUnicode(readFileSync(lower));
+      return cp437ToUnicode(readFileSync(lower), wrapCols);
     }
     return null;
   }
-  return cp437ToUnicode(readFileSync(filepath));
+  return cp437ToUnicode(readFileSync(filepath), wrapCols);
 }
 
 /** ANSI color escape code helpers */
