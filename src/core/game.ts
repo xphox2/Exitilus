@@ -62,17 +62,17 @@ export class GameEngine {
     // Wait, then animate copyright -> credit
     await this.animateCredit(17, 41, 30, '\x1B[1;35m');
     // Now change LOADING to "Press any key to continue"
-    this.session.write(`\x1B[20;24H\x1B[35m\xC4\x1B[1m<\x1B[37mPress any key to continue\x1B[35m>\x1B[0;35m\xC4\x1B[0m`);
+    this.session.write(`\x1B[20;24H\x1B[35m─\x1B[1m<\x1B[37mPress any key to continue\x1B[35m>\x1B[0;35m─\x1B[0m`);
     await this.session.readKey();
 
     // ── OPEN2.ANS ──
     this.session.clear();
     await this.session.showAnsi('OPEN2.ANS');
     // Replace press text at row 17, col 47
-    this.session.write(`\x1B[17;47H\x1B[0;31m\xC4\x1B[1m<\x1B[0m ... LOADING ...          \x1B[1;31m>\x1B[0m`);
+    this.session.write(`\x1B[17;47H\x1B[0;31m─\x1B[1m<\x1B[0m ... LOADING ...          \x1B[1;31m>\x1B[0m`);
     await this.animateCredit(13, 49, 30, '\x1B[37m');
     // Restore press text
-    this.session.write(`\x1B[17;47H\x1B[0;31m\xC4\x1B[1m<\x1B[0mPress any key to continue\x1B[1;31m>\x1B[0;31m\xC4\x1B[0m`);
+    this.session.write(`\x1B[17;47H\x1B[0;31m─\x1B[1m<\x1B[0mPress any key to continue\x1B[1;31m>\x1B[0;31m─\x1B[0m`);
     await this.session.readKey();
   }
 
