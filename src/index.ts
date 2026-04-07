@@ -9,6 +9,7 @@ import { GameEngine } from './core/game.js';
 import { runDailyMaintenance } from './systems/maintenance.js';
 import { generateBulletin } from './systems/bulletin.js';
 import { detectCapabilities, selectGraphicsMode, type GraphicsMode } from './io/capabilities.js';
+import { createWebServer } from './io/webserver.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
@@ -22,6 +23,7 @@ Usage:
 
 Modes:
   --local, -l          Local terminal mode (default, for testing)
+  --web [port]         Web browser mode with xterm.js (default port: 8080)
   --telnet [port]      Start telnet server (default port: 2323)
   --door <dropdir>     BBS door mode (reads drop file from directory)
 
@@ -40,6 +42,7 @@ Examples:
   exitilus --local                         Play locally (auto-detects best mode)
   exitilus --local --graphics enhanced     Force enhanced graphics
   exitilus --local --graphics classic      Force classic ANSI art
+  exitilus --web 8080                       Start web server (open browser to play)
   exitilus --telnet 2323                   Start telnet server on port 2323
   exitilus --door C:\\BBS\\NODE1            Run as BBS door using drop file
 `);
@@ -85,10 +88,26 @@ async function main() {
   generateBulletin(db, content, dataDir);
 
   // Determine mode
+  const webMode = args.includes('--web');
   const telnetMode = args.includes('--telnet');
   const doorMode = args.includes('--door');
 
-  if (telnetMode) {
+  if (webMode) {
+    // ── Web Browser Mode ──
+    const portIdx = args.indexOf('--web');
+    const port = portIdx >= 0 && args[portIdx + 1] && !args[portIdx + 1].startsWith('-')
+      ? parseInt(args[portIdx + 1], 10)
+      : 8080;
+
+    createWebServer({ port, ansiDir, db, content, timeLimit });
+
+    process.on('SIGINT', () => {
+      console.log('\n[Web] Shutting down...');
+      db.close();
+      process.exit(0);
+    });
+
+  } else if (telnetMode) {
     // ── Telnet Server Mode ──
     const portIdx = args.indexOf('--telnet');
     const port = portIdx >= 0 && args[portIdx + 1] && !args[portIdx + 1].startsWith('-')

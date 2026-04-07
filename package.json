@@ -8,8 +8,10 @@
     "build": "tsc",
     "dev": "tsx src/index.ts --local",
     "dev:enhanced": "tsx src/index.ts --local --graphics enhanced",
+    "dev:web": "tsx src/index.ts --web 8080",
     "dev:telnet": "tsx src/index.ts --telnet 2323",
     "start": "node dist/index.js --local",
+    "start:web": "node dist/index.js --web 8080",
     "start:telnet": "node dist/index.js --telnet 2323",
     "start:door": "node dist/index.js --door",
     "admin": "tsx src/tools/admin.ts",
@@ -24,10 +26,12 @@
   "dependencies": {
     "sharp": "^0.34.5",
     "sql.js": "^1.10.0",
+    "ws": "^8.20.0",
     "yaml": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.0.0",
     "typescript": "^5.5.0"
   }

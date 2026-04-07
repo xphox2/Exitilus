@@ -1,3 +1,27 @@
+## 0.6.0
+
+Add web browser mode - play Exitilus in your browser via xterm.js.
+
+### Added
+- **Web server mode** (`--web [port]`): HTTP server serves a web page with an embedded terminal (xterm.js). Players open a browser, click "Enter the Realm", and play the full game through a WebSocket connection
+- **WebSocket adapter** (`src/io/websocket.ts`): Bridges xterm.js in the browser to a game session, handles input/output, backspace, disconnect
+- **Web UI** (`public/index.html`): Dark-themed game page with:
+  - xterm.js terminal emulator with true-color support
+  - "Enter the Realm" connect screen
+  - Auto-reconnect on disconnect
+  - Responsive terminal sizing (fills browser window)
+  - Custom color theme matching the game aesthetic
+- **Multiplayer by default**: Each browser tab/telnet connection gets its own session but shares the same database - all players see each other
+- npm scripts: `dev:web`, `start:web`
+
+### How to Play in Browser
+```bash
+npm run dev:web          # Start web server on port 8080
+# Open http://localhost:8080 in your browser
+# Click "Enter the Realm" to start playing
+# Multiple tabs = multiple players!
+```
+
 ## 0.5.1
 
 Use original ANSI art for title screen in all modes.

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exitilus Reborn</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a12;
+      color: #ccc;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #2a2a4a;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 18px;
+      color: #ffd966;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    header .status {
+      font-size: 13px;
+      color: #666;
+    }
+
+    header .status.connected { color: #4caf50; }
+    header .status.disconnected { color: #f44336; }
+
+    #terminal-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: #0a0a12;
+    }
+
+    #terminal {
+      border: 1px solid #2a2a4a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay-content {
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .overlay-content h2 {
+      color: #ffd966;
+      font-size: 28px;
+      margin-bottom: 15px;
+      letter-spacing: 4px;
+    }
+
+    .overlay-content p {
+      color: #888;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .overlay-content button {
+      background: linear-gradient(135deg, #c9962b, #ffd966);
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 40px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .overlay-content button:hover {
+      background: linear-gradient(135deg, #ffd966, #ffe599);
+    }
+  </style>
+</head>
+<body>
+  <!-- Connect overlay -->
+  <div id="connect-overlay" class="overlay">
+    <div class="overlay-content">
+      <h2>⚔ Exitilus Reborn ⚔</h2>
+      <p>A Fantasy BBS Door Game<br>Originally (C) 1999 ECI Software, LLC<br>Reborn in 2026</p>
+      <button id="connect-btn">Enter the Realm</button>
+    </div>
+  </div>
+
+  <!-- Disconnect overlay -->
+  <div id="disconnect-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <h2>Disconnected</h2>
+      <p>Your session has ended.</p>
+      <button id="reconnect-btn">Reconnect</button>
+    </div>
+  </div>
+
+  <header>
+    <h1>⚔ Exitilus Reborn ⚔</h1>
+    <span id="status" class="status disconnected">Disconnected</span>
+  </header>
+
+  <div id="terminal-container">
+    <div id="terminal"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@0.11.0/lib/addon-web-links.min.js"></script>
+  <script>
+    const term = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
+      theme: {
+        background: '#0a0a12',
+        foreground: '#cccccc',
+        cursor: '#ffd966',
+        selectionBackground: '#3a3a5a',
+        black: '#0a0a12',
+        red: '#aa0000',
+        green: '#00aa00',
+        yellow: '#aa8800',
+        blue: '#0000aa',
+        magenta: '#aa00aa',
+        cyan: '#00aaaa',
+        white: '#aaaaaa',
+        brightBlack: '#555555',
+        brightRed: '#ff5555',
+        brightGreen: '#55ff55',
+        brightYellow: '#ffff55',
+        brightBlue: '#5555ff',
+        brightMagenta: '#ff55ff',
+        brightCyan: '#55ffff',
+        brightWhite: '#ffffff',
+      },
+      allowTransparency: false,
+      scrollback: 1000,
+    });
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.loadAddon(new WebLinksAddon.WebLinksAddon());
+
+    const termEl = document.getElementById('terminal');
+    term.open(termEl);
+    fitAddon.fit();
+
+    window.addEventListener('resize', () => fitAddon.fit());
+
+    let ws = null;
+
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        document.getElementById('status').textContent = 'Connected';
+        document.getElementById('status').className = 'status connected';
+        document.getElementById('connect-overlay').classList.add('hidden');
+        document.getElementById('disconnect-overlay').classList.add('hidden');
+        term.clear();
+        term.focus();
+      };
+
+      ws.onmessage = (event) => {
+        term.write(event.data);
+      };
+
+      ws.onclose = () => {
+        document.getElementById('status').textContent = 'Disconnected';
+        document.getElementById('status').className = 'status disconnected';
+        document.getElementById('disconnect-overlay').classList.remove('hidden');
+      };
+
+      ws.onerror = () => {
+        document.getElementById('status').textContent = 'Error';
+        document.getElementById('status').className = 'status disconnected';
+      };
+
+      // Send keyboard input to server
+      term.onData((data) => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(data);
+        }
+      });
+    }
+
+    document.getElementById('connect-btn').addEventListener('click', connect);
+    document.getElementById('reconnect-btn').addEventListener('click', () => {
+      if (ws) ws.close();
+      connect();
+    });
+
+    // Focus terminal on click
+    termEl.addEventListener('click', () => term.focus());
+  </script>
+</body>
+</html>
