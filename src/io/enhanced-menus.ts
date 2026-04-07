@@ -1,14 +1,8 @@
-/** Enhanced menu overlay - renders animated menu options ON TOP of
- *  enhanced ANSI art images using cursor positioning. */
+/** Enhanced menu overlay - draws an animated menu box on top of
+ *  the ANSI art image using cursor movement. */
 
 import type { PlayerSession } from './session.js';
 import { fg, bg, RESET, type RGB } from './truecolor.js';
-import { loadAnsiFile } from './ansi.js';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ansiDir = join(__dirname, '..', '..', 'content', 'ansi');
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -44,31 +38,21 @@ const DEFAULT_STYLE: OverlayStyle = {
   animDelay: 35,
 };
 
-/** Move cursor to absolute position (1-based) */
-function moveTo(row: number, col: number): string {
-  return `\x1B[${row};${col}H`;
+const BOX_WIDTH = 44; // fixed visible width of the overlay box
+
+/** Build a box line: ║ + content padded to exact width + ║ */
+function boxLine(content: string, visibleLen: number, s: OverlayStyle): string {
+  const pad = Math.max(0, BOX_WIDTH - 2 - visibleLen);
+  return (
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+    content + ' '.repeat(pad) +
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║'
+  );
 }
 
-/** Count how many visible rows an ANSI art string occupies */
-function countAnsiRows(content: string): number {
-  // Count \n characters - each represents a row
-  let rows = 0;
-  for (const ch of content) {
-    if (ch === '\n') rows++;
-  }
-  return Math.max(1, rows);
-}
-
-/** Draw a single line at a specific row, overwriting the image beneath.
- *  Pads to full width so the background covers the art. */
-function drawLineAt(row: number, content: string, width: number, bgColor: RGB): string {
-  const bgStr = bg(bgColor.r, bgColor.g, bgColor.b);
-  // We can't easily measure visible length with ANSI codes, so just pad generously
-  return moveTo(row, 1) + bgStr + content + ' '.repeat(width) + RESET;
-}
-
-/** Render menu options as an animated overlay centered ON TOP of the image.
- *  The image fills the screen, then the menu draws over the middle of it. */
+/** Render menu as animated overlay on top of the image.
+ *  After the image is shown, moves cursor up and draws the box
+ *  over the bottom-right portion of the image. */
 export async function showEnhancedMenuOverlay(
   session: PlayerSession,
   ansiFile: string,
@@ -78,169 +62,131 @@ export async function showEnhancedMenuOverlay(
   extraInfo?: string[]
 ): Promise<string> {
   const s = { ...DEFAULT_STYLE, ...style };
+  const bgStr = bg(s.barBg.r, s.barBg.g, s.barBg.b);
 
-  // 1. Show the full image and figure out how tall it is
+  // 1. Show the full image
   session.clear();
   await session.showAnsi(ansiFile);
 
-  // Count image height by reading the file content
-  const ansiContent = loadAnsiFile(
-    ansiDir,
-    ansiFile,
-    (session as any).graphicsMode ?? 'classic'
-  );
-  const imageRows = ansiContent ? countAnsiRows(ansiContent) : 22;
-
-  // 2. Calculate overlay dimensions
-  const cols = options.length > 6 ? 2 : 1;
-  const optionRows = cols === 2 ? Math.ceil(options.length / 2) : options.length;
-  const extraRows = extraInfo ? extraInfo.length : 0;
-  // border + title + sep + extra + options + blank + prompt + border
-  const totalRows = 1 + 1 + 1 + extraRows + optionRows + 1 + 1 + 1;
-
-  const termWidth = (process.stdout.columns ?? 80);
-
-  // 3. Position overlay at bottom-right of the IMAGE (not terminal)
-  //    2-line buffer from the bottom of the image
-  const overlayWidth = Math.min(termWidth - 6, 72);
-  const marginLeft = Math.max(1, termWidth - overlayWidth - 2); // right-aligned
-  const startRow = Math.max(1, imageRows - totalRows - 1); // within the image, 2 lines from bottom
-
-  // 4. Pause briefly to let the user see the full image
-  await sleep(200);
-
-  // 5. Draw the overlay with animation
-  const barBg = s.barBg;
-  let row = startRow;
+  // 2. Build all the overlay lines first (so we know exact height)
+  const lines: Array<{ text: string; visLen: number }> = [];
 
   // Top border
-  const topBorder = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╔' + '═'.repeat(overlayWidth - 2) + '╗';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + topBorder + RESET);
-  await sleep(s.animDelay);
-  row++;
+  lines.push({ text: fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╔' + '═'.repeat(BOX_WIDTH - 2) + '╗', visLen: BOX_WIDTH });
 
-  // Title - centered in the box
-  const titleInnerPad = Math.max(0, Math.floor((overlayWidth - 2 - title.length) / 2));
-  const titleLine =
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-    ' '.repeat(titleInnerPad) +
-    fg(s.titleColor.r, s.titleColor.g, s.titleColor.b) + title +
-    ' '.repeat(Math.max(0, overlayWidth - 2 - titleInnerPad - title.length)) +
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + titleLine + RESET);
-  await sleep(s.animDelay * 2);
-  row++;
+  // Title centered
+  const titlePad = Math.max(0, Math.floor((BOX_WIDTH - 2 - title.length) / 2));
+  const titleVis = ' '.repeat(titlePad) + title;
+  lines.push({ text: boxLine(' '.repeat(titlePad) + fg(s.titleColor.r, s.titleColor.g, s.titleColor.b) + title, titlePad + title.length, s), visLen: BOX_WIDTH });
 
-  // Separator after title
-  const sepLine =
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╟' + '─'.repeat(overlayWidth - 2) + '╢';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + sepLine + RESET);
-  await sleep(s.animDelay);
-  row++;
+  // Separator
+  lines.push({ text: fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╟' + '─'.repeat(BOX_WIDTH - 2) + '╢', visLen: BOX_WIDTH });
 
   // Extra info
   if (extraInfo) {
     for (const info of extraInfo) {
-      const infoLine =
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-        ' ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + info +
-        ' '.repeat(Math.max(0, overlayWidth - 3 - info.length)) +
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + infoLine + RESET);
-      await sleep(s.animDelay);
-      row++;
+      const truncated = info.slice(0, BOX_WIDTH - 4);
+      lines.push({ text: boxLine(' ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + truncated, 1 + truncated.length, s), visLen: BOX_WIDTH });
     }
   }
 
-  // Options - each line must be exactly overlayWidth visible chars total
-  // ║ + space + content + space + ║ = overlayWidth
-  // So content area = overlayWidth - 4
-  const contentWidth = overlayWidth - 4;
+  // Options
+  const cols = options.length > 6 ? 2 : 1;
+  const innerWidth = BOX_WIDTH - 4; // borders + 1 space each side
 
   if (cols === 2) {
-    const leftColWidth = Math.floor(contentWidth / 2);
-    const rightColWidth = contentWidth - leftColWidth; // absorb remainder
+    const leftW = Math.floor(innerWidth / 2);
+    const rightW = innerWidth - leftW;
     for (let i = 0; i < options.length; i += 2) {
-      const left = renderOptPadded(options[i], s, leftColWidth);
-      const right = i + 1 < options.length
-        ? renderOptPadded(options[i + 1], s, rightColWidth)
-        : ' '.repeat(rightColWidth);
-      const line =
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-        ' ' + left + right + ' ' +
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + line + RESET);
-      await sleep(s.animDelay);
-      row++;
+      const leftOpt = formatOpt(options[i], s);
+      const leftVis = optVisLen(options[i]);
+      const leftPad = Math.max(0, leftW - leftVis);
+
+      let rightStr = '';
+      let rightPad = rightW;
+      if (i + 1 < options.length) {
+        rightStr = formatOpt(options[i + 1], s);
+        const rightVis = optVisLen(options[i + 1]);
+        rightPad = Math.max(0, rightW - rightVis);
+      }
+
+      const content = ' ' + leftOpt + ' '.repeat(leftPad) + rightStr;
+      const contentVis = 1 + leftVis + leftPad + (i + 1 < options.length ? optVisLen(options[i + 1]) : 0);
+      lines.push({ text: boxLine(content, contentVis, s), visLen: BOX_WIDTH });
     }
   } else {
     for (const opt of options) {
-      const optStr = renderOptPadded(opt, s, contentWidth);
-      const line =
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-        ' ' + optStr + ' ' +
-        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + line + RESET);
-      await sleep(s.animDelay);
-      row++;
+      const optStr = formatOpt(opt, s);
+      const vis = optVisLen(opt);
+      lines.push({ text: boxLine(' ' + optStr, 1 + vis, s), visLen: BOX_WIDTH });
     }
   }
 
-  // Blank line before prompt
-  const blankLine =
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-    ' '.repeat(overlayWidth - 2) +
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + blankLine + RESET);
-  row++;
+  // Blank line
+  lines.push({ text: boxLine('', 0, s), visLen: BOX_WIDTH });
 
-  // Prompt line
-  const promptText = '› Your Choice: ';
-  const promptLine =
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
-    '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + promptText +
-    fg(255, 255, 255) +
-    ' '.repeat(Math.max(0, overlayWidth - 4 - promptText.length)) +
-    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + promptLine + RESET);
-  row++;
+  // Prompt
+  const promptText = ' › Your Choice: ';
+  lines.push({ text: boxLine(fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + promptText + fg(255, 255, 255), promptText.length, s), visLen: BOX_WIDTH });
 
   // Bottom border
-  const bottomBorder = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╚' + '═'.repeat(overlayWidth - 2) + '╝';
-  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + bottomBorder + RESET);
+  lines.push({ text: fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╚' + '═'.repeat(BOX_WIDTH - 2) + '╝', visLen: BOX_WIDTH });
 
-  // Position cursor at the prompt input position
-  session.write(moveTo(row - 1, marginLeft + 2 + promptText.length + 1));
+  // 3. Calculate cursor positioning
+  //    Move UP from current position to overlay on bottom of image
+  //    +2 for the buffer lines from the bottom
+  const overlayHeight = lines.length;
+  const moveUp = overlayHeight + 2;
 
-  // 5. Read valid key
+  // Right-align: figure out how many spaces to indent
+  const termWidth = process.stdout.columns ?? 80;
+  const indent = Math.max(0, termWidth - BOX_WIDTH - 2);
+
+  // 4. Brief pause to see the full image
+  await sleep(150);
+
+  // 5. Move cursor up into the image and draw each line with animation
+  session.write(`\x1B[${moveUp}A`); // Move up
+
+  for (const line of lines) {
+    // Move to right side of screen, draw the line
+    session.write(`\r${bgStr}${' '.repeat(indent)}${line.text}${RESET}\r\n`);
+    await sleep(s.animDelay);
+  }
+
+  // 6. Position cursor at the prompt input spot
+  //    Go up 2 lines (bottom border + prompt line), then right to after prompt text
+  session.write(`\x1B[2A`);
+  session.write(`\r\x1B[${indent + 1 + promptText.length + 1}C`);
+
+  // 7. Read valid key
   const validKeys = options.filter(o => o.enabled !== false).map(o => o.key.toLowerCase());
   while (true) {
     const key = await session.readKey();
     if (validKeys.includes(key.toLowerCase())) {
-      session.write(key + RESET + '\r\n');
+      session.write(key + RESET);
+      // Move cursor below the box before returning
+      session.write(`\x1B[3B\r\n`);
       return key.toLowerCase();
     }
   }
 }
 
-function renderOptPadded(opt: MenuOption, s: OverlayStyle, padTo: number): string {
-  const visLen = opt.key.length + opt.label.length + 4; // [X] Label
-  const padding = Math.max(0, padTo - visLen);
-  return renderOpt(opt, s) + ' '.repeat(padding);
-}
-
-function renderOpt(opt: MenuOption, s: OverlayStyle): string {
+function formatOpt(opt: MenuOption, s: OverlayStyle): string {
   const enabled = opt.enabled !== false;
   const kc = enabled ? s.keyColor : s.disabledColor;
   const bc = enabled ? s.bracketColor : s.disabledColor;
   const lc = enabled ? s.labelColor : s.disabledColor;
-
   return (
     fg(bc.r, bc.g, bc.b) + '[' +
     fg(kc.r, kc.g, kc.b) + opt.key +
     fg(bc.r, bc.g, bc.b) + '] ' +
     fg(lc.r, lc.g, lc.b) + opt.label
   );
+}
+
+function optVisLen(opt: MenuOption): number {
+  return opt.key.length + opt.label.length + 4; // [X] Label
 }
 
 /** Pre-built menu configurations for each game screen */
@@ -252,8 +198,8 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'G', label: 'Guilds' },
       { key: 'I', label: 'Inn / Tavern' },
       { key: 'C', label: 'Church' },
-      { key: 'T', label: 'Training Grounds' },
-      { key: 'M', label: "Merchants' Wharves" },
+      { key: 'T', label: 'Training' },
+      { key: 'M', label: 'Merchants' },
       { key: 'B', label: 'Back Alleys' },
       { key: 'U', label: 'Quests' },
       { key: 'W', label: 'Walk Outside' },
@@ -262,11 +208,11 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'L', label: 'List Players' },
       { key: 'F', label: 'Player Fight' },
       { key: 'P', label: 'Personal' },
-      { key: 'R', label: 'Grand Library' },
-      { key: 'V', label: 'View Ratings' },
+      { key: 'R', label: 'Library' },
+      { key: 'V', label: 'Ratings' },
       { key: 'K', label: 'Bank' },
-      { key: '*', label: 'Commit Suicide' },
-      { key: 'Q', label: 'Quit for Today' },
+      { key: '*', label: 'Suicide' },
+      { key: 'Q', label: 'Quit' },
     ],
   },
   SHOPS: {
@@ -284,9 +230,9 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     title: '⚔  WEAPON SHOP  ⚔',
     options: [
       { key: 'B', label: 'Browse & Buy' },
-      { key: 'S', label: 'Sell Equipment' },
-      { key: 'A', label: 'Attempt to Steal' },
-      { key: 'T', label: 'Talk to Shopkeeper' },
+      { key: 'S', label: 'Sell' },
+      { key: 'A', label: 'Steal' },
+      { key: 'T', label: 'Talk' },
       { key: 'R', label: 'Return' },
     ],
   },
@@ -294,9 +240,9 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     title: '🛡  SHIELD SHOP  🛡',
     options: [
       { key: 'B', label: 'Browse & Buy' },
-      { key: 'S', label: 'Sell Equipment' },
-      { key: 'A', label: 'Attempt to Steal' },
-      { key: 'T', label: 'Talk to Shopkeeper' },
+      { key: 'S', label: 'Sell' },
+      { key: 'A', label: 'Steal' },
+      { key: 'T', label: 'Talk' },
       { key: 'R', label: 'Return' },
     ],
   },
@@ -304,45 +250,45 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     title: '🗡  ARMOUR SHOP  🗡',
     options: [
       { key: 'B', label: 'Browse & Buy' },
-      { key: 'S', label: 'Sell Equipment' },
-      { key: 'A', label: 'Attempt to Steal' },
-      { key: 'T', label: 'Talk to Shopkeeper' },
+      { key: 'S', label: 'Sell' },
+      { key: 'A', label: 'Steal' },
+      { key: 'T', label: 'Talk' },
       { key: 'R', label: 'Return' },
     ],
   },
   CHURCH: {
     title: '✦  THE CHURCH  ✦',
     options: [
-      { key: 'B', label: 'Buy Healing Potions' },
-      { key: 'C', label: 'Contribute to Church' },
-      { key: 'G', label: 'Give to the Poor' },
-      { key: 'A', label: 'Accept Blessings' },
-      { key: 'S', label: 'Steal from Church' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'B', label: 'Buy Potions' },
+      { key: 'C', label: 'Contribute' },
+      { key: 'G', label: 'Give to Poor' },
+      { key: 'A', label: 'Blessings' },
+      { key: 'S', label: 'Steal' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
   INN: {
     title: '🍺  THE TAVERN  🍺',
     options: [
-      { key: 'M', label: 'Message Board' },
-      { key: 'D', label: 'Drink at Bar' },
+      { key: 'M', label: 'Messages' },
+      { key: 'D', label: 'Drink' },
       { key: 'G', label: 'Get a Room' },
-      { key: 'T', label: 'Talk to Bartender' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'T', label: 'Bartender' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
   GUILDS: {
     title: '✧  THE GUILDS  ✧',
     options: [
-      { key: 'S', label: "Sorcerers' Guild" },
-      { key: 'A', label: "Alchemists' Guild" },
-      { key: 'F', label: "Fighters' Guild" },
-      { key: 'M', label: "Monks' Guild" },
-      { key: 'P', label: "Peddlers' Guild" },
-      { key: 'C', label: "Clerics' Guild" },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'S', label: 'Sorcerers' },
+      { key: 'A', label: 'Alchemists' },
+      { key: 'F', label: 'Fighters' },
+      { key: 'M', label: 'Monks' },
+      { key: 'P', label: 'Peddlers' },
+      { key: 'C', label: 'Clerics' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
@@ -353,7 +299,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'T', label: "Thieves' Guild" },
       { key: 'B', label: 'Black Market' },
       { key: 'C', label: 'Curses' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
@@ -369,7 +315,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   TRAIN: {
-    title: '⚔  TRAINING GROUNDS  ⚔',
+    title: '⚔  TRAINING  ⚔',
     options: [
       { key: '1', label: 'Strength' },
       { key: '2', label: 'Defense' },
@@ -380,52 +326,46 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   LIBRARY: {
-    title: '📖  GRAND LIBRARY  📖',
+    title: '📖  LIBRARY  📖',
     options: [
-      { key: 'H', label: 'History of the Realm' },
-      { key: 'M', label: 'Merchant Knowledge' },
-      { key: 'N', label: 'Noble Arts of Combat' },
+      { key: 'H', label: 'History' },
+      { key: 'M', label: 'Merchants' },
+      { key: 'N', label: 'Combat Arts' },
       { key: 'D', label: 'On Death' },
-      { key: 'I', label: 'Hints & Tips' },
-      { key: 'E', label: 'Hall of Emperors' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'I', label: 'Hints' },
+      { key: 'E', label: 'Emperors' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
   MANOR: {
     title: '🏰  ARMY & MANOR  🏰',
     options: [
-      { key: 'I', label: 'Inspect Manor' },
-      { key: 'P', label: 'Purchase Land' },
-      { key: 'M', label: 'Recruit Military' },
-      { key: 'B', label: 'Build Structures' },
-      { key: 'T', label: 'Set Tax Rate' },
-      { key: 'C', label: 'Collect Treasury' },
-      { key: 'A', label: 'Attack Manor' },
+      { key: 'I', label: 'Inspect' },
+      { key: 'P', label: 'Buy Land' },
+      { key: 'M', label: 'Recruit' },
+      { key: 'B', label: 'Build' },
+      { key: 'T', label: 'Tax Rate' },
+      { key: 'C', label: 'Treasury' },
+      { key: 'A', label: 'Attack' },
       { key: 'D', label: 'Diplomacy' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
-  MERCHANT: {
-    title: '💎  MERCHANTS  💎',
-    options: [],
-  },
+  MERCHANT: { title: '💎  MERCHANTS  💎', options: [] },
   PERSONAL: {
     title: '👤  PERSONAL  👤',
     options: [
-      { key: 'C', label: 'Change Profession' },
+      { key: 'C', label: 'Change Class' },
       { key: 'L', label: 'Level Status' },
       { key: 'A', label: 'Announcements' },
-      { key: 'N', label: 'Player News' },
-      { key: 'Y', label: 'Your Stats' },
+      { key: 'N', label: 'News' },
+      { key: 'Y', label: 'Stats' },
       { key: 'R', label: 'Return' },
     ],
   },
-  FIGHT: {
-    title: '⚔  PLAYER FIGHT  ⚔',
-    options: [],
-  },
+  FIGHT: { title: '⚔  PLAYER FIGHT  ⚔', options: [] },
   MAGICIAN: {
     title: "✧  MAGICIAN'S SHOP  ✧",
     options: [
