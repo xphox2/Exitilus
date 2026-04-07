@@ -56,8 +56,8 @@ function generateAnsiBulletin(players: PlayerRecord[], content: GameContent, dat
   ln(`${R}`);
   ln(`${BY}╔══════════════════════════════════════════════════════════════════════════════╗`);
   ln(`║${BW}                      E X I T I L U S   R E B O R N                         ${BY}║`);
-  ln(`║${BC}                         Daily Scoreboard                                    ${BY}║`);
-  ln(`╚══════════════════════════════════════════════════════════════════════════════╝${R}`);
+  ln(`${BY}║${BC}                         Daily Scoreboard                                    ${BY}║`);
+  ln(`${BY}╚══════════════════════════════════════════════════════════════════════════════╝${R}`);
   ln(`  ${C}${dateStr}${R}`);
   ln('');
 
@@ -172,8 +172,8 @@ function generateAnsiBulletin(players: PlayerRecord[], content: GameContent, dat
   ln('');
 
   ln(`${BY}╔══════════════════════════════════════════════════════════════════════════════╗`);
-  ln(`║${BG}  Play Exitilus Reborn today! Type NEW at the character select to begin.     ${BY}║`);
-  ln(`╚══════════════════════════════════════════════════════════════════════════════╝${R}`);
+  ln(`${BY}║${BG}  Play Exitilus Reborn today! Type NEW at the character select to begin.     ${BY}║`);
+  ln(`${BY}╚══════════════════════════════════════════════════════════════════════════════╝${R}`);
 
   return out;
 }
