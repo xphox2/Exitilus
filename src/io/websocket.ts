@@ -76,13 +76,20 @@ export class WebSocketAdapter implements PlayerSession {
     return new Promise(resolve => { this.inputResolve = resolve; });
   }
 
+  /** Discard any buffered input */
+  flushInput(): void {
+    this.inputBuffer.length = 0;
+  }
+
   async readKey(): Promise<string> {
+    this.flushInput();
     const ch = await this.readChar();
     if (ch === '\x03' || this.closed) throw new Error('Connection closed');
     return ch;
   }
 
   async readLine(prompt: string): Promise<string> {
+    this.flushInput();
     this.write(prompt);
     let line = '';
     while (true) {

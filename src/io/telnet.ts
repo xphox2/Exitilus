@@ -82,7 +82,12 @@ export class TelnetAdapter implements PlayerSession {
     });
   }
 
+  flushInput(): void {
+    this.inputBuffer.length = 0;
+  }
+
   async readKey(): Promise<string> {
+    this.flushInput();
     const ch = await this.readChar();
     if (ch === '\x03' || this.closed) {
       throw new Error('Connection closed');
@@ -91,6 +96,7 @@ export class TelnetAdapter implements PlayerSession {
   }
 
   async readLine(prompt: string): Promise<string> {
+    this.flushInput();
     this.write(prompt);
     let line = '';
 
