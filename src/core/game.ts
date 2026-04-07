@@ -304,7 +304,7 @@ export class GameEngine {
 
         case 'y':
           this.session.clear();
-          showStats(this.session, this.player, this.content);
+          await showStats(this.session, this.player, this.content);
           await this.session.pause();
           break;
 

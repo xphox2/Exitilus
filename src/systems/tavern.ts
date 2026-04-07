@@ -86,7 +86,7 @@ export async function enterTavern(
         break;
       case 'y':
         session.clear();
-        showStats(session, player, content);
+        await showStats(session, player, content);
         await session.pause();
         break;
       case 'q':

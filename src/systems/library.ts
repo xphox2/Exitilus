@@ -103,7 +103,7 @@ export async function enterLibrary(
 
       case 'y':
         session.clear();
-        showStats(session, player, content);
+        await showStats(session, player, content);
         await session.pause();
         break;
 

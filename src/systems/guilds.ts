@@ -161,7 +161,7 @@ export async function enterGuilds(
       case 'c': await castSpells(session, player, content, db, "Clerics' Guild"); break;
       case 'y':
         session.clear();
-        showStats(session, player, content);
+        await showStats(session, player, content);
         await session.pause();
         break;
       case 'q':
