@@ -43,6 +43,37 @@ export class LocalAdapter implements PlayerSession {
     });
   }
 
+  async readPassword(prompt: string): Promise<string> {
+    this.write(prompt);
+    let password = '';
+    if (process.stdin.isTTY) process.stdin.setRawMode(true);
+    process.stdin.resume();
+    return new Promise((resolve) => {
+      const onData = (data: Buffer) => {
+        const ch = data.toString();
+        if (ch === '\r' || ch === '\n') {
+          if (process.stdin.isTTY) process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          this.writeln('');
+          resolve(password);
+        } else if (ch === '\x08' || ch === '\x7F') {
+          if (password.length > 0) {
+            password = password.slice(0, -1);
+            this.write('\x08 \x08');
+          }
+        } else if (ch === '\x03') {
+          this.writeln('\r\n\r\nExiting...');
+          process.exit(0);
+        } else if (ch.charCodeAt(0) >= 32) {
+          password += ch;
+          this.write('*');
+        }
+      };
+      process.stdin.on('data', onData);
+    });
+  }
+
   readKey(): Promise<string> {
     return new Promise((resolve) => {
       if (process.stdin.isTTY) {

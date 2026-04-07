@@ -148,7 +148,7 @@ export class GameEngine {
         // Verify password (skip for BBS door mode or legacy players with no password)
         const needsAuth = !this.session.preAuthenticated && player.passwordHash && player.passwordHash.length > 0;
         if (needsAuth) {
-          const pw = await this.session.readLine(`${ANSI.BRIGHT_CYAN}Password: ${ANSI.BRIGHT_WHITE}`);
+          const pw = await this.session.readPassword(`${ANSI.BRIGHT_CYAN}Password: ${ANSI.BRIGHT_WHITE}`);
           if (!verifyPassword(pw, player.passwordHash)) {
             this.session.writeln(`${ANSI.BRIGHT_RED}Wrong password!${ANSI.RESET}`);
             await this.session.pause();

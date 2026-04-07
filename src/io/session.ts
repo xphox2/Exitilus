@@ -16,6 +16,9 @@ export interface PlayerSession {
   /** Read a line of input with optional prompt */
   readLine(prompt: string): Promise<string>;
 
+  /** Read a line with masked input (shows * for each character) */
+  readPassword(prompt: string): Promise<string>;
+
   /** Read a single keypress, returns the character */
   readKey(): Promise<string>;
 

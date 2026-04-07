@@ -124,6 +124,22 @@ export class TelnetAdapter implements PlayerSession {
     }
   }
 
+  async readPassword(prompt: string): Promise<string> {
+    this.write(prompt);
+    let password = '';
+    while (true) {
+      const ch = await this.readChar();
+      if (this.closed) throw new Error('Connection closed');
+      if (ch === '\r' || ch === '\n') { this.writeln(''); return password.trim(); }
+      if (ch === '\x08' || ch === '\x7F') {
+        if (password.length > 0) { password = password.slice(0, -1); this.write('\x08 \x08'); }
+        continue;
+      }
+      if (ch === '\x03') throw new Error('Connection closed');
+      if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) < 127) { password += ch; this.write('*'); }
+    }
+  }
+
   clear(): void {
     this.write(ANSI.CLEAR);
   }

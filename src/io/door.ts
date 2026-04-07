@@ -112,6 +112,11 @@ export class DoorAdapter implements PlayerSession {
     });
   }
 
+  async readPassword(prompt: string): Promise<string> {
+    // Door mode is pre-authenticated, but implement for interface compliance
+    return this.readLine(prompt);
+  }
+
   readKey(): Promise<string> {
     return new Promise((resolve) => {
       if (process.stdin.isTTY) {

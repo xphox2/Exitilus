@@ -62,13 +62,13 @@ export async function createNewPlayer(
   session.writeln('');
   let password = '';
   while (!password) {
-    password = await session.readLine(`${ANSI.BRIGHT_GREEN}Choose a password: ${ANSI.BRIGHT_WHITE}`);
+    password = await session.readPassword(`${ANSI.BRIGHT_GREEN}Choose a password: ${ANSI.BRIGHT_WHITE}`);
     if (password.length < 3) {
       session.writeln(`${ANSI.BRIGHT_RED}Password must be at least 3 characters.${ANSI.RESET}`);
       password = '';
       continue;
     }
-    const confirm = await session.readLine(`${ANSI.BRIGHT_GREEN}Confirm password: ${ANSI.BRIGHT_WHITE}`);
+    const confirm = await session.readPassword(`${ANSI.BRIGHT_GREEN}Confirm password: ${ANSI.BRIGHT_WHITE}`);
     if (confirm !== password) {
       session.writeln(`${ANSI.BRIGHT_RED}Passwords don't match. Try again.${ANSI.RESET}`);
       password = '';
