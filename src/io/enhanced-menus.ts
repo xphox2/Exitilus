@@ -95,30 +95,19 @@ export async function showEnhancedMenuOverlay(
   const innerWidth = BOX_WIDTH - 4; // borders + 1 space each side
 
   if (cols === 2) {
-    const leftW = Math.floor(innerWidth / 2);
-    const rightW = innerWidth - leftW;
+    const colW = Math.floor(innerWidth / 2);
     for (let i = 0; i < options.length; i += 2) {
-      const leftOpt = formatOpt(options[i], s);
-      const leftVis = optVisLen(options[i]);
-      const leftPad = Math.max(0, leftW - leftVis);
-
-      let rightStr = '';
-      let rightPad = rightW;
-      if (i + 1 < options.length) {
-        rightStr = formatOpt(options[i + 1], s);
-        const rightVis = optVisLen(options[i + 1]);
-        rightPad = Math.max(0, rightW - rightVis);
-      }
-
-      const content = ' ' + leftOpt + ' '.repeat(leftPad) + rightStr;
-      const contentVis = 1 + leftVis + leftPad + (i + 1 < options.length ? optVisLen(options[i + 1]) : 0);
-      lines.push({ text: boxLine(content, contentVis, s), visLen: BOX_WIDTH });
+      const leftStr = padOpt(options[i], s, colW);
+      const rightStr = i + 1 < options.length
+        ? padOpt(options[i + 1], s, innerWidth - colW)
+        : ' '.repeat(innerWidth - colW);
+      // innerWidth visible chars total
+      lines.push({ text: boxLine(' ' + leftStr + rightStr, innerWidth + 1, s), visLen: BOX_WIDTH });
     }
   } else {
     for (const opt of options) {
-      const optStr = formatOpt(opt, s);
-      const vis = optVisLen(opt);
-      lines.push({ text: boxLine(' ' + optStr, 1 + vis, s), visLen: BOX_WIDTH });
+      const optStr = padOpt(opt, s, innerWidth);
+      lines.push({ text: boxLine(' ' + optStr, innerWidth + 1, s), visLen: BOX_WIDTH });
     }
   }
 
@@ -172,6 +161,13 @@ export async function showEnhancedMenuOverlay(
   }
 }
 
+/** Format option and pad to exact visible width */
+function padOpt(opt: MenuOption, s: OverlayStyle, width: number): string {
+  const vis = optVisLen(opt);
+  const pad = Math.max(0, width - vis);
+  return formatOpt(opt, s) + ' '.repeat(pad);
+}
+
 function formatOpt(opt: MenuOption, s: OverlayStyle): string {
   const enabled = opt.enabled !== false;
   const kc = enabled ? s.keyColor : s.disabledColor;
@@ -186,7 +182,8 @@ function formatOpt(opt: MenuOption, s: OverlayStyle): string {
 }
 
 function optVisLen(opt: MenuOption): number {
-  return opt.key.length + opt.label.length + 4; // [X] Label
+  // [X] Label = '[' + key + ']' + ' ' + label = 3 extra chars
+  return opt.key.length + opt.label.length + 3;
 }
 
 /** Pre-built menu configurations for each game screen */
