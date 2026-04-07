@@ -18,11 +18,11 @@ game:
 
 kingdoms:
   - id: chocolate
-    name: The Kingdom of Chocolate
-    description: A sweet realm ruled by indulgence.
+    name: The Kingdom in the Sea
+    description: A coastal realm of sailors and traders.
   - id: brute_strength
-    name: The Kingdom of Brute Strength
-    description: A realm where might makes right.
+    name: The Kingdom in the Mountains
+    description: A rugged realm of stone and steel.
   - id: fields
     name: The Kingdom in the Fields
     description: A pastoral kingdom of farmers and fighters.
