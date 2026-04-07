@@ -77,10 +77,10 @@ export async function showEnhancedMenuOverlay(
   const termHeight = (process.stdout.rows ?? 25);
   const termWidth = (process.stdout.columns ?? 80);
 
-  // 3. Center the overlay on screen (vertically and horizontally)
-  const overlayWidth = Math.min(termWidth - 4, 72); // leave 2 char margin each side
-  const marginLeft = Math.max(1, Math.floor((termWidth - overlayWidth) / 2));
-  const startRow = Math.max(1, Math.floor((termHeight - totalRows) / 2));
+  // 3. Position overlay at bottom-right with 2-line buffer from bottom
+  const overlayWidth = Math.min(termWidth - 6, 72); // leave room on left side
+  const marginLeft = Math.max(1, termWidth - overlayWidth - 2); // right-aligned with 2 char margin
+  const startRow = Math.max(1, termHeight - totalRows - 2); // 2-line buffer from bottom
 
   // 4. Pause briefly to let the user see the full image
   await sleep(200);
@@ -128,14 +128,19 @@ export async function showEnhancedMenuOverlay(
     }
   }
 
-  // Options
-  const innerWidth = overlayWidth - 4; // 2 for borders, 2 for padding
+  // Options - each line must be exactly overlayWidth visible chars total
+  // ║ + space + content + space + ║ = overlayWidth
+  // So content area = overlayWidth - 4
+  const contentWidth = overlayWidth - 4;
 
   if (cols === 2) {
-    const halfWidth = Math.floor(innerWidth / 2);
+    const leftColWidth = Math.floor(contentWidth / 2);
+    const rightColWidth = contentWidth - leftColWidth; // absorb remainder
     for (let i = 0; i < options.length; i += 2) {
-      const left = renderOptPadded(options[i], s, halfWidth);
-      const right = i + 1 < options.length ? renderOptPadded(options[i + 1], s, halfWidth) : ' '.repeat(halfWidth);
+      const left = renderOptPadded(options[i], s, leftColWidth);
+      const right = i + 1 < options.length
+        ? renderOptPadded(options[i + 1], s, rightColWidth)
+        : ' '.repeat(rightColWidth);
       const line =
         fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
         ' ' + left + right + ' ' +
@@ -146,7 +151,7 @@ export async function showEnhancedMenuOverlay(
     }
   } else {
     for (const opt of options) {
-      const optStr = renderOptPadded(opt, s, innerWidth);
+      const optStr = renderOptPadded(opt, s, contentWidth);
       const line =
         fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
         ' ' + optStr + ' ' +
