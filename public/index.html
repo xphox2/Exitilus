@@ -132,12 +132,24 @@
     term.open(termEl);
 
     function fitToWidth() {
+      // Start fresh each time
+      term.options.fontSize = 11;
       fitAddon.fit();
+
       // Shrink font until 160 cols fit
-      while (term.cols < 160 && term.options.fontSize > 6) {
+      let attempts = 0;
+      while (term.cols < 160 && term.options.fontSize > 5 && attempts < 10) {
         term.options.fontSize = term.options.fontSize - 1;
         fitAddon.fit();
+        attempts++;
       }
+
+      // If we still can't fit 160, force it
+      if (term.cols < 160) {
+        term.resize(160, term.rows);
+      }
+
+      console.log('Terminal:', term.cols + 'x' + term.rows, 'font:', term.options.fontSize + 'px');
     }
 
     fitToWidth();
