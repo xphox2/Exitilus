@@ -33,6 +33,20 @@ export function createWebServer(options: {
 
   // HTTP server for static files
   const server = http.createServer((req, res) => {
+    // Test endpoint: serve raw enhanced ANSI file
+    if (req.url === '/test-ansi') {
+      const testFile = join(ansiDir, 'enhanced', 'MAIN.ANS');
+      if (existsSync(testFile)) {
+        const data = readFileSync(testFile, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(data);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('No enhanced MAIN.ANS found');
+      }
+      return;
+    }
+
     let filePath = req.url === '/' ? '/index.html' : req.url ?? '/index.html';
     // Security: prevent directory traversal
     filePath = filePath.replace(/\.\./g, '');
