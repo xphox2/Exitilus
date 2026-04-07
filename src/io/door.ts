@@ -86,6 +86,7 @@ export class DoorAdapter implements PlayerSession {
   private info: DropFileInfo;
   private ansiDir: string;
   public graphicsMode: string = 'classic';
+  public preAuthenticated: boolean = true;
 
   constructor(info: DropFileInfo, ansiDir: string) {
     this.info = info;

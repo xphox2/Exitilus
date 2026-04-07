@@ -39,4 +39,7 @@ export interface PlayerSession {
 
   /** Graphics mode: 'classic', 'enhanced', or 'ascii' */
   graphicsMode?: string;
+
+  /** Whether this session was pre-authenticated (e.g. BBS door mode) */
+  preAuthenticated?: boolean;
 }

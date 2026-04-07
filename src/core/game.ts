@@ -11,6 +11,7 @@ import type { GraphicsMode } from '../io/capabilities.js';
 import { showMenu } from './menus.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS } from '../io/enhanced-menus.js';
 import { createNewPlayer } from './player-creation.js';
+import { verifyPassword } from './auth.js';
 import { showStats } from './stats.js';
 import { walkOutside } from '../systems/combat.js';
 import { enterShops } from '../systems/shops.js';
@@ -140,21 +141,34 @@ export class GameEngine {
         } else {
           return;
         }
-      } else if (!player.alive) {
-        // Dead player - attempt resurrection
-        const resurrected = await attemptResurrection(this.session, player, this.db);
-        if (!resurrected) return;
       } else {
-        // Welcome back
-        this.session.writeln('');
-        this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
-        player.lastLogin = new Date().toISOString();
-        // Reset daily counters
-        player.monsterFights = 0;
-        player.playerFights = 0;
-        this.db.updatePlayer(player);
-        await checkMessages(this.session, player, this.db);
-        await this.session.pause();
+        // Verify password (skip for BBS door mode or legacy players with no password)
+        const needsAuth = !this.session.preAuthenticated && player.passwordHash && player.passwordHash.length > 0;
+        if (needsAuth) {
+          const pw = await this.session.readLine(`${ANSI.BRIGHT_CYAN}Password: ${ANSI.BRIGHT_WHITE}`);
+          if (!verifyPassword(pw, player.passwordHash)) {
+            this.session.writeln(`${ANSI.BRIGHT_RED}Wrong password!${ANSI.RESET}`);
+            await this.session.pause();
+            return;
+          }
+        }
+
+        if (!player.alive) {
+          // Dead player - attempt resurrection
+          const resurrected = await attemptResurrection(this.session, player, this.db);
+          if (!resurrected) return;
+        } else {
+          // Welcome back
+          this.session.writeln('');
+          this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+          player.lastLogin = new Date().toISOString();
+          // Reset daily counters
+          player.monsterFights = 0;
+          player.playerFights = 0;
+          this.db.updatePlayer(player);
+          await checkMessages(this.session, player, this.db);
+          await this.session.pause();
+        }
       }
     }
 

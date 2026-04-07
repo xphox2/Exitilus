@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS players (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE NOT NULL,
   real_name TEXT NOT NULL,
+  password_hash TEXT NOT NULL DEFAULT '',
   sex TEXT NOT NULL DEFAULT 'M',
   class_id TEXT NOT NULL,
   race_id TEXT NOT NULL,
@@ -112,15 +113,15 @@ export class GameDatabase {
 
   createPlayer(player: Omit<PlayerRecord, 'id'>): PlayerRecord {
     this.db.run(`
-      INSERT INTO players (name, real_name, sex, class_id, race_id, level, xp, high_xp,
+      INSERT INTO players (name, real_name, password_hash, sex, class_id, race_id, level, xp, high_xp,
         hp, max_hp, mp, max_mp, strength, defense, agility, leadership, wisdom,
         gold, bank_gold, evil_deeds, monster_fights, player_fights, healing_potions,
         right_hand, left_hand, armour, manor_id, kingdom_id, quests_completed,
         alive, last_login, soldiers, knights, cannons, forts, training_level, morale,
         serfs, food, farms, silos, circuses, iron_mines, gold_mines, tax_rate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      player.name, player.realName, player.sex, player.classId, player.raceId,
+      player.name, player.realName, player.passwordHash, player.sex, player.classId, player.raceId,
       player.level, player.xp, player.highXp, player.hp, player.maxHp,
       player.mp, player.maxMp, player.strength, player.defense, player.agility,
       player.leadership, player.wisdom, player.gold, player.bankGold,
@@ -143,7 +144,7 @@ export class GameDatabase {
   updatePlayer(player: PlayerRecord): void {
     this.db.run(`
       UPDATE players SET
-        name=?, real_name=?, sex=?, class_id=?, race_id=?, level=?, xp=?, high_xp=?,
+        name=?, real_name=?, password_hash=?, sex=?, class_id=?, race_id=?, level=?, xp=?, high_xp=?,
         hp=?, max_hp=?, mp=?, max_mp=?, strength=?, defense=?, agility=?,
         leadership=?, wisdom=?, gold=?, bank_gold=?, evil_deeds=?,
         monster_fights=?, player_fights=?, healing_potions=?,
@@ -153,7 +154,7 @@ export class GameDatabase {
         serfs=?, food=?, farms=?, silos=?, circuses=?, iron_mines=?, gold_mines=?, tax_rate=?
       WHERE id=?
     `, [
-      player.name, player.realName, player.sex, player.classId, player.raceId,
+      player.name, player.realName, player.passwordHash, player.sex, player.classId, player.raceId,
       player.level, player.xp, player.highXp, player.hp, player.maxHp,
       player.mp, player.maxMp, player.strength, player.defense, player.agility,
       player.leadership, player.wisdom, player.gold, player.bankGold,
@@ -209,6 +210,7 @@ export class GameDatabase {
       id: row['id'] as number,
       name: row['name'] as string,
       realName: row['real_name'] as string,
+      passwordHash: (row['password_hash'] as string) ?? '',
       sex: row['sex'] as 'M' | 'F',
       classId: row['class_id'] as string,
       raceId: row['race_id'] as string,

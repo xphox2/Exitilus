@@ -1,3 +1,17 @@
+## 0.6.1
+
+Add password authentication for player characters.
+
+### Added
+- **Password system**: Players set a password during character creation (min 3 chars, must confirm)
+- **Login verification**: Returning players must enter their password to access their character
+- **SHA-256 hashing**: Passwords stored as salted SHA-256 hashes, never in plaintext
+- **BBS door bypass**: Door mode sessions skip password check (BBS already authenticated the user)
+- **Legacy support**: Characters created before passwords were added can still log in without one
+
+### Breaking
+- Database schema changed (added password_hash column). Delete your `exitilus.db` to reset, or existing characters will have no password set
+
 ## 0.6.0
 
 Add web browser mode - play Exitilus in your browser via xterm.js.

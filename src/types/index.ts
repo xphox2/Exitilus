@@ -114,6 +114,7 @@ export interface PlayerRecord {
   id: number;
   name: string;
   realName: string;
+  passwordHash: string;
   sex: 'M' | 'F';
   classId: string;
   raceId: string;
