@@ -3,6 +3,12 @@
 
 import type { PlayerSession } from './session.js';
 import { fg, bg, RESET, type RGB } from './truecolor.js';
+import { loadAnsiFile } from './ansi.js';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ansiDir = join(__dirname, '..', '..', 'content', 'ansi');
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -78,9 +84,8 @@ export async function showEnhancedMenuOverlay(
   await session.showAnsi(ansiFile);
 
   // Count image height by reading the file content
-  const { loadAnsiFile } = require('./ansi.js');
   const ansiContent = loadAnsiFile(
-    require('path').join(require('path').dirname(require('url').fileURLToPath(import.meta.url)), '..', '..', 'content', 'ansi'),
+    ansiDir,
     ansiFile,
     (session as any).graphicsMode ?? 'classic'
   );
