@@ -51,8 +51,8 @@ function drawLineAt(row: number, content: string, width: number, bgColor: RGB): 
   return moveTo(row, 1) + bgStr + content + ' '.repeat(width) + RESET;
 }
 
-/** Render menu options as an animated overlay ON TOP of the image.
- *  The image fills the screen, then the menu fades in over the bottom portion. */
+/** Render menu options as an animated overlay centered ON TOP of the image.
+ *  The image fills the screen, then the menu draws over the middle of it. */
 export async function showEnhancedMenuOverlay(
   session: PlayerSession,
   ansiFile: string,
@@ -67,80 +67,121 @@ export async function showEnhancedMenuOverlay(
   session.clear();
   await session.showAnsi(ansiFile);
 
-  // 2. Calculate how many rows we need for the overlay
+  // 2. Calculate overlay dimensions
   const cols = options.length > 6 ? 2 : 1;
   const optionRows = cols === 2 ? Math.ceil(options.length / 2) : options.length;
   const extraRows = extraInfo ? extraInfo.length : 0;
-  const totalOverlayRows = 1 + 1 + extraRows + optionRows + 1 + 1; // border + title + extra + options + spacer + prompt
+  // border + title + blank + extra + options + blank + prompt + border
+  const totalRows = 1 + 1 + 1 + extraRows + optionRows + 1 + 1 + 1;
 
-  // 3. Start drawing from bottom of screen upward
-  //    We assume ~25 rows for 80-col or detect from image height
-  //    Position overlay at the bottom portion of the screen
   const termHeight = (process.stdout.rows ?? 25);
-  const startRow = Math.max(1, termHeight - totalOverlayRows);
+  const termWidth = (process.stdout.columns ?? 80);
 
+  // 3. Center the overlay on screen (vertically and horizontally)
+  const overlayWidth = Math.min(termWidth - 4, 72); // leave 2 char margin each side
+  const marginLeft = Math.max(1, Math.floor((termWidth - overlayWidth) / 2));
+  const startRow = Math.max(1, Math.floor((termHeight - totalRows) / 2));
+
+  // 4. Pause briefly to let the user see the full image
+  await sleep(200);
+
+  // 5. Draw the overlay with animation
   const barBg = s.barBg;
-  const width = (process.stdout.columns ?? 80);
+  let row = startRow;
 
-  // 4. Animate: draw each line with a delay
-
-  // Top border - thin line
-  const borderStr = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '▄'.repeat(width);
-  session.write(drawLineAt(startRow, borderStr, 0, barBg));
+  // Top border
+  const topBorder = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╔' + '═'.repeat(overlayWidth - 2) + '╗';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + topBorder + RESET);
   await sleep(s.animDelay);
+  row++;
 
-  let row = startRow + 1;
-
-  // Title
-  const titlePad = Math.max(0, Math.floor((width - title.length) / 2));
-  const titleStr = ' '.repeat(titlePad) + fg(s.titleColor.r, s.titleColor.g, s.titleColor.b) + title;
-  session.write(drawLineAt(row, titleStr, width, barBg));
+  // Title - centered in the box
+  const titleInnerPad = Math.max(0, Math.floor((overlayWidth - 2 - title.length) / 2));
+  const titleLine =
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+    ' '.repeat(titleInnerPad) +
+    fg(s.titleColor.r, s.titleColor.g, s.titleColor.b) + title +
+    ' '.repeat(Math.max(0, overlayWidth - 2 - titleInnerPad - title.length)) +
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + titleLine + RESET);
   await sleep(s.animDelay * 2);
+  row++;
+
+  // Separator after title
+  const sepLine =
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╟' + '─'.repeat(overlayWidth - 2) + '╢';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + sepLine + RESET);
+  await sleep(s.animDelay);
   row++;
 
   // Extra info
   if (extraInfo) {
-    for (const line of extraInfo) {
-      const infoStr = '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + line;
-      session.write(drawLineAt(row, infoStr, width, barBg));
+    for (const info of extraInfo) {
+      const infoLine =
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+        ' ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + info +
+        ' '.repeat(Math.max(0, overlayWidth - 3 - info.length)) +
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + infoLine + RESET);
       await sleep(s.animDelay);
       row++;
     }
   }
 
   // Options
+  const innerWidth = overlayWidth - 4; // 2 for borders, 2 for padding
+
   if (cols === 2) {
-    const colWidth = Math.floor(width / 2) - 2;
+    const halfWidth = Math.floor(innerWidth / 2);
     for (let i = 0; i < options.length; i += 2) {
-      let line = '  ' + renderOpt(options[i], s);
-      if (i + 1 < options.length) {
-        const leftLen = options[i].key.length + options[i].label.length + 5;
-        const gap = Math.max(2, colWidth - leftLen);
-        line += ' '.repeat(gap) + renderOpt(options[i + 1], s);
-      }
-      session.write(drawLineAt(row, line, width, barBg));
+      const left = renderOptPadded(options[i], s, halfWidth);
+      const right = i + 1 < options.length ? renderOptPadded(options[i + 1], s, halfWidth) : ' '.repeat(halfWidth);
+      const line =
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+        ' ' + left + right + ' ' +
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + line + RESET);
       await sleep(s.animDelay);
       row++;
     }
   } else {
     for (const opt of options) {
-      const line = '  ' + renderOpt(opt, s);
-      session.write(drawLineAt(row, line, width, barBg));
+      const optStr = renderOptPadded(opt, s, innerWidth);
+      const line =
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+        ' ' + optStr + ' ' +
+        fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+      session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + line + RESET);
       await sleep(s.animDelay);
       row++;
     }
   }
 
-  // Empty spacer
-  session.write(drawLineAt(row, '', width, barBg));
+  // Blank line before prompt
+  const blankLine =
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+    ' '.repeat(overlayWidth - 2) +
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + blankLine + RESET);
   row++;
 
-  // Prompt
-  const promptStr = '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + '› Your Choice: ' + fg(255, 255, 255);
-  session.write(drawLineAt(row, promptStr, width, barBg));
+  // Prompt line
+  const promptText = '› Your Choice: ';
+  const promptLine =
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║' +
+    '  ' + fg(s.promptColor.r, s.promptColor.g, s.promptColor.b) + promptText +
+    fg(255, 255, 255) +
+    ' '.repeat(Math.max(0, overlayWidth - 4 - promptText.length)) +
+    fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '║';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + promptLine + RESET);
+  row++;
 
-  // Position cursor right after the prompt text
-  session.write(moveTo(row, 19));
+  // Bottom border
+  const bottomBorder = fg(s.borderColor.r, s.borderColor.g, s.borderColor.b) + '╚' + '═'.repeat(overlayWidth - 2) + '╝';
+  session.write(moveTo(row, marginLeft) + bg(barBg.r, barBg.g, barBg.b) + bottomBorder + RESET);
+
+  // Position cursor at the prompt input position
+  session.write(moveTo(row - 1, marginLeft + 2 + promptText.length + 1));
 
   // 5. Read valid key
   const validKeys = options.filter(o => o.enabled !== false).map(o => o.key.toLowerCase());
@@ -151,6 +192,12 @@ export async function showEnhancedMenuOverlay(
       return key.toLowerCase();
     }
   }
+}
+
+function renderOptPadded(opt: MenuOption, s: OverlayStyle, padTo: number): string {
+  const visLen = opt.key.length + opt.label.length + 4; // [X] Label
+  const padding = Math.max(0, padTo - visLen);
+  return renderOpt(opt, s) + ' '.repeat(padding);
 }
 
 function renderOpt(opt: MenuOption, s: OverlayStyle): string {
