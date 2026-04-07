@@ -52,26 +52,48 @@ echo ""
 
 # ── Step 1: System packages ──
 echo -e "${GREEN}[1/7] Installing system dependencies...${NC}"
-sudo apt update -qq
-sudo apt install -y -qq curl git build-essential > /dev/null 2>&1
+export DEBIAN_FRONTEND=noninteractive
+sudo apt-get update -y
+sudo apt-get install -y curl git build-essential ca-certificates gnupg
 echo "  Done."
 
 # ── Step 2: Node.js ──
 echo -e "${GREEN}[2/7] Installing Node.js...${NC}"
+NEED_NODE=false
+
 if command -v node &> /dev/null; then
     NODE_VER=$(node -v)
-    echo "  Node.js already installed: $NODE_VER"
-    # Check version is 20+
     NODE_MAJOR=$(echo $NODE_VER | cut -d'.' -f1 | tr -d 'v')
+    echo "  Found Node.js $NODE_VER"
     if [ "$NODE_MAJOR" -lt 20 ]; then
-        echo "  Version too old, upgrading..."
-        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - > /dev/null 2>&1
-        sudo apt install -y -qq nodejs > /dev/null 2>&1
+        echo "  Version too old (need 20+), will install newer..."
+        NEED_NODE=true
     fi
 else
-    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - > /dev/null 2>&1
-    sudo apt install -y -qq nodejs > /dev/null 2>&1
+    echo "  Node.js not found, installing..."
+    NEED_NODE=true
 fi
+
+if [ "$NEED_NODE" = true ]; then
+    # Try nodesource first
+    echo "  Adding NodeSource repository..."
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg 2>/dev/null || true
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
+    sudo apt-get update -y
+    sudo apt-get install -y nodejs
+
+    if ! command -v node &> /dev/null; then
+        echo -e "${RED}  Failed to install Node.js via nodesource. Trying snap...${NC}"
+        sudo snap install node --classic --channel=22
+    fi
+fi
+
+if ! command -v node &> /dev/null; then
+    echo -e "${RED}  Could not install Node.js. Please install manually and re-run.${NC}"
+    exit 1
+fi
+
 echo "  Node.js: $(node -v), npm: $(npm -v)"
 
 # ── Step 3: Clone or update repo ──
@@ -90,12 +112,12 @@ echo "  Done."
 # ── Step 4: Install dependencies ──
 echo -e "${GREEN}[4/7] Installing npm dependencies...${NC}"
 cd "$INSTALL_DIR"
-npm install --production=false 2>&1 | tail -1
+npm install
 echo "  Done."
 
 # ── Step 5: Build ──
 echo -e "${GREEN}[5/7] Building TypeScript...${NC}"
-npm run build 2>&1 | tail -1
+npm run build
 echo "  Done."
 
 # ── Step 6: Create systemd service ──
