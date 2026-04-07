@@ -55,10 +55,30 @@ export class GameEngine {
   private async showTitle(): Promise<void> {
     this.session.clear();
     await this.session.showAnsi('OPEN.ANS');
+    // Animate: show copyright, then overwrite with credit
+    await this.animateCredit(17, 41, 30);
     await this.session.pause();
     this.session.clear();
     await this.session.showAnsi('OPEN2.ANS');
+    await this.animateCredit(13, 49, 30);
     await this.session.pause();
+  }
+
+  private async animateCredit(row: number, col: number, len: number): Promise<void> {
+    // Wait so user sees the original copyright
+    await new Promise(r => setTimeout(r, 2000));
+    // Move to the copyright position and overwrite with credit
+    const pos = `\x1B[${row};${col}H`;
+    // Blank out the old text
+    this.session.write(pos + ' '.repeat(len));
+    await new Promise(r => setTimeout(r, 300));
+    // Write the credit in the same spot
+    this.session.write(pos + `${ANSI.BRIGHT_MAGENTA}Ported by Xphox in 2026${ANSI.RESET}`);
+    await new Promise(r => setTimeout(r, 1500));
+    // Restore original copyright
+    this.session.write(pos + ' '.repeat(30));
+    await new Promise(r => setTimeout(r, 200));
+    this.session.write(pos + `${ANSI.BRIGHT_MAGENTA}(C)opyright 1999, ECI Software${ANSI.RESET}`);
   }
 
   private async entryMenu(): Promise<void> {
