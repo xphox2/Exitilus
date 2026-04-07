@@ -130,8 +130,18 @@
 
     const termEl = document.getElementById('terminal');
     term.open(termEl);
-    fitAddon.fit();
-    window.addEventListener('resize', () => fitAddon.fit());
+
+    function fitToWidth() {
+      fitAddon.fit();
+      // Shrink font until 160 cols fit
+      while (term.cols < 160 && term.options.fontSize > 6) {
+        term.options.fontSize = term.options.fontSize - 1;
+        fitAddon.fit();
+      }
+    }
+
+    fitToWidth();
+    window.addEventListener('resize', fitToWidth);
 
     let ws = null;
 
