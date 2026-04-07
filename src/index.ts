@@ -30,6 +30,7 @@ Modes:
 Options:
   --data <dir>         Data directory for database (default: project root)
   --time <minutes>     Session time limit (default: 60)
+  --host <addr>        Bind address (default: 0.0.0.0, use 127.0.0.1 for localhost only)
   --graphics <mode>    Graphics mode: enhanced, classic, ascii (default: auto-detect)
   --help, -h           Show this help
 
@@ -43,6 +44,7 @@ Examples:
   exitilus --local --graphics enhanced     Force enhanced graphics
   exitilus --local --graphics classic      Force classic ANSI art
   exitilus --web 8080                       Start web server (open browser to play)
+  exitilus --web 8080 --host 127.0.0.1     Localhost only (for nginx proxy)
   exitilus --telnet 2323                   Start telnet server on port 2323
   exitilus --door C:\\BBS\\NODE1            Run as BBS door using drop file
 `);
@@ -99,7 +101,10 @@ async function main() {
       ? parseInt(args[portIdx + 1], 10)
       : 8080;
 
-    createWebServer({ port, ansiDir, db, content, timeLimit });
+    const hostIdx = args.indexOf('--host');
+    const host = hostIdx >= 0 && args[hostIdx + 1] ? args[hostIdx + 1] : undefined;
+
+    createWebServer({ port, host, ansiDir, db, content, timeLimit });
 
     process.on('SIGINT', () => {
       console.log('\n[Web] Shutting down...');

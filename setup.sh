@@ -111,7 +111,7 @@ Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$(which node) dist/index.js --web $WEB_PORT
+ExecStart=$(which node) dist/index.js --web $WEB_PORT --host 127.0.0.1
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production

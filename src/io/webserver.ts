@@ -23,12 +23,13 @@ const MIME_TYPES: Record<string, string> = {
 
 export function createWebServer(options: {
   port: number;
+  host?: string;
   ansiDir: string;
   db: GameDatabase;
   content: GameContent;
   timeLimit?: number;
 }): http.Server {
-  const { port, ansiDir, db, content, timeLimit } = options;
+  const { port, host, ansiDir, db, content, timeLimit } = options;
 
   // HTTP server for static files
   const server = http.createServer((req, res) => {
@@ -70,9 +71,14 @@ export function createWebServer(options: {
     });
   });
 
-  server.listen(port, () => {
-    console.log(`[Web] Exitilus web server running at http://localhost:${port}`);
-    console.log(`[Web] Open in your browser to play!`);
+  const bindHost = host ?? '0.0.0.0';
+  server.listen(port, bindHost, () => {
+    console.log(`[Web] Exitilus web server running at http://${bindHost}:${port}`);
+    if (bindHost === '127.0.0.1' || bindHost === 'localhost') {
+      console.log(`[Web] Bound to localhost only - use a reverse proxy (nginx) for external access`);
+    } else {
+      console.log(`[Web] Open in your browser to play!`);
+    }
   });
 
   return server;
