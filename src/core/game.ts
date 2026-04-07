@@ -30,6 +30,7 @@ import { enterArmyManor } from '../systems/manor.js';
 import { enterQuests } from '../systems/quests.js';
 import { attemptResurrection } from '../systems/resurrection.js';
 import { checkMessages } from '../systems/messaging.js';
+import { runDailyMaintenance } from '../systems/maintenance.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -45,6 +46,8 @@ export class GameEngine {
   }
 
   async start(): Promise<void> {
+    // Run daily maintenance if it hasn't run today (handles long-running servers)
+    runDailyMaintenance(this.db, this.content);
     await this.showTitle();
     await this.entryMenu();
   }
