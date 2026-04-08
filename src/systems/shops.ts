@@ -8,6 +8,12 @@ import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
+import { loadAnsiFile } from '../io/ansi.js';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __shopDirname = dirname(fileURLToPath(import.meta.url));
+const shopAnsiDir = join(__shopDirname, '..', '..', 'content', 'ansi');
 
 const GOLD: RGB = { r: 220, g: 180, b: 50 };
 const GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
@@ -125,11 +131,21 @@ async function shopBrowse(
     lines.push(shopRow(cc(CYAN_C) + prompt, prompt.length, W));
     lines.push(shopBorder('+', '=', '+', W));
 
-    session.writeln('');
-    for (const line of lines) {
-      session.writeln(line);
+    // Overlay on image using cursor positioning
+    const ansiContent = loadAnsiFile(shopAnsiDir, config.ansi, 'enhanced');
+    const imageRows = ansiContent ? ansiContent.split('\n').length : 22;
+    const imageWidth = ansiContent ? (ansiContent.split('\n')[0]?.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').replace(/\r/g, '').length ?? 80) : 80;
+    const startRow = Math.max(1, imageRows - lines.length - 1);
+    const startCol = Math.max(1, imageWidth - W - 2);
+
+    await shopSleep(150);
+    for (let i = 0; i < lines.length; i++) {
+      session.write(`\x1B[${startRow + i};${startCol}H${lines[i]}`);
       await shopSleep(d);
     }
+    const promptRow = startRow + lines.length - 2;
+    const promptCol = startCol + prompt.length + 1;
+    session.write(`\x1B[${promptRow};${promptCol}H`);
 
     input = await session.readLine('');
   } else {
@@ -293,36 +309,94 @@ async function runMagicShop(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
-  // Magic items: anything with magicBonus > 0
   const magicItems = content.items.filter(i => i.magicBonus > 0 && i.price > 0);
+  const isEnhanced = (session as any).graphicsMode === 'enhanced';
 
   while (true) {
-    session.clear();
-    await session.showAnsi('MAGICIAN.ANS');
+    let key: string;
 
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_MAGENTA}═══ Magician's Shop ═══${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}${'#'.padStart(3)}  ${'Item'.padEnd(25)} ${'Price'.padStart(10)} ${'MAG'.padStart(5)} ${'Type'.padEnd(8)}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.CYAN}${'─'.repeat(55)}${ANSI.RESET}`);
+    if (isEnhanced && shouldUseOverlay(session, 'MAGICIAN.ANS')) {
+      // Enhanced: show image then overlay item listing
+      session.clear();
+      await session.showAnsi('MAGICIAN.ANS');
 
-    for (let i = 0; i < magicItems.length; i++) {
-      const item = magicItems[i];
-      const affordable = player.gold >= item.price;
-      const color = affordable ? ANSI.BRIGHT_MAGENTA : ANSI.BRIGHT_BLACK;
-      session.writeln(
-        `  ${color}${String(i + 1).padStart(3)}  ${item.name.padEnd(25)} $${formatGold(item.price).padStart(9)} ` +
-        `+${String(item.magicBonus).padStart(3)} ${(item.type).padEnd(8)}${ANSI.RESET}`
-      );
+      const W = 58;
+      const lines: string[] = [];
+      lines.push(shopBorder('+', '=', '+', W));
+      const title = "MAGICIAN'S SHOP";
+      const tPad = Math.floor((W - 2 - title.length) / 2);
+      lines.push(shopRow(' '.repeat(tPad) + cc({r:180,g:80,b:220}) + title, tPad + title.length, W));
+      lines.push(shopBorder('+', '-', '+', W));
+
+      for (let i = 0; i < magicItems.length; i++) {
+        const item = magicItems[i];
+        const affordable = player.gold >= item.price;
+        const nc = affordable ? WHITE_C : DIM_C;
+        const pc = affordable ? YELLOW_C : DIM_C;
+        const mc = affordable ? {r:180,g:80,b:220} as RGB : DIM_C;
+        const num = String(i + 1).padStart(2);
+        const name = item.name.slice(0, 22).padEnd(22);
+        const price = ('$' + formatGold(item.price)).padStart(8);
+        const mag = ('+' + item.magicBonus).padStart(4);
+        const type = item.type.slice(0, 7).padEnd(7);
+        const line = ' ' + cc(affordable ? GREEN_C : DIM_C) + num + '  ' + cc(nc) + name + ' ' + cc(pc) + price + ' ' + cc(mc) + mag + ' ' + cc(DIM_C) + type;
+        const vis = 1 + 2 + 2 + 22 + 1 + 8 + 1 + 4 + 1 + 7;
+        lines.push(shopRow(line, vis, W));
+      }
+
+      lines.push(shopBorder('+', '-', '+', W));
+      const goldLine = ' Gold: $' + formatGold(player.gold);
+      lines.push(shopRow(cc(YELLOW_C) + goldLine, goldLine.length, W));
+      lines.push(shopBorder('+', '-', '+', W));
+      lines.push(shopRow(cc(GREEN_C) + ' B) ' + cc(WHITE_C) + 'Browse & Buy    ' + cc(GREEN_C) + 'R) ' + cc(WHITE_C) + 'Return', 4 + 16 + 3 + 6, W));
+      lines.push(shopBorder('+', '-', '+', W));
+      const prompt = ' Choice: ';
+      lines.push(shopRow(cc(CYAN_C) + prompt, prompt.length, W));
+      lines.push(shopBorder('+', '=', '+', W));
+
+      // Overlay on image
+      const ansiContent = loadAnsiFile(shopAnsiDir, 'MAGICIAN.ANS', 'enhanced');
+      const imageRows = ansiContent ? ansiContent.split('\n').length : 22;
+      const imageWidth = ansiContent ? (ansiContent.split('\n')[0]?.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').replace(/\r/g, '').length ?? 80) : 80;
+      const startRow = Math.max(1, imageRows - lines.length - 1);
+      const startCol = Math.max(1, imageWidth - W - 2);
+
+      await shopSleep(150);
+      for (let i = 0; i < lines.length; i++) {
+        session.write(`\x1B[${startRow + i};${startCol}H${lines[i]}`);
+        await shopSleep(15);
+      }
+      const promptRow = startRow + lines.length - 2;
+      const promptCol = startCol + prompt.length + 1;
+      session.write(`\x1B[${promptRow};${promptCol}H`);
+
+      key = await session.readKey();
+    } else {
+      // Classic mode
+      session.clear();
+      await session.showAnsi('MAGICIAN.ANS');
+      session.writeln('');
+      session.writeln(`  ${ANSI.BRIGHT_MAGENTA}═══ Magician's Shop ═══${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_CYAN}${'#'.padStart(3)}  ${'Item'.padEnd(25)} ${'Price'.padStart(10)} ${'MAG'.padStart(5)} ${'Type'.padEnd(8)}${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.CYAN}${'─'.repeat(55)}${ANSI.RESET}`);
+      for (let i = 0; i < magicItems.length; i++) {
+        const item = magicItems[i];
+        const affordable = player.gold >= item.price;
+        const color = affordable ? ANSI.BRIGHT_MAGENTA : ANSI.BRIGHT_BLACK;
+        session.writeln(
+          `  ${color}${String(i + 1).padStart(3)}  ${item.name.padEnd(25)} $${formatGold(item.price).padStart(9)} ` +
+          `+${String(item.magicBonus).padStart(3)} ${(item.type).padEnd(8)}${ANSI.RESET}`
+        );
+      }
+      session.writeln('');
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_MAGENTA}(B)${ANSI.RESET} Buy  ${ANSI.BRIGHT_MAGENTA}(R)${ANSI.RESET} Return`);
+      session.writeln('');
+      session.write(`${ANSI.BRIGHT_CYAN}  Choice: ${ANSI.BRIGHT_WHITE}`);
+      key = await session.readKey();
     }
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_MAGENTA}(B)${ANSI.RESET} Buy  ${ANSI.BRIGHT_MAGENTA}(R)${ANSI.RESET} Return`);
-    session.writeln('');
 
-    session.write(`${ANSI.BRIGHT_CYAN}  Choice: ${ANSI.BRIGHT_WHITE}`);
-    const key = await session.readKey();
     session.writeln(key);
-
     if (key.toLowerCase() === 'r') return;
 
     if (key.toLowerCase() === 'b') {
