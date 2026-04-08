@@ -438,36 +438,47 @@ export async function enterArmyManor(
       }
     }
 
+    // Move cursor below the menu before running sub-functions
+    session.write('\x1B[30;1H\r\n');
+
     switch (choice) {
       case 'i':
+        session.clear();
         await manorOverview(session, player, content);
         await session.pause();
         break;
       case 'p':
+        session.clear();
         await purchaseLand(session, player, db);
         await session.pause();
         break;
       case 'm':
+        session.clear();
         await recruitMilitary(session, player, db);
         await session.pause();
         break;
       case 'b':
+        session.clear();
         await buildStructures(session, player, db);
         await session.pause();
         break;
       case 't':
+        session.clear();
         await setTaxRate(session, player, db);
         await session.pause();
         break;
       case 'c':
+        session.clear();
         await collectTreasury(session, player, db);
         await session.pause();
         break;
       case 'a':
+        session.clear();
         await attackManor(session, player, content, db);
         await session.pause();
         break;
       case 'd':
+        session.clear();
         await enterDiplomacy(session, player, content, db);
         break;
       case 'y':
