@@ -7,6 +7,42 @@ import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
+import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
+
+const GOLD: RGB = { r: 220, g: 180, b: 50 };
+const GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
+const BG_DARK: RGB = { r: 10, g: 10, b: 20 };
+const WHITE_C: RGB = { r: 240, g: 240, b: 250 };
+const GREEN_C: RGB = { r: 70, g: 220, b: 90 };
+const CYAN_C: RGB = { r: 80, g: 200, b: 220 };
+const RED_C: RGB = { r: 220, g: 55, b: 55 };
+const DIM_C: RGB = { r: 55, g: 55, b: 65 };
+const YELLOW_C: RGB = { r: 220, g: 200, b: 50 };
+
+const cc = (color: RGB) => fg(color.r, color.g, color.b);
+const bgd = bg(BG_DARK.r, BG_DARK.g, BG_DARK.b);
+
+function shopSleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function shopBorder(left: string, fill: string, right: string, w: number): string {
+  let s = '';
+  for (let i = 0; i < w; i++) {
+    const t = w > 1 ? i / (w - 1) : 0;
+    const color = lerpColor(GOLD_DIM, GOLD, Math.sin(t * Math.PI));
+    s += fg(color.r, color.g, color.b);
+    if (i === 0) s += left;
+    else if (i === w - 1) s += right;
+    else s += fill;
+  }
+  return s + RESET;
+}
+
+function shopRow(content: string, visLen: number, w: number): string {
+  const pad = Math.max(0, w - 2 - visLen);
+  return cc(GOLD) + '|' + bgd + content + ' '.repeat(pad) + RESET + cc(GOLD) + '|' + RESET;
+}
 
 
 function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
@@ -29,29 +65,97 @@ async function shopBrowse(
   db: GameDatabase
 ): Promise<void> {
   const config = SHOP_CONFIG[shopType];
+  const isEnhanced = (session as any).graphicsMode === 'enhanced';
 
-  session.writeln('');
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}${'#'.padStart(3)}  ${'Item'.padEnd(25)} ${'Price'.padStart(10)} ${'STR'.padStart(5)} ${'DEF'.padStart(5)}${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.CYAN}${'─'.repeat(55)}${ANSI.RESET}`);
+  let input: string;
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const affordable = player.gold >= item.price;
-    const color = affordable ? ANSI.BRIGHT_GREEN : ANSI.BRIGHT_BLACK;
-    session.writeln(
-      `  ${color}${String(i + 1).padStart(3)}  ${item.name.padEnd(25)} $${formatGold(item.price).padStart(9)} ` +
-      `${item.strengthBonus > 0 ? '+' + item.strengthBonus : '-'.padStart(4)} ` +
-      `${item.defenseBonus > 0 ? '+' + item.defenseBonus : '-'.padStart(4)}${ANSI.RESET}`
-    );
+  if (isEnhanced) {
+    const W = 64;
+    const d = 15;
+    const lines: string[] = [];
+
+    const titles: Record<ShopType, string> = { weapon: 'WEAPONS FOR SALE', shield: 'SHIELDS FOR SALE', armour: 'ARMOUR FOR SALE' };
+    const title = titles[shopType];
+
+    lines.push(shopBorder('+', '=', '+', W));
+    const tPad = Math.floor((W - 2 - title.length) / 2);
+    lines.push(shopRow(' '.repeat(tPad) + cc(WHITE_C) + title, tPad + title.length, W));
+    lines.push(shopBorder('+', '-', '+', W));
+
+    // Header
+    const hdr = ' #  Item                     Price      STR  DEF  MAG';
+    lines.push(shopRow(cc(CYAN_C) + hdr, hdr.length, W));
+    lines.push(shopRow(' ' + cc(GOLD_DIM) + '-'.repeat(W - 4), W - 3, W));
+
+    // Items
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const affordable = player.gold >= item.price;
+      const nc = affordable ? WHITE_C : DIM_C;
+      const pc = affordable ? YELLOW_C : DIM_C;
+      const sc = affordable ? GREEN_C : DIM_C;
+
+      const num = String(i + 1).padStart(2);
+      const name = item.name.padEnd(24);
+      const price = ('$' + formatGold(item.price)).padStart(9);
+      const str = item.strengthBonus > 0 ? ('+' + item.strengthBonus).padStart(4) : '  - ';
+      const def = item.defenseBonus > 0 ? ('+' + item.defenseBonus).padStart(4) : '  - ';
+      const mag = item.magicBonus > 0 ? ('+' + item.magicBonus).padStart(4) : '  - ';
+
+      const line = ' ' + cc(affordable ? GREEN_C : DIM_C) + num + '  ' +
+        cc(nc) + name + ' ' +
+        cc(pc) + price + '  ' +
+        cc(sc) + str + ' ' + def + ' ' + mag;
+      const vis = 1 + 2 + 2 + 24 + 1 + 9 + 2 + 4 + 1 + 4 + 1 + 4;
+      lines.push(shopRow(line, vis, W));
+    }
+
+    lines.push(shopBorder('+', '-', '+', W));
+
+    // Gold and equipped
+    const currentItem = player[config.slot] ? items.find(i => i.id === player[config.slot]) : null;
+    const goldLine = ' Gold: $' + formatGold(player.gold);
+    const equipLine = ' Equipped: ' + (currentItem?.name ?? 'Nothing');
+    lines.push(shopRow(cc(YELLOW_C) + goldLine, goldLine.length, W));
+    lines.push(shopRow(cc(CYAN_C) + equipLine, equipLine.length, W));
+
+    lines.push(shopBorder('+', '-', '+', W));
+
+    const prompt = ' Buy which? (0 to cancel): ';
+    lines.push(shopRow(cc(CYAN_C) + prompt, prompt.length, W));
+    lines.push(shopBorder('+', '=', '+', W));
+
+    session.writeln('');
+    for (const line of lines) {
+      session.writeln(line);
+      await shopSleep(d);
+    }
+
+    input = await session.readLine('');
+  } else {
+    session.writeln('');
+    session.writeln(`  ${ANSI.BRIGHT_CYAN}${'#'.padStart(3)}  ${'Item'.padEnd(25)} ${'Price'.padStart(10)} ${'STR'.padStart(5)} ${'DEF'.padStart(5)}${ANSI.RESET}`);
+    session.writeln(`  ${ANSI.CYAN}${'─'.repeat(55)}${ANSI.RESET}`);
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const affordable = player.gold >= item.price;
+      const color = affordable ? ANSI.BRIGHT_GREEN : ANSI.BRIGHT_BLACK;
+      session.writeln(
+        `  ${color}${String(i + 1).padStart(3)}  ${item.name.padEnd(25)} $${formatGold(item.price).padStart(9)} ` +
+        `${item.strengthBonus > 0 ? '+' + item.strengthBonus : '-'.padStart(4)} ` +
+        `${item.defenseBonus > 0 ? '+' + item.defenseBonus : '-'.padStart(4)}${ANSI.RESET}`
+      );
+    }
+
+    session.writeln('');
+    session.writeln(`  ${ANSI.BRIGHT_YELLOW}Your Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
+    const currentItem = player[config.slot] ? items.find(i => i.id === player[config.slot]) : null;
+    session.writeln(`  ${ANSI.BRIGHT_CYAN}Currently equipped: ${ANSI.BRIGHT_WHITE}${currentItem?.name ?? 'Nothing'}${ANSI.RESET}`);
+    session.writeln('');
+
+    input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Buy which item? (0 to cancel): ${ANSI.BRIGHT_WHITE}`);
   }
-
-  session.writeln('');
-  session.writeln(`  ${ANSI.BRIGHT_YELLOW}Your Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
-  const currentItem = player[config.slot] ? items.find(i => i.id === player[config.slot]) : null;
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}Currently equipped: ${ANSI.BRIGHT_WHITE}${currentItem?.name ?? 'Nothing'}${ANSI.RESET}`);
-  session.writeln('');
-
-  const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Buy which item? (0 to cancel): ${ANSI.BRIGHT_WHITE}`);
   const idx = parseInt(input, 10) - 1;
 
   if (idx >= 0 && idx < items.length) {
