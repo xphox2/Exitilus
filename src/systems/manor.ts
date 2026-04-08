@@ -214,6 +214,15 @@ async function collectTreasury(
     return;
   }
 
+  // Check if already collected today
+  const today = new Date().toISOString().slice(0, 10);
+  const lastCollect = db.getState(`treasury:${player.id}`);
+  if (lastCollect === today) {
+    session.writeln(`${ANSI.BRIGHT_YELLOW}  You have already collected your treasury today.${ANSI.RESET}`);
+    return;
+  }
+  db.setState(`treasury:${player.id}`, today);
+
   // Calculate daily income
   const farmIncome = player.farms * randomInt(20, 60);
   const siloIncome = player.silos * randomInt(10, 30);

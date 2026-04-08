@@ -100,6 +100,16 @@ export async function enterChurch(
       }
 
       case 'a': {
+        // Blessings once per day
+        const blessToday = new Date().toISOString().slice(0, 10);
+        const lastBless = db.getState(`bless:${player.id}`);
+        if (lastBless === blessToday) {
+          session.writeln(`${ANSI.BRIGHT_CYAN}  "You have already received your blessing today, child."${ANSI.RESET}`);
+          await session.pause();
+          break;
+        }
+        db.setState(`bless:${player.id}`, blessToday);
+
         session.writeln(`${ANSI.BRIGHT_CYAN}  The priest lays his hands upon you...${ANSI.RESET}`);
         if (player.evilDeeds > 10) {
           session.writeln(`${ANSI.BRIGHT_RED}  "Your soul is too dark for blessings. Repent first!"${ANSI.RESET}`);
