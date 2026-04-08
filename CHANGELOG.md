@@ -11,9 +11,7 @@ Implement 7 missing features from the original game for full feature parity.
 - **9 additional quests**: Total now 18 quests (was 9) - includes Dragon's Lair, Haunted Crypt, Crystal Caves, Plague Village, and more
 - **Customizable prompts**: Welcome, death, level-up, and other messages loaded from `content/prompts.json`
 - Equipment option added to enhanced main menu overlay
-
-### Breaking
-- Database schema changed (added `mana_potions`, `ring` columns). Delete your `exitilus.db` to reset.
+- **Auto-migration**: Existing databases automatically gain new `mana_potions` and `ring` columns on startup (no data loss)
 
 ## 0.6.1
 
