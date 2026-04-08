@@ -371,34 +371,46 @@ export async function enterArmyManor(
         '[A] Attack     [D] Diplomacy  [Y] Stats',
         '[R] Return     Your Choice: ',
       ];
-      const startRow = 20; // skip a line after "You are paying" (row 17) + art rows
+      const startRow = 20;
       const startCol = 15;
-      const bw = 50; // border width
+      const bw = 50; // inner width between ║ borders
       const Y = `\x1B[1;33m`; const W = `\x1B[1;37m`; const G = `\x1B[1;32m`; const C = `\x1B[1;36m`; const RST = ANSI.RESET;
-      const border = Y + '═'.repeat(bw) + RST;
+
+      // Helper: pad content to exactly bw visible chars
+      function mRow(content: string, visLen: number): string {
+        return Y + '║' + content + ' '.repeat(Math.max(0, bw - visLen)) + Y + '║' + RST;
+      }
 
       await new Promise(r => setTimeout(r, 150));
 
       let r = startRow;
-      session.write(`\x1B[${r};${startCol}H${Y}╔${border}${Y}╗${RST}`);
+      // Top border: ╔ + bw ═'s + ╗
+      session.write(`\x1B[${r};${startCol}H${Y}╔${'═'.repeat(bw)}╗${RST}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit  ${Y}║${RST}`);
+      //                  1234567890123456789012345678901234567890123456789012
+      // Content lines: 50 visible chars each
+      //                   ' [I] Inspect    [P] Purchase   [M] Recruit' = 42 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit`, 42)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury ${Y}║${RST}`);
+      //                   ' [B] Build      [T] Tax Rate   [C] Treasury' = 43 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury`, 43)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats    ${Y}║${RST}`);
+      //                   ' [A] Attack     [D] Diplomacy  [Y] Stats' = 40 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats`, 40)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}R${Y}]${G} Return     ${C}Your Choice: ${W}             ${Y}║${RST}`);
+      //                   ' [R] Return     Your Choice: ' = 29 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}R${Y}]${G} Return     ${C}Your Choice: ${W}`, 29)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${Y}╚${border}${Y}╝${RST}`);
+      // Bottom border
+      session.write(`\x1B[${r};${startCol}H${Y}╚${'═'.repeat(bw)}╝${RST}`);
 
-      // Position cursor at the prompt
-      session.write(`\x1B[${r-1};${startCol + 29}H${W}`);
+      // Position cursor after "Your Choice: " (col 15 + 1 + 29 = 45)
+      session.write(`\x1B[${r-1};${startCol + 30}H${W}`);
 
       choice = '';
       while (!choice) {
