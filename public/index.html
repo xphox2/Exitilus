@@ -141,23 +141,25 @@
       console.warn('WebGL renderer not available, using canvas fallback');
     }
 
-    let targetFontSize = 14;
-
     function fitToWidth() {
-      // Start at target font and shrink only if needed
-      term.options.fontSize = targetFontSize;
+      // Start fresh each time
+      term.options.fontSize = 11;
       fitAddon.fit();
 
       // Shrink font until 160 cols fit
-      while (term.cols < 160 && term.options.fontSize > 6) {
+      let attempts = 0;
+      while (term.cols < 160 && term.options.fontSize > 5 && attempts < 10) {
         term.options.fontSize = term.options.fontSize - 1;
         fitAddon.fit();
+        attempts++;
       }
 
       // If we still can't fit 160, force it
       if (term.cols < 160) {
         term.resize(160, term.rows);
       }
+
+      console.log('Terminal:', term.cols + 'x' + term.rows, 'font:', term.options.fontSize + 'px');
     }
 
     fitToWidth();
@@ -187,18 +189,11 @@
             const cols = parseInt(match[2], 10);
             // Adjust font size based on target columns
             if (cols <= 80) {
-              targetFontSize = 18;
               term.options.fontSize = 18;
             } else {
-              targetFontSize = 14;
               term.options.fontSize = 14;
             }
             fitAddon.fit();
-            // Shrink if needed to fit
-            while (term.cols < cols && term.options.fontSize > 6) {
-              term.options.fontSize = term.options.fontSize - 1;
-              fitAddon.fit();
-            }
             // Strip the resize command and write the rest
             const cleaned = data.replace(/\x1b\[8;\d+;\d+t/g, '');
             if (cleaned) term.write(cleaned);
