@@ -30,7 +30,6 @@ async function manorOverview(
   content: GameContent
 ): Promise<void> {
   session.clear();
-  await session.showAnsi('INSPECT.ANS');
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
 
   session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════════════════╗`);
