@@ -448,6 +448,35 @@ export async function enterArmyManor(
     session.clear();
     await session.showAnsi('MANOR.ANS');
 
+    // Fill in manor data fields on the ANSI art
+    const W_C = ANSI.BRIGHT_WHITE;
+    const RST_C = ANSI.RESET;
+    if (player.manorId) {
+      session.write(`\x1B[8;18H${W_C}${player.manorId}${RST_C}`);
+      session.write(`\x1B[8;27H${W_C}${player.knights}${RST_C}`);
+      session.write(`\x1B[8;34H${W_C}${player.farms}${RST_C}`);
+      session.write(`\x1B[9;18H${W_C}${player.serfs}${RST_C}`);
+      session.write(`\x1B[9;27H${W_C}${player.cannons}${RST_C}`);
+      session.write(`\x1B[9;34H${W_C}${player.silos}${RST_C}`);
+      session.write(`\x1B[10;18H${W_C}${player.food}${RST_C}`);
+      session.write(`\x1B[10;27H${W_C}${player.soldiers}${RST_C}`);
+      session.write(`\x1B[10;39H${W_C}${player.circuses}${RST_C}`);
+      session.write(`\x1B[11;18H${W_C}${player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A'}${RST_C}`);
+      session.write(`\x1B[11;27H${W_C}${player.trainingLevel}%${RST_C}`);
+      session.write(`\x1B[11;39H${W_C}${player.ironMines}${RST_C}`);
+      session.write(`\x1B[12;18H${W_C}${player.taxRate}%${RST_C}`);
+      session.write(`\x1B[12;27H${W_C}${player.morale}%${RST_C}`);
+      session.write(`\x1B[12;39H${W_C}${player.goldMines}${RST_C}`);
+      session.write(`\x1B[13;18H${W_C}0${RST_C}`);
+      session.write(`\x1B[13;27H${W_C}${player.forts}${RST_C}`);
+      const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
+      session.write(`\x1B[17;17H${W_C}${kingdom?.name ?? 'None'}${RST_C}`);
+      const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
+      session.write(`\x1B[18;17H${W_C}$${formatGold(taxPayment)} in taxes${RST_C}`);
+    } else {
+      session.write(`\x1B[8;18H${ANSI.BRIGHT_RED}No manor yet${RST_C}`);
+    }
+
     if ((session as any).graphicsMode === 'enhanced') {
       // Place menu below "You are paying" line (row 17), skip one line = row 19
       // Center within 80 cols: menu is about 46 chars, so start at col ~17
@@ -476,20 +505,20 @@ export async function enterArmyManor(
       r++;
       //                  1234567890123456789012345678901234567890123456789012
       // Content lines: 50 visible chars each
-      //                   ' [I] Inspect    [P] Purchase   [M] Recruit' = 42 chars
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit`, 42)}`);
+      //                   ' [P] Purchase   [M] Recruit    [B] Build' = 40 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit    ${Y}[${W}B${Y}]${G} Build`, 40)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      //                   ' [B] Build      [T] Tax Rate   [C] Treasury' = 43 chars
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury`, 43)}`);
+      //                   ' [T] Tax Rate   [C] Treasury   [A] Attack' = 40 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury   ${Y}[${W}A${Y}]${G} Attack`, 40)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      //                   ' [A] Attack     [D] Diplomacy  [Y] Stats' = 40 chars
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats`, 40)}`);
+      //                   ' [D] Diplomacy  [Y] Stats      [R] Return' = 41 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats      ${Y}[${W}R${Y}]${G} Return`, 41)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      //                   ' [R] Return     Your Choice: ' = 29 chars
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}R${Y}]${G} Return     ${C}Your Choice: ${W}`, 29)}`);
+      //                   ' Your Choice: ' = 15 chars
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${C}Your Choice: ${W}`, 15)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
       // Bottom border
@@ -529,9 +558,7 @@ export async function enterArmyManor(
 
     switch (choice) {
       case 'i':
-        session.clear();
-        await manorOverview(session, player, content);
-        await session.pause();
+        // Refresh - just continue the loop to redisplay with updated data
         break;
       case 'p':
         session.clear();
