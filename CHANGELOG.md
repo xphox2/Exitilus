@@ -1,12 +1,13 @@
 ## 0.6.3
 
-Redesign manor data screen with proper programmatic rendering.
+Fix manor data screen cursor positions to align with ANSI art layout.
 
 ### Fixed
-- Manor overview now renders a clean data table below the ANSI title art instead of broken cursor-positioned overlays that didn't align with the art layout
-- Enhanced mode shows true-color bordered box with Population, Military, and Buildings sections
-- Classic mode shows clean color-coded text layout with all manor stats
-- Menu options rendered inline below data instead of overlapping art at wrong positions
+- Mapped exact character positions in MANOR.ANS (labels packed in rows 4-6)
+- Clear and redraw data rows with proper label:value formatting that matches the art's 3-column layout
+- Fill "Your Ruler is" field at correct position (row 7, col 50)
+- Show tax income and gold on row 8 below the data grid
+- Menu options positioned at row 10 below the data area
 
 ## 0.6.2
 

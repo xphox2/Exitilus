@@ -6,7 +6,7 @@ import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
-import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
+import { fg, RESET } from '../io/truecolor.js';
 
 import { enterDiplomacy } from '../systems/diplomacy.js';
 
@@ -25,143 +25,69 @@ const CIRCUS_COST = 800;
 const IRON_MINE_COST = 1500;
 const GOLD_MINE_COST = 3000;
 
-// Colors for enhanced manor display
-const MANOR_GOLD: RGB = { r: 220, g: 180, b: 50 };
-const MANOR_GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
-const MANOR_BG: RGB = { r: 8, g: 8, b: 18 };
-const MANOR_CYAN: RGB = { r: 80, g: 200, b: 220 };
-const MANOR_WHITE: RGB = { r: 240, g: 240, b: 250 };
-const MANOR_GREEN: RGB = { r: 70, g: 220, b: 90 };
-const MANOR_DIM: RGB = { r: 100, g: 100, b: 120 };
-
-function manorGradientBorder(left: string, fill: string, right: string, width: number): string {
-  let s = '';
-  for (let i = 0; i < width; i++) {
-    const t = width > 1 ? i / (width - 1) : 0;
-    const color = lerpColor(MANOR_GOLD_DIM, MANOR_GOLD, Math.sin(t * Math.PI));
-    s += fg(color.r, color.g, color.b);
-    if (i === 0) s += left;
-    else if (i === width - 1) s += right;
-    else s += fill;
-  }
-  return s + RESET;
-}
-
-function renderManorData(
+function fillManorFields(
   session: PlayerSession,
   player: PlayerRecord,
   content: GameContent,
-  isEnhanced: boolean,
 ): void {
-  const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
-  const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
-  const foodSupport = player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A';
-  const siloCapacity = player.silos * 200;
-
   if (!player.manorId) {
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_RED}You do not own a manor. Purchase land to begin.${ANSI.RESET}`);
+    session.write(`\x1B[4;4H${ANSI.BRIGHT_RED}You do not own a manor. Purchase land to begin.${ANSI.RESET}`);
+    // Clear the remaining label rows
+    session.write(`\x1B[5;1H${' '.repeat(80)}`);
+    session.write(`\x1B[6;1H${' '.repeat(80)}`);
     return;
   }
 
-  if (isEnhanced) {
-    const W = 56;
-    const bgd = bg(MANOR_BG.r, MANOR_BG.g, MANOR_BG.b);
-    const gc = fg(MANOR_GOLD.r, MANOR_GOLD.g, MANOR_GOLD.b);
-    const wc = fg(MANOR_WHITE.r, MANOR_WHITE.g, MANOR_WHITE.b);
-    const cc = fg(MANOR_CYAN.r, MANOR_CYAN.g, MANOR_CYAN.b);
-    const grc = fg(MANOR_GREEN.r, MANOR_GREEN.g, MANOR_GREEN.b);
-    const dc = fg(MANOR_DIM.r, MANOR_DIM.g, MANOR_DIM.b);
+  const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
+  const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
+  const foodSupport = player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A';
 
-    function row(label: string, val: string, label2?: string, val2?: string): string {
-      let inner: string;
-      let visLen: number;
-      if (label2 && val2 !== undefined) {
-        const l1 = ` ${label}`;
-        const v1 = val;
-        const l2 = label2;
-        const v2 = val2;
-        inner = bgd + dc + l1 + wc + v1 + dc + '   ' + l2 + wc + v2;
-        visLen = l1.length + v1.length + 3 + l2.length + v2.length;
-      } else {
-        inner = bgd + dc + ` ${label}` + wc + val;
-        visLen = 1 + label.length + val.length;
-      }
-      const pad = Math.max(1, W - 2 - visLen);
-      return gc + '\u2551' + inner + ' '.repeat(pad) + RESET + gc + '\u2551' + RESET;
-    }
+  // The ANSI art has labels packed in rows 4-6 in a 3-section layout.
+  // We clear rows 4-6 and redraw with labels + values properly spaced.
+  // Row 4: Left panel labels | separator | Right panel labels
+  // Row 5: Left panel data   | separator | Right panel data
+  // etc.
 
-    function headerRow(text: string): string {
-      const pad = Math.floor((W - 2 - text.length) / 2);
-      const rpad = W - 2 - pad - text.length;
-      return gc + '\u2551' + bgd + ' '.repeat(pad) + cc + text + ' '.repeat(rpad) + RESET + gc + '\u2551' + RESET;
-    }
+  const Y = ANSI.BRIGHT_YELLOW;
+  const W = ANSI.BRIGHT_WHITE;
+  const C = ANSI.CYAN;
+  const D = ANSI.BRIGHT_BLACK;
+  const RST = ANSI.RESET;
 
-    const lines: string[] = [];
-    lines.push(manorGradientBorder('\u2554', '\u2550', '\u2557', W));
+  // Clear rows 4-6 and redraw with proper label:value formatting
+  // Left panel (col 1-36), separator (col 37-38), Right panel (col 39-80)
 
-    // Title
-    const title = player.manorId;
-    const tPad = Math.floor((W - 2 - title.length) / 2);
-    lines.push(gc + '\u2551' + bgd + ' '.repeat(tPad) + wc + title + ' '.repeat(W - 2 - tPad - title.length) + RESET + gc + '\u2551' + RESET);
+  // Row 4: Land Size / Knights / Farms  |  Population / Cannons / Silos
+  session.write(`\x1B[4;1H${' '.repeat(80)}`);
+  session.write(`\x1B[4;2H${Y}Land Size:${W}${player.manorId}${RST}`);
+  session.write(`\x1B[4;28H${Y}Knights:${W}${player.knights}${RST}`);
+  session.write(`\x1B[4;40H${Y}Population:${W}${player.serfs}${RST}`);
+  session.write(`\x1B[4;58H${Y}Cannons:${W}${player.cannons}${RST}`);
+  session.write(`\x1B[4;70H${Y}Farms:${W}${player.farms}${RST}`);
 
-    lines.push(manorGradientBorder('\u2560', '\u2550', '\u2563', W));
+  // Row 5: Food / Soldiers / Circuses  |  Serf Support / Training / Iron Mines
+  session.write(`\x1B[5;1H${' '.repeat(80)}`);
+  session.write(`\x1B[5;2H${Y}Food:${W}${player.food}${RST}`);
+  session.write(`\x1B[5;14H${Y}Soldiers:${W}${player.soldiers}${RST}`);
+  session.write(`\x1B[5;28H${Y}Silos:${W}${player.silos}${RST}`);
+  session.write(`\x1B[5;40H${Y}Serf Support:${W}${foodSupport}${RST}`);
+  session.write(`\x1B[5;58H${Y}Training:${W}${player.trainingLevel}%${RST}`);
+  session.write(`\x1B[5;70H${Y}Circuses:${W}${player.circuses}${RST}`);
 
-    // Population section
-    lines.push(headerRow('-- Population --'));
-    lines.push(row('Serfs: ', String(player.serfs), 'Morale: ', player.morale + '%'));
-    lines.push(row('Food: ', String(player.food), 'Food Support: ', foodSupport));
-    lines.push(row('Tax Rate: ', player.taxRate + '%', 'Tax Income: ', '$' + formatGold(taxPayment)));
+  // Row 6: Tax Rate / Morale / Gold Mines  |  War Turns / Forts
+  session.write(`\x1B[6;1H${' '.repeat(80)}`);
+  session.write(`\x1B[6;2H${Y}Serf Tax:${W}${player.taxRate}%${RST}`);
+  session.write(`\x1B[6;14H${Y}Morale:${W}${player.morale}%${RST}`);
+  session.write(`\x1B[6;28H${Y}Gold Mines:${W}${player.goldMines}${RST}`);
+  session.write(`\x1B[6;40H${Y}Iron Mines:${W}${player.ironMines}${RST}`);
+  session.write(`\x1B[6;58H${Y}Forts:${W}${player.forts}${RST}`);
 
-    lines.push(manorGradientBorder('\u2560', '\u2550', '\u2563', W));
-
-    // Military section
-    lines.push(headerRow('-- Military --'));
-    lines.push(row('Soldiers: ', String(player.soldiers), 'Knights: ', String(player.knights)));
-    lines.push(row('Cannons: ', String(player.cannons), 'Forts: ', String(player.forts)));
-    lines.push(row('Training: ', player.trainingLevel + '%'));
-
-    lines.push(manorGradientBorder('\u2560', '\u2550', '\u2563', W));
-
-    // Buildings section
-    lines.push(headerRow('-- Buildings --'));
-    lines.push(row('Farms: ', String(player.farms), 'Silos: ', String(player.silos) + ' (' + siloCapacity + ' cap)'));
-    lines.push(row('Circuses: ', String(player.circuses), 'Iron Mines: ', String(player.ironMines)));
-    lines.push(row('Gold Mines: ', String(player.goldMines)));
-
-    lines.push(manorGradientBorder('\u2560', '\u2550', '\u2563', W));
-
-    // Kingdom
-    lines.push(row('Kingdom: ', kingdom?.name ?? 'None', 'Gold: ', '$' + formatGold(player.gold)));
-
-    lines.push(manorGradientBorder('\u255A', '\u2550', '\u255D', W));
-
-    for (const line of lines) {
-      session.writeln(line);
-    }
-  } else {
-    // Classic mode
-    const Y = ANSI.BRIGHT_YELLOW;
-    const W = ANSI.BRIGHT_WHITE;
-    const C = ANSI.CYAN;
-    const G = ANSI.BRIGHT_GREEN;
-    const R = ANSI.RESET;
-
-    session.writeln(`  ${Y}Manor: ${W}${player.manorId}${R}    ${Y}Kingdom: ${W}${kingdom?.name ?? 'None'}${R}`);
-    session.writeln(`  ${Y}Gold: ${G}$${formatGold(player.gold)}${R}`);
-    session.writeln(`  ${C}${'─'.repeat(50)}${R}`);
-    session.writeln(`  ${Y}Population${R}              ${Y}Military${R}`);
-    session.writeln(`  ${C}Serfs:${W} ${player.serfs}${R}               ${C}Soldiers:${W} ${player.soldiers}${R}`);
-    session.writeln(`  ${C}Food:${W} ${player.food}${R}                ${C}Knights:${W} ${player.knights}${R}`);
-    session.writeln(`  ${C}Food Support:${W} ${foodSupport}${R}        ${C}Cannons:${W} ${player.cannons}${R}`);
-    session.writeln(`  ${C}Morale:${W} ${player.morale}%${R}              ${C}Forts:${W} ${player.forts}${R}`);
-    session.writeln(`  ${C}Tax Rate:${W} ${player.taxRate}%${R}            ${C}Training:${W} ${player.trainingLevel}%${R}`);
-    session.writeln(`  ${C}Tax Income:${W} $${formatGold(taxPayment)}${R}`);
-    session.writeln(`  ${C}${'─'.repeat(50)}${R}`);
-    session.writeln(`  ${Y}Buildings${R}`);
-    session.writeln(`  ${C}Farms:${W} ${player.farms}  ${C}Silos:${W} ${player.silos} (${siloCapacity} cap)  ${C}Circuses:${W} ${player.circuses}${R}`);
-    session.writeln(`  ${C}Iron Mines:${W} ${player.ironMines}  ${C}Gold Mines:${W} ${player.goldMines}${R}`);
-  }
+  // Row 7: Fix up the "Your Ruler is" and "You are paying" fields
+  // "Your Ruler is" ends at col 50, "You are paying" ends at col 78
+  session.write(`\x1B[7;50H${W}${(kingdom?.name ?? 'None').padEnd(13).slice(0, 13)}${RST}`);
+  session.write(`\x1B[7;78H${RST}`);
+  // "You are paying" line wraps to row 8 - clear and show tax info
+  session.write(`\x1B[8;1H${Y}  Tax Income: ${W}$${formatGold(taxPayment)}   ${Y}Gold: ${W}$${formatGold(player.gold)}${RST}`);
 }
 
 async function purchaseLand(
@@ -528,22 +454,20 @@ export async function enterArmyManor(
     const validKeys = ['i', 'p', 'm', 'b', 't', 'c', 'a', 'd', 'y', 'r', 'q'];
     let choice: string;
 
-    const isEnhanced = (session as any).graphicsMode === 'enhanced';
-
     session.clear();
     await session.showAnsi('MANOR.ANS');
-    session.writeln('');
 
-    // Render manor data below the title art
-    renderManorData(session, player, content, isEnhanced);
+    // Fill in manor data on top of the ANSI art (rows 4-8)
+    fillManorFields(session, player, content);
 
-    session.writeln('');
+    // Position cursor below the data area for menu
+    session.write('\x1B[10;1H');
 
-    if (isEnhanced) {
-      const gc = fg(MANOR_GOLD.r, MANOR_GOLD.g, MANOR_GOLD.b);
-      const wc = fg(MANOR_WHITE.r, MANOR_WHITE.g, MANOR_WHITE.b);
-      const grc = fg(MANOR_GREEN.r, MANOR_GREEN.g, MANOR_GREEN.b);
-      const cc = fg(MANOR_CYAN.r, MANOR_CYAN.g, MANOR_CYAN.b);
+    if ((session as any).graphicsMode === 'enhanced') {
+      const gc = fg(220, 180, 50);
+      const wc = fg(240, 240, 250);
+      const grc = fg(70, 220, 90);
+      const cc = fg(80, 200, 220);
 
       session.writeln(`  ${gc}[${wc}I${gc}]${grc} Inspect  ${gc}[${wc}P${gc}]${grc} Purchase  ${gc}[${wc}M${gc}]${grc} Recruit   ${gc}[${wc}B${gc}]${grc} Build${RESET}`);
       session.writeln(`  ${gc}[${wc}T${gc}]${grc} Tax Rate ${gc}[${wc}C${gc}]${grc} Treasury  ${gc}[${wc}A${gc}]${grc} Attack    ${gc}[${wc}D${gc}]${grc} Diplomacy${RESET}`);
