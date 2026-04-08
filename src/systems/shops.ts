@@ -178,6 +178,7 @@ async function shopBrowse(
     const item = items[idx];
     if (player.gold < item.price) {
       session.writeln(`${ANSI.BRIGHT_RED}  You can't afford the ${item.name}!${ANSI.RESET}`);
+      await session.pause();
     } else {
       const ok = await confirmPrompt(session, `  Buy ${item.name} for $${formatGold(item.price)}?`, true);
       if (ok) {
@@ -185,9 +186,11 @@ async function shopBrowse(
         setEquipSlot(player, config.slot, item.id);
         db.updatePlayer(player);
         session.writeln(`${ANSI.BRIGHT_GREEN}  You purchased the ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+        await session.pause();
       }
     }
   }
+  // 0 or cancel: no pause needed, menu loop will redisplay
 }
 
 async function shopSell(
@@ -202,12 +205,14 @@ async function shopSell(
 
   if (!currentItemId) {
     session.writeln(`${ANSI.BRIGHT_RED}  You have nothing to sell in this slot.${ANSI.RESET}`);
+    await session.pause();
     return;
   }
 
   const item = findItem(content, currentItemId);
   if (!item || item.price === 0) {
     session.writeln(`${ANSI.BRIGHT_RED}  That item has no resale value.${ANSI.RESET}`);
+    await session.pause();
     return;
   }
 
@@ -283,11 +288,9 @@ async function runShop(
     switch (choice) {
       case 'b':
         await shopBrowse(session, player, shopItems, shopType, db);
-        await session.pause();
         break;
       case 's':
         await shopSell(session, player, shopType, content, db);
-        await session.pause();
         break;
       case 'a':
         await shopSteal(session, player, shopItems, shopType, db);
