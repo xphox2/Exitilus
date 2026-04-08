@@ -49,7 +49,9 @@ export function createWebServer(options: {
       return;
     }
 
-    let filePath = req.url === '/' ? '/index.html' : req.url ?? '/index.html';
+    // Strip query parameters (e.g. ?fbclid=... from social media links)
+    const rawUrl = (req.url ?? '/').split('?')[0];
+    let filePath = rawUrl === '/' ? '/index.html' : rawUrl;
     // Security: prevent directory traversal
     filePath = filePath.replace(/\.\./g, '');
     const fullPath = join(publicDir, filePath);
