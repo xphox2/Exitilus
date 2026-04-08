@@ -181,7 +181,26 @@
       };
 
       ws.onmessage = (event) => {
-        term.write(event.data);
+        const data = event.data;
+        // Intercept font size hints: ESC[8;rows;colst
+        if (data.includes('\x1b[8;')) {
+          const match = data.match(/\x1b\[8;(\d+);(\d+)t/);
+          if (match) {
+            const cols = parseInt(match[2], 10);
+            // Adjust font size based on target columns
+            if (cols <= 80) {
+              term.options.fontSize = 18;
+            } else {
+              term.options.fontSize = 11;
+            }
+            fitAddon.fit();
+            // Strip the resize command and write the rest
+            const cleaned = data.replace(/\x1b\[8;\d+;\d+t/g, '');
+            if (cleaned) term.write(cleaned);
+            return;
+          }
+        }
+        term.write(data);
       };
 
       ws.onclose = () => {

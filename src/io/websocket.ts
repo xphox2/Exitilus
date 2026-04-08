@@ -143,6 +143,15 @@ export class WebSocketAdapter implements PlayerSession {
     const content = loadAnsiFile(this.ansiDir, filename, this.graphicsMode);
     if (!content) return;
 
+    // Measure content width and send font size hint
+    const firstLine = content.split('\n')[0] ?? '';
+    const visWidth = firstLine.replace(/\x1B\[[^A-Za-z]*[A-Za-z]/g, '').replace(/\r/g, '').length;
+    if (visWidth <= 80) {
+      this.write('\x1B[8;25;80t'); // Hint: use large font for 80-col
+    } else {
+      this.write('\x1B[8;50;160t'); // Hint: use small font for wide content
+    }
+
     this.write(content);
   }
 
