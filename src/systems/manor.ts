@@ -30,37 +30,55 @@ async function manorOverview(
   content: GameContent
 ): Promise<void> {
   session.clear();
-  const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
+  await session.showAnsi('MANOR.ANS');
 
-  session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════════════════╗`);
-  session.writeln(`║              MANOR STATUS                    ║`);
-  session.writeln(`╚══════════════════════════════════════════════╝${ANSI.RESET}`);
-  session.writeln('');
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}Kingdom:    ${ANSI.BRIGHT_WHITE}${kingdom?.name ?? 'None'}${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}Manor:      ${player.manorId ? `${ANSI.BRIGHT_GREEN}Established` : `${ANSI.BRIGHT_RED}None - Purchase land first`}${ANSI.RESET}`);
+  const W = ANSI.BRIGHT_WHITE;
+  const RST = ANSI.RESET;
 
   if (player.manorId) {
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}── Population ──${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Serfs:      ${ANSI.BRIGHT_WHITE}${player.serfs.toLocaleString()}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Food:       ${ANSI.BRIGHT_WHITE}${player.food.toLocaleString()} units${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Tax Rate:   ${ANSI.BRIGHT_WHITE}${player.taxRate}%${ANSI.RESET}`);
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}── Buildings ──${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Farms:      ${ANSI.BRIGHT_WHITE}${player.farms}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Silos:      ${ANSI.BRIGHT_WHITE}${player.silos}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Circuses:   ${ANSI.BRIGHT_WHITE}${player.circuses}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Iron Mines: ${ANSI.BRIGHT_WHITE}${player.ironMines}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Gold Mines: ${ANSI.BRIGHT_WHITE}${player.goldMines}${ANSI.RESET}`);
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}── Military ──${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Soldiers:   ${ANSI.BRIGHT_WHITE}${player.soldiers.toLocaleString()}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Knights:    ${ANSI.BRIGHT_WHITE}${player.knights}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Cannons:    ${ANSI.BRIGHT_WHITE}${player.cannons}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Forts:      ${ANSI.BRIGHT_WHITE}${player.forts}${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Training:   ${ANSI.BRIGHT_WHITE}${player.trainingLevel}%${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_CYAN}Morale:     ${ANSI.BRIGHT_WHITE}${player.morale}%${ANSI.RESET}`);
+    // Fill in values using cursor positioning (row;col)
+    // Row 8: Land Size, Knights, Farms
+    session.write(`\x1B[8;18H${W}${player.manorId}${RST}`);
+    session.write(`\x1B[8;27H${W}${player.knights}${RST}`);
+    session.write(`\x1B[8;34H${W}${player.farms}${RST}`);
+
+    // Row 9: Population, Cannons, Silos
+    session.write(`\x1B[9;18H${W}${player.serfs}${RST}`);
+    session.write(`\x1B[9;27H${W}${player.cannons}${RST}`);
+    session.write(`\x1B[9;34H${W}${player.silos}${RST}`);
+
+    // Row 10: Employed Pop, Soldiers, Circuses
+    session.write(`\x1B[10;18H${W}${player.food}${RST}`);
+    session.write(`\x1B[10;27H${W}${player.soldiers}${RST}`);
+    session.write(`\x1B[10;39H${W}${player.circuses}${RST}`);
+
+    // Row 11: Serf Support, Training, Iron Mines
+    session.write(`\x1B[11;18H${W}${player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A'}${RST}`);
+    session.write(`\x1B[11;27H${W}${player.trainingLevel}%${RST}`);
+    session.write(`\x1B[11;39H${W}${player.ironMines}${RST}`);
+
+    // Row 12: Serf Tax, Morale, Gold Mines
+    session.write(`\x1B[12;18H${W}${player.taxRate}%${RST}`);
+    session.write(`\x1B[12;27H${W}${player.morale}%${RST}`);
+    session.write(`\x1B[12;39H${W}${player.goldMines}${RST}`);
+
+    // Row 13: War Turns, Forts
+    session.write(`\x1B[13;18H${W}${player.forts}${RST}`);
+    session.write(`\x1B[13;27H${W}${player.forts}${RST}`);
+
+    // Row 17: Ruler info
+    const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
+    session.write(`\x1B[17;17H${W}${kingdom?.name ?? 'None'}${RST}`);
+
+    // Row 18: Tax payment info
+    const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
+    session.write(`\x1B[18;17H${W}$${formatGold(taxPayment)} in taxes${RST}`);
+  } else {
+    session.write(`\x1B[8;18H${ANSI.BRIGHT_RED}No manor - Purchase land first${RST}`);
   }
+
+  // Move cursor below the art
+  session.write('\x1B[23;1H');
 }
 
 async function purchaseLand(
