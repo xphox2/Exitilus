@@ -168,9 +168,37 @@ async function fightMonster(
   for (const drop of monster.drops) {
     if (Math.random() < drop.chance) {
       const item = findItem(content, drop.item);
-      if (item) {
+      if (item && item.slot) {
         itemDropped = drop.item;
-        session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA}!${ANSI.RESET}`);
+        const currentEquip = player[item.slot];
+        const currentItem = currentEquip ? findItem(content, currentEquip) : null;
+
+        if (!currentEquip) {
+          // Empty slot - auto-equip
+          player[item.slot] = item.id;
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA}! Equipped!${ANSI.RESET}`);
+        } else {
+          // Compare with current - auto-equip if better
+          const currentPower = (currentItem?.strengthBonus ?? 0) + (currentItem?.defenseBonus ?? 0) + (currentItem?.magicBonus ?? 0);
+          const newPower = item.strengthBonus + item.defenseBonus + item.magicBonus;
+          if (newPower > currentPower) {
+            player[item.slot] = item.id;
+            session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA}! Upgraded from ${currentItem?.name ?? 'nothing'}!${ANSI.RESET}`);
+          } else {
+            session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA} but your ${currentItem?.name} is better. Sold for $${formatGold(Math.floor(item.price * 0.5))}!${ANSI.RESET}`);
+            player.gold += Math.floor(item.price * 0.5);
+          }
+        }
+      } else if (item) {
+        // Non-equippable item (potion, etc)
+        itemDropped = drop.item;
+        if (item.type === 'potion') {
+          player.healingPotions++;
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA}! Added to inventory.${ANSI.RESET}`);
+        } else {
+          player.gold += Math.floor(item.price * 0.5);
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  The ${monster.name} dropped a ${ANSI.BRIGHT_WHITE}${item.name}${ANSI.BRIGHT_MAGENTA}! Sold for $${formatGold(Math.floor(item.price * 0.5))}!${ANSI.RESET}`);
+        }
       }
     }
   }
