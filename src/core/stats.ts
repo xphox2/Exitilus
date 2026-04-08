@@ -212,7 +212,7 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
 
   // Status
   const alive = player.alive;
-  const statusIcon = alive ? c(GREEN) + '♥' : c(RED) + '✖';
+  const statusIcon = alive ? c(GREEN) + '*' : c(RED) + 'x';
   const statusText = alive ? c(GREEN) + 'ALIVE' : c(RED) + 'DEAD';
 
   // Build all lines
