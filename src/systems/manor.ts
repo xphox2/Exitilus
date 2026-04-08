@@ -360,7 +360,7 @@ export async function enterArmyManor(
     let choice: string;
 
     if (shouldUseOverlay(session, 'MANOR.ANS')) {
-      choice = await showEnhancedMenuOverlay(session, 'MANOR.ANS', MENU_CONFIGS.MANOR.title, MENU_CONFIGS.MANOR.options);
+      choice = await showEnhancedMenuOverlay(session, 'MANOR.ANS', MENU_CONFIGS.MANOR.title, MENU_CONFIGS.MANOR.options, undefined, undefined, 'right-center');
     } else {
       session.clear();
       await session.showAnsi('MANOR.ANS');

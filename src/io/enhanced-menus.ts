@@ -90,7 +90,8 @@ export async function showEnhancedMenuOverlay(
   title: string,
   options: MenuOption[],
   style?: Partial<OverlayStyle>,
-  extraInfo?: string[]
+  extraInfo?: string[],
+  position?: 'bottom-right' | 'right-center'
 ): Promise<string> {
   const s = { ...DEFAULT_STYLE, ...style };
   const bgStr = bg(s.barBg.r, s.barBg.g, s.barBg.b);
@@ -170,9 +171,20 @@ export async function showEnhancedMenuOverlay(
   // 4. Calculate position within the IMAGE bounds (not terminal)
   const overlayHeight = lines.length;
   const imageWidth = ansiContent ? measureWidth(ansiContent) : 80;
-  // Bottom-right of the image, 2 lines buffer from bottom
-  const startRow = Math.max(1, imageRows - overlayHeight - 1);
-  const startCol = Math.max(1, imageWidth - BOX_WIDTH - 2);
+  const pos = position ?? 'bottom-right';
+
+  let startRow: number;
+  let startCol: number;
+
+  if (pos === 'right-center') {
+    // Right side, vertically centered
+    startRow = Math.max(1, Math.floor((imageRows - overlayHeight) / 2));
+    startCol = Math.max(1, imageWidth - BOX_WIDTH - 2);
+  } else {
+    // Bottom-right, 2 lines buffer from bottom
+    startRow = Math.max(1, imageRows - overlayHeight - 1);
+    startCol = Math.max(1, imageWidth - BOX_WIDTH - 2);
+  }
 
   // 5. Brief pause to see the full image
   await sleep(150);
