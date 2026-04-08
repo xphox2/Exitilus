@@ -1,8 +1,9 @@
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import type {
-  ClassDef, RaceDef, MonsterDef, ItemDef, SpellDef, AreaDef, GameConfig, KingdomDef, StatBlock
+  ClassDef, RaceDef, MonsterDef, ItemDef, SpellDef, AreaDef, GameConfig, KingdomDef, StatBlock,
+  BarResponse, GamePrompts
 } from '../types/index.js';
 
 export interface GameContent {
@@ -15,6 +16,8 @@ export interface GameContent {
   config: GameConfig;
   kingdoms: KingdomDef[];
   baseStats: StatBlock;
+  barResponses: BarResponse[];
+  prompts: GamePrompts;
 }
 
 function loadJson<T>(contentDir: string, filename: string): T {
@@ -39,6 +42,23 @@ export function loadGameContent(contentDir: string): GameContent {
     player: { baseStats: StatBlock };
   };
 
+  // Optional content files
+  const barFile = join(contentDir, 'bar.json');
+  const barResponses: BarResponse[] = existsSync(barFile)
+    ? loadJson<BarResponse[]>(contentDir, 'bar.json')
+    : [];
+
+  const promptsFile = join(contentDir, 'prompts.json');
+  const defaultPrompts: GamePrompts = {
+    welcomeBack: 'Welcome back, %NAME%!',
+    deathMessage: 'You have fallen in battle...',
+    levelUp: 'Congratulations! You reached level %LEVEL%!',
+    noGold: "You can't afford that!",
+  };
+  const prompts: GamePrompts = existsSync(promptsFile)
+    ? { ...defaultPrompts, ...loadJson<Record<string, string>>(contentDir, 'prompts.json') }
+    : defaultPrompts;
+
   return {
     classes,
     races,
@@ -49,6 +69,8 @@ export function loadGameContent(contentDir: string): GameContent {
     config: configDoc.game,
     kingdoms: configDoc.kingdoms,
     baseStats: configDoc.player.baseStats,
+    barResponses,
+    prompts,
   };
 }
 

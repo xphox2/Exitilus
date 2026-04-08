@@ -77,7 +77,29 @@ export async function enterTavern(
         break;
       case 't':
         session.writeln('');
-        session.writeln(`  ${ANSI.BRIGHT_CYAN}${BARTENDER_RESPONSES[randomInt(0, BARTENDER_RESPONSES.length - 1)]}${ANSI.RESET}`);
+        session.writeln(`  ${ANSI.BRIGHT_CYAN}The bartender leans forward. "What do you want to know about?"${ANSI.RESET}`);
+        session.writeln(`  ${ANSI.BRIGHT_BLACK}(Type a keyword like "quest", "dragon", "help", or just press Enter)${ANSI.RESET}`);
+        {
+          const keyword = await session.readLine(`  ${ANSI.BRIGHT_YELLOW}Ask about: ${ANSI.BRIGHT_WHITE}`);
+          if (keyword.trim()) {
+            const match = content.barResponses.find(
+              b => b.keyword.toLowerCase() === keyword.trim().toLowerCase()
+            );
+            if (match) {
+              session.writeln(`  ${ANSI.BRIGHT_CYAN}${match.response}${ANSI.RESET}`);
+              if (match.reward) {
+                if (match.reward.type === 'gold') { player.gold += match.reward.amount; session.writeln(`  ${ANSI.BRIGHT_YELLOW}+$${formatGold(match.reward.amount)} gold!${ANSI.RESET}`); }
+                else if (match.reward.type === 'xp') { player.xp += match.reward.amount; session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} XP!${ANSI.RESET}`); }
+                else if (match.reward.type === 'hp') { player.hp = Math.min(player.maxHp, player.hp + match.reward.amount); session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} HP!${ANSI.RESET}`); }
+                db.updatePlayer(player);
+              }
+            } else {
+              session.writeln(`  ${ANSI.BRIGHT_CYAN}${BARTENDER_RESPONSES[randomInt(0, BARTENDER_RESPONSES.length - 1)]}${ANSI.RESET}`);
+            }
+          } else {
+            session.writeln(`  ${ANSI.BRIGHT_CYAN}${BARTENDER_RESPONSES[randomInt(0, BARTENDER_RESPONSES.length - 1)]}${ANSI.RESET}`);
+          }
+        }
         await session.pause();
         break;
       case 'g':

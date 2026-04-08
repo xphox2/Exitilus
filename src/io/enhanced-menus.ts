@@ -259,6 +259,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'P', label: 'Personal Commands' },
       { key: 'R', label: 'Grand Library' },
       { key: 'V', label: 'View Ratings' },
+      { key: 'E', label: 'Equipment' },
       { key: 'K', label: 'Bank' },
       { key: '*', label: 'Commit Suicide' },
       { key: 'Q', label: 'Quit for Today' },

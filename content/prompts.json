@@ -1,0 +1,11 @@
+{
+  "welcomeBack": "Welcome back, %NAME%!",
+  "deathMessage": "You have fallen in battle...",
+  "levelUp": "Congratulations! You reached level %LEVEL%!",
+  "noGold": "You can't afford that!",
+  "questComplete": "Quest complete! Well done, %NAME%!",
+  "newDay": "A new day dawns in the realm of Exitilus...",
+  "farewell": "See you tomorrow, %NAME%! Rest well.",
+  "combatVictory": "The monster falls before your might!",
+  "combatDefeat": "Darkness closes in around you..."
+}

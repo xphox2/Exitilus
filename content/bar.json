@@ -1,0 +1,22 @@
+[
+  { "keyword": "quest", "response": "I heard there's trouble in the goblin caves. Brave souls are needed!" },
+  { "keyword": "dragon", "response": "Dragons? In the King's Garden, if you're brave enough. Most who go never return." },
+  { "keyword": "gold", "response": "Try the gold mines in your manor, or rob someone in the alleys if you're desperate!" },
+  { "keyword": "weapon", "response": "The weapon shop has decent blades. For the really good stuff, visit the Merchant's Wharves." },
+  { "keyword": "armour", "response": "Get yourself some plate armour from the shops. Dragon Scale is the best, but costs a fortune." },
+  { "keyword": "magic", "response": "The Magician's Shop sells enchanted goods. Mages should focus on wisdom and mana." },
+  { "keyword": "potion", "response": "The church sells healing potions cheapest. Stock up before heading outside!" },
+  { "keyword": "level", "response": "Fight monsters outside town to gain experience. The harder the area, the more XP you earn." },
+  { "keyword": "king", "response": "The King holds tournaments for warriors level 12 and above. Grand prizes await!" },
+  { "keyword": "church", "response": "The church offers daily blessings and cheap potions. Also a good place to... donate." },
+  { "keyword": "manor", "response": "Buy land at the Army & Manor hall. Build farms, hire soldiers, become a lord!" },
+  { "keyword": "bank", "response": "Keep your gold in the bank. It earns interest daily, and thieves can't touch it there." },
+  { "keyword": "thief", "response": "Watch your back in the alleys. Criminals lurk there, but so does easy gold if you're sneaky." },
+  { "keyword": "guild", "response": "The guilds teach spells and special abilities. Essential for magic users." },
+  { "keyword": "pirate", "response": "Pirates have a cove along the seashore. Dangerous, but the loot is incredible." },
+  { "keyword": "undead", "response": "The old crypt beneath the church crawls with the dead. Bring your best gear." },
+  { "keyword": "ring", "response": "Magical rings can be found at the Magician's Shop. They give passive bonuses in combat." },
+  { "keyword": "help", "response": "Try asking about: quest, dragon, gold, weapon, armour, magic, potion, level, manor, ring" },
+  { "keyword": "secret", "response": "Between you and me... the Mystery Brew sometimes gives incredible power. Worth the risk.", "reward": { "type": "xp", "amount": 10 } },
+  { "keyword": "death", "response": "Death isn't always the end. The church can sometimes bring back the fallen... for a price." }
+]

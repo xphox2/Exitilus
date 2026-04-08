@@ -49,7 +49,7 @@ export interface ItemDef {
   name: string;
   description: string;
   type: 'weapon' | 'shield' | 'armour' | 'potion' | 'misc';
-  slot?: 'rightHand' | 'leftHand' | 'armour';
+  slot?: 'rightHand' | 'leftHand' | 'armour' | 'ring';
   price: number;
   strengthBonus: number;
   defenseBonus: number;
@@ -77,6 +77,14 @@ export interface BarResponse {
   reward?: { type: 'gold' | 'xp' | 'hp' | 'stat'; amount: number; stat?: string };
   deathChance?: number;
   deathMessage?: string;
+}
+
+export interface GamePrompts {
+  welcomeBack: string;
+  deathMessage: string;
+  levelUp: string;
+  noGold: string;
+  [key: string]: string;
 }
 
 export interface AreaDef {
@@ -136,9 +144,11 @@ export interface PlayerRecord {
   monsterFights: number;
   playerFights: number;
   healingPotions: number;
+  manaPotions: number;
   rightHand: string | null;
   leftHand: string | null;
   armour: string | null;
+  ring: string | null;
   manorId: string | null;
   kingdomId: string | null;
   questsCompleted: string[];

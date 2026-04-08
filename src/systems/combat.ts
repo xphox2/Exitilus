@@ -22,6 +22,10 @@ function calcPlayerAttack(player: PlayerRecord, content: GameContent): number {
     const weapon = findItem(content, player.rightHand);
     if (weapon) atk += weapon.strengthBonus;
   }
+  if (player.ring) {
+    const ring = findItem(content, player.ring);
+    if (ring) atk += ring.strengthBonus;
+  }
   return atk;
 }
 
@@ -34,6 +38,10 @@ function calcPlayerDefense(player: PlayerRecord, content: GameContent): number {
   if (player.armour) {
     const arm = findItem(content, player.armour);
     if (arm) def += arm.defenseBonus;
+  }
+  if (player.ring) {
+    const ring = findItem(content, player.ring);
+    if (ring) def += ring.defenseBonus;
   }
   return def;
 }
@@ -82,6 +90,7 @@ async function fightMonster(
       { key: 'a', label: 'Attack' },
       { key: 'c', label: `Cast Spell (${player.mp} MP)`, enabled: hasSpells },
       { key: 'h', label: `Heal (${player.healingPotions} potions)`, enabled: player.healingPotions > 0 },
+      { key: 'm', label: `Mana Potion (${player.manaPotions})`, enabled: player.manaPotions > 0 },
       { key: 'r', label: 'Run Away' },
     ], { showBorder: false });
 
@@ -99,6 +108,13 @@ async function fightMonster(
       const healAmount = Math.min(50 + player.wisdom, player.maxHp - player.hp);
       player.hp += healAmount;
       session.writeln(`${ANSI.BRIGHT_GREEN}  You drink a healing potion and recover ${healAmount} HP!${ANSI.RESET}`);
+    }
+
+    if (choice === 'm') {
+      player.manaPotions--;
+      const manaRestore = Math.min(30, player.maxMp - player.mp);
+      player.mp += manaRestore;
+      session.writeln(`${ANSI.BRIGHT_MAGENTA}  You drink a mana potion and recover ${manaRestore} MP!${ANSI.RESET}`);
     }
 
     if (choice === 'c') {
@@ -147,7 +163,8 @@ async function fightMonster(
     if (player.hp <= 0) {
       player.hp = 0;
       player.alive = false;
-      session.writeln(`${ANSI.BRIGHT_RED}  ☠  You have been slain by the ${monster.name}!${ANSI.RESET}`);
+      const deathMsg = content.prompts?.deathMessage ?? 'You have fallen in battle...';
+      session.writeln(`${ANSI.BRIGHT_RED}  ☠  ${deathMsg}${ANSI.RESET}`);
       return { won: false, fled: false, goldEarned: 0, xpEarned: 0, itemDropped: null, playerDied: true };
     }
   }
@@ -168,7 +185,7 @@ async function fightMonster(
   for (const drop of monster.drops) {
     if (Math.random() < drop.chance) {
       const item = findItem(content, drop.item);
-      if (item && item.slot) {
+      if (item && item.slot && (item.slot === 'rightHand' || item.slot === 'leftHand' || item.slot === 'armour' || item.slot === 'ring')) {
         itemDropped = drop.item;
         const currentEquip = player[item.slot];
         const currentItem = currentEquip ? findItem(content, currentEquip) : null;
@@ -219,7 +236,9 @@ async function fightMonster(
     player.agility += randomInt(1, 2);
 
     session.writeln('');
-    session.writeln(`${ANSI.BRIGHT_YELLOW}  ★★★ LEVEL UP! You are now level ${player.level}! ★★★${ANSI.RESET}`);
+    const lvlMsg = content.prompts?.levelUp?.replace(/%LEVEL%/g, String(player.level))
+      ?? `Congratulations! You reached level ${player.level}!`;
+    session.writeln(`${ANSI.BRIGHT_YELLOW}  ★★★ ${lvlMsg} ★★★${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_GREEN}  +${hpGain} Max HP, +${mpGain} Max MP, +${statGain} STR/DEF${ANSI.RESET}`);
   }
 
@@ -255,6 +274,7 @@ export async function enterCombatArea(
     const choice = await showMenu(session, area.name, [
       { key: 'f', label: `Fight Monsters (${fightsLeft} fights left)`, enabled: fightsLeft > 0 && player.alive },
       { key: 'b', label: 'Buy Healing Potions' },
+      { key: 'm', label: 'Buy Mana Potions' },
       { key: 'h', label: 'Heal Yourself', enabled: player.healingPotions > 0 },
       { key: 'y', label: 'Your Stats' },
       { key: 'r', label: 'Return to Town' },
@@ -296,6 +316,23 @@ export async function enterCombatArea(
           session.writeln(`${ANSI.BRIGHT_GREEN}  Bought ${num} healing potion(s)!${ANSI.RESET}`);
           db.updatePlayer(player);
         } else if (num > 0) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You can't afford that many!${ANSI.RESET}`);
+        }
+        break;
+      }
+
+      case 'm': {
+        const manaCost = 150;
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  Mana potions cost ${ANSI.BRIGHT_YELLOW}$${manaCost}${ANSI.BRIGHT_MAGENTA} each.${ANSI.RESET}`);
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  You have ${ANSI.BRIGHT_YELLOW}$${formatGold(player.gold)}${ANSI.BRIGHT_MAGENTA} gold and ${ANSI.BRIGHT_WHITE}${player.manaPotions}${ANSI.BRIGHT_MAGENTA} mana potions.${ANSI.RESET}`);
+        const mQty = await session.readLine(`${ANSI.BRIGHT_CYAN}  How many? ${ANSI.BRIGHT_WHITE}`);
+        const mNum = parseInt(mQty, 10);
+        if (mNum > 0 && mNum * manaCost <= player.gold) {
+          player.gold -= mNum * manaCost;
+          player.manaPotions += mNum;
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  Bought ${mNum} mana potion(s)!${ANSI.RESET}`);
+          db.updatePlayer(player);
+        } else if (mNum > 0) {
           session.writeln(`${ANSI.BRIGHT_RED}  You can't afford that many!${ANSI.RESET}`);
         }
         break;

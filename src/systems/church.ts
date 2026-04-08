@@ -18,7 +18,7 @@ export async function enterChurch(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
-  const validKeys = ['b', 'c', 'g', 'a', 's', 'r', 'q', 'y'];
+  const validKeys = ['b', 'p', 'c', 'g', 'a', 's', 'r', 'q', 'y'];
 
   while (true) {
     let choice: string;
@@ -51,6 +51,24 @@ export async function enterChurch(
           db.updatePlayer(player);
           session.writeln(`${ANSI.BRIGHT_GREEN}  "Bless you, child." You received ${num} healing potion(s).${ANSI.RESET}`);
         } else if (num > 0) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You can't afford that many.${ANSI.RESET}`);
+        }
+        await session.pause();
+        break;
+      }
+
+      case 'p': {
+        const manaCost = 120; // Church sells mana potions slightly cheaper
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  The church offers mana potions for $${manaCost} each.${ANSI.RESET}`);
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  You have $${formatGold(player.gold)} gold and ${player.manaPotions} mana potions.${ANSI.RESET}`);
+        const mInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  How many? ${ANSI.BRIGHT_WHITE}`);
+        const mNum = parseInt(mInput, 10);
+        if (mNum > 0 && mNum * manaCost <= player.gold) {
+          player.gold -= mNum * manaCost;
+          player.manaPotions += mNum;
+          db.updatePlayer(player);
+          session.writeln(`${ANSI.BRIGHT_MAGENTA}  "May the arcane bless you." You received ${mNum} mana potion(s).${ANSI.RESET}`);
+        } else if (mNum > 0) {
           session.writeln(`${ANSI.BRIGHT_RED}  You can't afford that many.${ANSI.RESET}`);
         }
         await session.pause();

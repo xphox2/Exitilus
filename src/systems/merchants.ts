@@ -50,6 +50,18 @@ function generateDeals(player: PlayerRecord): MerchantDeal[] {
     { name: 'Battle Experience Scroll', description: 'Grants combat knowledge', cost: 400 + player.level * 30,
       action: (p) => { const xp = 200 + player.level * 100; p.xp += xp; return `Gained ${xp} XP!`; } },
   ];
+  // Ring deals
+  allDeals.push(
+    { name: 'Ring of Strength', description: 'Ruby ring (+8 STR)', cost: 1500,
+      action: (p) => { p.ring = 'ring_of_strength'; return 'Equipped Ring of Strength!'; } },
+    { name: 'Ring of Defense', description: 'Sapphire ring (+8 DEF)', cost: 1500,
+      action: (p) => { p.ring = 'ring_of_defense'; return 'Equipped Ring of Defense!'; } },
+    { name: 'Ring of Magic', description: 'Amethyst ring (+12 MAG)', cost: 2000,
+      action: (p) => { p.ring = 'ring_of_magic'; return 'Equipped Ring of Magic!'; } },
+    { name: 'Ring of Power', description: 'Golden ring (+10 STR, +5 DEF, +8 MAG)', cost: 8000,
+      action: (p) => { p.ring = 'ring_of_power'; return 'Equipped Ring of Power!'; } },
+  );
+
   return allDeals.sort(() => Math.random() - 0.5).slice(0, 5);
 }
 

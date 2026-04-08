@@ -31,6 +31,7 @@ import { enterQuests } from '../systems/quests.js';
 import { attemptResurrection } from '../systems/resurrection.js';
 import { checkMessages } from '../systems/messaging.js';
 import { runDailyMaintenance } from '../systems/maintenance.js';
+import { inspectEquipment } from '../systems/equipment.js';
 
 export class GameEngine {
   private player: PlayerRecord | null = null;
@@ -183,7 +184,8 @@ export class GameEngine {
         } else {
           // Welcome back
           this.session.writeln('');
-          this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+          const welcomeMsg = this.content.prompts.welcomeBack.replace(/%NAME%/g, player.name);
+          this.session.writeln(`${ANSI.BRIGHT_GREEN}${welcomeMsg}${ANSI.RESET}`);
           // Only reset daily counters if last login was a different day
           const today = new Date().toISOString().slice(0, 10);
           const lastDay = player.lastLogin ? player.lastLogin.slice(0, 10) : '';
@@ -206,7 +208,7 @@ export class GameEngine {
   private async mainStreet(): Promise<void> {
     if (!this.player) return;
 
-    const validKeys = ['s', 'g', 'i', 'c', 't', 'm', 'b', 'u', 'w', 'a', 'y', 'l', 'f', 'p', 'r', 'v', 'k', '*', 'q'];
+    const validKeys = ['s', 'g', 'i', 'c', 't', 'm', 'b', 'u', 'w', 'a', 'y', 'l', 'f', 'p', 'r', 'v', 'k', 'e', '*', 'q'];
 
     while (true) {
       let choice: string;
@@ -246,7 +248,7 @@ export class GameEngine {
         case 'w':
           await walkOutside(this.session, this.player, this.content, this.db);
           if (!this.player.alive) {
-            this.session.writeln(`${ANSI.BRIGHT_RED}You are dead. Your adventure ends here...${ANSI.RESET}`);
+            this.session.writeln(`${ANSI.BRIGHT_RED}${this.content.prompts.deathMessage}${ANSI.RESET}`);
             this.db.updatePlayer(this.player);
             await this.session.pause();
             return;
@@ -268,7 +270,7 @@ export class GameEngine {
         case 'f':
           await playerFight(this.session, this.player, this.content, this.db);
           if (!this.player.alive) {
-            this.session.writeln(`${ANSI.BRIGHT_RED}You are dead. Your adventure ends here...${ANSI.RESET}`);
+            this.session.writeln(`${ANSI.BRIGHT_RED}${this.content.prompts.deathMessage}${ANSI.RESET}`);
             this.db.updatePlayer(this.player);
             await this.session.pause();
             return;
@@ -293,6 +295,10 @@ export class GameEngine {
 
         case 'a':
           await enterArmyManor(this.session, this.player, this.content, this.db);
+          break;
+
+        case 'e':
+          await inspectEquipment(this.session, this.player, this.content, this.db);
           break;
 
         case 'v':
@@ -326,7 +332,7 @@ export class GameEngine {
         case 'q':
           this.session.writeln('');
           this.session.writeln(`${ANSI.BRIGHT_GREEN}You head back to your quarters for some rest.${ANSI.RESET}`);
-          this.session.writeln(`${ANSI.BRIGHT_GREEN}See you tomorrow, ${ANSI.BRIGHT_YELLOW}${this.player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+          this.session.writeln(`${ANSI.BRIGHT_GREEN}${this.content.prompts.farewell?.replace(/%NAME%/g, this.player.name) ?? `See you tomorrow, ${this.player.name}!`}${ANSI.RESET}`);
           this.db.updatePlayer(this.player);
           await this.session.pause();
           return;

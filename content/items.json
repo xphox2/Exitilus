@@ -27,5 +27,12 @@
   { "id": "mystic_robes", "name": "Mystic Robes", "description": "Enchanted robes that boost magical power.", "type": "armour", "slot": "armour", "price": 2000, "strengthBonus": 0, "defenseBonus": 8, "magicBonus": 20, "hpBonus": 5 },
   { "id": "archmage_robes", "name": "Archmage Robes", "description": "Legendary robes worn by the greatest mages.", "type": "armour", "slot": "armour", "price": 15000, "strengthBonus": 0, "defenseBonus": 20, "magicBonus": 40, "hpBonus": 15 },
   { "id": "amulet_of_protection", "name": "Amulet of Protection", "description": "A magical shield amulet.", "type": "shield", "slot": "leftHand", "price": 1500, "strengthBonus": 0, "defenseBonus": 15, "magicBonus": 10, "hpBonus": 5 },
-  { "id": "orb_of_power", "name": "Orb of Power", "description": "A pulsing orb of concentrated magic.", "type": "shield", "slot": "leftHand", "price": 6000, "strengthBonus": 5, "defenseBonus": 10, "magicBonus": 30, "hpBonus": 10 }
+  { "id": "orb_of_power", "name": "Orb of Power", "description": "A pulsing orb of concentrated magic.", "type": "shield", "slot": "leftHand", "price": 6000, "strengthBonus": 5, "defenseBonus": 10, "magicBonus": 30, "hpBonus": 10 },
+
+  { "id": "ring_of_strength", "name": "Ring of Strength", "description": "A ruby ring that amplifies physical power.", "type": "misc", "slot": "ring", "price": 1500, "strengthBonus": 8, "defenseBonus": 0, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "ring_of_defense", "name": "Ring of Defense", "description": "A sapphire ring that hardens the wearer's skin.", "type": "misc", "slot": "ring", "price": 1500, "strengthBonus": 0, "defenseBonus": 8, "magicBonus": 0, "hpBonus": 0 },
+  { "id": "ring_of_magic", "name": "Ring of Magic", "description": "An amethyst ring crackling with arcane energy.", "type": "misc", "slot": "ring", "price": 2000, "strengthBonus": 0, "defenseBonus": 0, "magicBonus": 12, "hpBonus": 0 },
+  { "id": "ring_of_vitality", "name": "Ring of Vitality", "description": "An emerald ring that pulses with life force.", "type": "misc", "slot": "ring", "price": 2500, "strengthBonus": 0, "defenseBonus": 3, "magicBonus": 0, "hpBonus": 20 },
+  { "id": "ring_of_power", "name": "Ring of Power", "description": "A golden ring radiating overwhelming energy.", "type": "misc", "slot": "ring", "price": 8000, "strengthBonus": 10, "defenseBonus": 5, "magicBonus": 8, "hpBonus": 10 },
+  { "id": "ring_of_shadows", "name": "Ring of Shadows", "description": "A dark ring that bends light around the wearer.", "type": "misc", "slot": "ring", "price": 5000, "strengthBonus": 5, "defenseBonus": 10, "magicBonus": 5, "hpBonus": 0 }
 ]

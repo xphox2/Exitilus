@@ -30,9 +30,11 @@ CREATE TABLE IF NOT EXISTS players (
   monster_fights INTEGER NOT NULL DEFAULT 0,
   player_fights INTEGER NOT NULL DEFAULT 0,
   healing_potions INTEGER NOT NULL DEFAULT 0,
+  mana_potions INTEGER NOT NULL DEFAULT 0,
   right_hand TEXT,
   left_hand TEXT,
   armour TEXT,
+  ring TEXT,
   manor_id TEXT,
   kingdom_id TEXT,
   quests_completed TEXT NOT NULL DEFAULT '[]',
@@ -79,6 +81,7 @@ export class GameDatabase {
     }
 
     this.db.run(SCHEMA);
+    this.migrateSchema();
     this.save();
   }
 
@@ -115,18 +118,19 @@ export class GameDatabase {
     this.db.run(`
       INSERT INTO players (name, real_name, password_hash, sex, class_id, race_id, level, xp, high_xp,
         hp, max_hp, mp, max_mp, strength, defense, agility, leadership, wisdom,
-        gold, bank_gold, evil_deeds, monster_fights, player_fights, healing_potions,
-        right_hand, left_hand, armour, manor_id, kingdom_id, quests_completed,
+        gold, bank_gold, evil_deeds, monster_fights, player_fights, healing_potions, mana_potions,
+        right_hand, left_hand, armour, ring, manor_id, kingdom_id, quests_completed,
         alive, last_login, soldiers, knights, cannons, forts, training_level, morale,
         serfs, food, farms, silos, circuses, iron_mines, gold_mines, tax_rate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       player.name, player.realName, player.passwordHash, player.sex, player.classId, player.raceId,
       player.level, player.xp, player.highXp, player.hp, player.maxHp,
       player.mp, player.maxMp, player.strength, player.defense, player.agility,
       player.leadership, player.wisdom, player.gold, player.bankGold,
       player.evilDeeds, player.monsterFights, player.playerFights, player.healingPotions,
-      player.rightHand, player.leftHand, player.armour,
+      player.manaPotions,
+      player.rightHand, player.leftHand, player.armour, player.ring,
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
       player.alive ? 1 : 0, player.lastLogin,
       player.soldiers, player.knights, player.cannons, player.forts,
@@ -147,8 +151,8 @@ export class GameDatabase {
         name=?, real_name=?, password_hash=?, sex=?, class_id=?, race_id=?, level=?, xp=?, high_xp=?,
         hp=?, max_hp=?, mp=?, max_mp=?, strength=?, defense=?, agility=?,
         leadership=?, wisdom=?, gold=?, bank_gold=?, evil_deeds=?,
-        monster_fights=?, player_fights=?, healing_potions=?,
-        right_hand=?, left_hand=?, armour=?, manor_id=?, kingdom_id=?,
+        monster_fights=?, player_fights=?, healing_potions=?, mana_potions=?,
+        right_hand=?, left_hand=?, armour=?, ring=?, manor_id=?, kingdom_id=?,
         quests_completed=?, alive=?, last_login=?,
         soldiers=?, knights=?, cannons=?, forts=?, training_level=?, morale=?,
         serfs=?, food=?, farms=?, silos=?, circuses=?, iron_mines=?, gold_mines=?, tax_rate=?
@@ -159,7 +163,8 @@ export class GameDatabase {
       player.mp, player.maxMp, player.strength, player.defense, player.agility,
       player.leadership, player.wisdom, player.gold, player.bankGold,
       player.evilDeeds, player.monsterFights, player.playerFights, player.healingPotions,
-      player.rightHand, player.leftHand, player.armour,
+      player.manaPotions,
+      player.rightHand, player.leftHand, player.armour, player.ring,
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
       player.alive ? 1 : 0, player.lastLogin,
       player.soldiers, player.knights, player.cannons, player.forts,
@@ -205,6 +210,19 @@ export class GameDatabase {
     this.db.close();
   }
 
+  /** Add columns that may be missing from older databases */
+  private migrateSchema(): void {
+    const cols = this.db.exec("PRAGMA table_info(players)");
+    if (!cols[0]) return;
+    const existing = new Set(cols[0].values.map((r: unknown[]) => r[1] as string));
+    if (!existing.has('mana_potions')) {
+      this.db.run("ALTER TABLE players ADD COLUMN mana_potions INTEGER NOT NULL DEFAULT 0");
+    }
+    if (!existing.has('ring')) {
+      this.db.run("ALTER TABLE players ADD COLUMN ring TEXT");
+    }
+  }
+
   private rowToPlayer(row: Record<string, unknown>): PlayerRecord {
     return {
       id: row['id'] as number,
@@ -232,9 +250,11 @@ export class GameDatabase {
       monsterFights: row['monster_fights'] as number,
       playerFights: row['player_fights'] as number,
       healingPotions: row['healing_potions'] as number,
+      manaPotions: (row['mana_potions'] as number) ?? 0,
       rightHand: (row['right_hand'] as string) || null,
       leftHand: (row['left_hand'] as string) || null,
       armour: (row['armour'] as string) || null,
+      ring: (row['ring'] as string) || null,
       manorId: (row['manor_id'] as string) || null,
       kingdomId: (row['kingdom_id'] as string) || null,
       questsCompleted: JSON.parse((row['quests_completed'] as string) || '[]'),

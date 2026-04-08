@@ -1,3 +1,20 @@
+## 0.6.2
+
+Implement 7 missing features from the original game for full feature parity.
+
+### Added
+- **Equipment screen** (`E` key): Inspect equipped items with stat bonuses, drop/unequip gear
+- **Mana potions**: Buy at combat area menu, use in combat to restore MP (separate from healing potions)
+- **Ring equipment slot**: 4 rings available from traveling merchants (Strength, Defense, Magic, Power) with stat bonuses applied in combat
+- **Bar keyword system**: 20 keywords to ask the bartender about (lore, hints, humor) loaded from `content/bar.json`
+- **NPC manors**: Auto-generated NPC lords with manors when fewer than 3 exist, so solo players always have invasion targets
+- **9 additional quests**: Total now 18 quests (was 9) - includes Dragon's Lair, Haunted Crypt, Crystal Caves, Plague Village, and more
+- **Customizable prompts**: Welcome, death, level-up, and other messages loaded from `content/prompts.json`
+- Equipment option added to enhanced main menu overlay
+
+### Breaking
+- Database schema changed (added `mana_potions`, `ring` columns). Delete your `exitilus.db` to reset.
+
 ## 0.6.1
 
 Add password authentication for player characters.

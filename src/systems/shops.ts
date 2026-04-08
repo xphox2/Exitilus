@@ -51,7 +51,7 @@ function shopRow(content: string, visLen: number, w: number): string {
 }
 
 
-function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour', value: string | null): void {
+function setEquipSlot(player: PlayerRecord, slot: 'rightHand' | 'leftHand' | 'armour' | 'ring', value: string | null): void {
   player[slot] = value;
 }
 

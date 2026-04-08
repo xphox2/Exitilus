@@ -113,6 +113,7 @@ export function showStatsClassic(session: PlayerSession, player: PlayerRecord, c
   const rh = player.rightHand ? findItem(content, player.rightHand) : null;
   const lh = player.leftHand ? findItem(content, player.leftHand) : null;
   const arm = player.armour ? findItem(content, player.armour) : null;
+  const rng = player.ring ? findItem(content, player.ring) : null;
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
   const C = ANSI.BRIGHT_CYAN; const W = ANSI.BRIGHT_WHITE; const G = ANSI.BRIGHT_GREEN;
   const Y = ANSI.BRIGHT_YELLOW; const R = ANSI.BRIGHT_RED; const RST = ANSI.RESET;
@@ -136,6 +137,7 @@ export function showStatsClassic(session: PlayerSession, player: PlayerRecord, c
   session.writeln(`  ${C}Right Hand: ${W}${rh?.name ?? 'Bare Fists'}`);
   session.writeln(`  ${C}Left Hand:  ${W}${lh?.name ?? 'Nothing'}`);
   session.writeln(`  ${C}Armour:     ${W}${arm?.name ?? 'None'}`);
+  session.writeln(`  ${C}Ring:       ${W}${rng?.name ?? 'None'}`);
   session.writeln('');
   session.writeln(`  ${Y}── Wealth ──${RST}`);
   session.writeln(`  ${C}Gold:       ${Y}$${formatGold(player.gold)}`.padEnd(45) + `${C}Bank: ${Y}$${formatGold(player.bankGold)}`);
@@ -145,7 +147,8 @@ export function showStatsClassic(session: PlayerSession, player: PlayerRecord, c
   session.writeln('');
   session.writeln(`  ${Y}── Activity ──${RST}`);
   session.writeln(`  ${C}Monster Fights: ${G}${player.monsterFights}`.padEnd(40) + `${C}Player Fights: ${G}${player.playerFights}`);
-  session.writeln(`  ${C}Evil Deeds:     ${G}${player.evilDeeds}`.padEnd(40) + `${C}Potions: ${G}${player.healingPotions}`);
+  session.writeln(`  ${C}Evil Deeds:     ${G}${player.evilDeeds}`.padEnd(40) + `${C}HP Potions: ${G}${player.healingPotions}`);
+  session.writeln(`  ${C}`.padEnd(40) + `${C}MP Potions: ${G}${player.manaPotions}`);
   session.writeln(`${RST}`);
 }
 
@@ -156,6 +159,7 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   const rh = player.rightHand ? findItem(content, player.rightHand) : null;
   const lh = player.leftHand ? findItem(content, player.leftHand) : null;
   const arm = player.armour ? findItem(content, player.armour) : null;
+  const rng = player.ring ? findItem(content, player.ring) : null;
   const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
   const xpForNext = player.level * 100 + player.level * player.level * 50;
   const maxStat = content.config.maxStatValue;
@@ -287,6 +291,14 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
     c(CYAN) + '  Armour  ' + c(WHITE) + (arm?.name ?? 'None'),
     arm ? c(GREEN) + '+' + arm.defenseBonus + ' DEF  ' : ''
   ));
+  const ringBonuses: string[] = [];
+  if (rng?.strengthBonus) ringBonuses.push('+' + rng.strengthBonus + ' STR');
+  if (rng?.defenseBonus) ringBonuses.push('+' + rng.defenseBonus + ' DEF');
+  if (rng?.magicBonus) ringBonuses.push('+' + rng.magicBonus + ' MAG');
+  lines.push(padRow(
+    c(CYAN) + '  Ring    ' + c(WHITE) + (rng?.name ?? 'None'),
+    rng ? c(GREEN) + ringBonuses.join(' ') + '  ' : ''
+  ));
 
   // Wealth & XP
   lines.push(thinBorder);
@@ -310,10 +322,11 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   ));
   lines.push(padRow(
     c(CYAN) + '  Quests    ' + c(WHITE) + player.questsCompleted.length,
-    c(CYAN) + 'Potions  ' + c(WHITE) + player.healingPotions + '  '
+    c(CYAN) + 'HP Pot  ' + c(WHITE) + player.healingPotions + '  '
   ));
   lines.push(padRow(
-    c(CYAN) + '  Evil      ' + c(WHITE) + player.evilDeeds
+    c(CYAN) + '  Evil      ' + c(WHITE) + player.evilDeeds,
+    c(CYAN) + 'MP Pot  ' + c(WHITE) + player.manaPotions + '  '
   ));
 
   lines.push(emptyRow());

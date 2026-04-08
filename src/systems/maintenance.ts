@@ -159,6 +159,9 @@ export function runDailyMaintenance(db: GameDatabase, content: GameContent): str
     db.updatePlayer(player);
   }
 
+  // Generate NPC manors if fewer than 3 total manors exist
+  generateNpcManors(db, content, log);
+
   db.setState('lastMaintenance', today);
 
   if (missedDays > 1) {
@@ -168,4 +171,100 @@ export function runDailyMaintenance(db: GameDatabase, content: GameContent): str
   }
 
   return log;
+}
+
+const NPC_NAMES = [
+  'Lord Blackwood', 'Baron Ironforge', 'Lady Silvermoon', 'Duke Ashvane',
+  'Countess Thornwall', 'Lord Ravencrest', 'Baron Stormhelm', 'Lady Goleli',
+  'Duke Flamecrown', 'Countess Nighthollow',
+];
+
+const NPC_MANOR_NAMES = [
+  'Darkhollow Keep', 'Iron Bastion', 'Silver Spire', 'Ashvane Hold',
+  'Thornwall Estate', 'Raven Hall', 'Storm Fortress', 'Goleli Manor',
+  'Flamecrown Castle', 'Night Sanctum',
+];
+
+function generateNpcManors(db: GameDatabase, content: GameContent, log: string[]): void {
+  const allPlayers = db.listPlayers();
+  const manorCount = allPlayers.filter(p => p.manorId && p.alive).length;
+
+  if (manorCount >= 3) return;
+
+  const needed = 3 - manorCount;
+  const existingNames = new Set(allPlayers.map(p => p.name));
+
+  // Find average player level for scaling
+  const activePlayers = allPlayers.filter(p => p.alive && !p.name.startsWith('NPC:'));
+  const avgLevel = activePlayers.length > 0
+    ? Math.max(1, Math.floor(activePlayers.reduce((s, p) => s + p.level, 0) / activePlayers.length))
+    : 3;
+
+  for (let i = 0; i < needed; i++) {
+    // Find an unused NPC name
+    const availableIdx = NPC_NAMES.findIndex((n, idx) => !existingNames.has('NPC: ' + n));
+    if (availableIdx === -1) break; // All NPC names used
+
+    const npcName = 'NPC: ' + NPC_NAMES[availableIdx];
+    const manorName = NPC_MANOR_NAMES[availableIdx];
+    const level = Math.max(1, avgLevel + randomInt(-2, 2));
+
+    const classId = content.classes[randomInt(0, content.classes.length - 1)].id;
+    const raceId = content.races[randomInt(0, content.races.length - 1)].id;
+    const kingdomId = content.kingdoms[randomInt(0, content.kingdoms.length - 1)].id;
+
+    db.createPlayer({
+      name: npcName,
+      realName: 'NPC',
+      passwordHash: '',
+      sex: randomInt(0, 1) === 0 ? 'M' : 'F',
+      classId,
+      raceId,
+      level,
+      xp: level * 100,
+      highXp: level * 100,
+      hp: 80 + level * 15,
+      maxHp: 80 + level * 15,
+      mp: 20 + level * 5,
+      maxMp: 20 + level * 5,
+      strength: 15 + level * 3 + randomInt(0, 5),
+      defense: 12 + level * 3 + randomInt(0, 5),
+      agility: 12 + level * 2 + randomInt(0, 3),
+      leadership: 10 + level * 2,
+      wisdom: 10 + level * 2,
+      gold: 1000 + level * 500 + randomInt(0, 2000),
+      bankGold: 0,
+      evilDeeds: randomInt(0, 5),
+      monsterFights: 0,
+      playerFights: 0,
+      healingPotions: randomInt(2, 8),
+      manaPotions: randomInt(0, 4),
+      rightHand: null,
+      leftHand: null,
+      armour: null,
+      ring: null,
+      manorId: manorName,
+      kingdomId,
+      questsCompleted: [],
+      alive: true,
+      lastLogin: new Date().toISOString(),
+      soldiers: 20 + level * 10 + randomInt(0, 30),
+      knights: Math.floor(level / 2) + randomInt(0, 5),
+      cannons: Math.max(0, Math.floor(level / 3) + randomInt(-1, 3)),
+      forts: randomInt(1, 3),
+      trainingLevel: 20 + level * 5,
+      morale: 50 + randomInt(0, 30),
+      serfs: 30 + level * 15 + randomInt(0, 50),
+      food: 100 + level * 20,
+      farms: 2 + randomInt(0, level),
+      silos: 1 + randomInt(0, 2),
+      circuses: randomInt(0, 2),
+      ironMines: randomInt(0, Math.floor(level / 3) + 1),
+      goldMines: randomInt(0, Math.floor(level / 4) + 1),
+      taxRate: randomInt(5, 25),
+    });
+
+    existingNames.add(npcName);
+    log.push(`  Created NPC manor: ${npcName} at ${manorName} (Level ${level})`);
+  }
 }
