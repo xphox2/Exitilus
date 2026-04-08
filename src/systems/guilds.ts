@@ -299,7 +299,6 @@ export async function enterGuilds(
       case 'y':
         session.clear();
         await showStats(session, player, content);
-        await session.pause();
         break;
       case 'q':
       case 'r':

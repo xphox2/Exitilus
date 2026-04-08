@@ -313,7 +313,6 @@ export class GameEngine {
         case 'y':
           this.session.clear();
           await showStats(this.session, this.player, this.content);
-          await this.session.pause();
           break;
 
         case 'l':

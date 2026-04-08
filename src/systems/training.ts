@@ -54,7 +54,6 @@ export async function enterTraining(
     if (key.toLowerCase() === 'y') {
       session.clear();
       await showStats(session, player, content);
-      await session.pause();
       continue;
     }
 

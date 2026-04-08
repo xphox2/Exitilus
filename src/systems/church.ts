@@ -154,7 +154,6 @@ export async function enterChurch(
       case 'y':
         session.clear();
         await showStats(session, player, content);
-        await session.pause();
         break;
 
       case 'q':

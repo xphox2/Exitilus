@@ -199,7 +199,6 @@ export async function enterAlleys(
       case 'y':
         session.clear();
         await showStats(session, player, content);
-        await session.pause();
         break;
       case 'q':
       case 'r':

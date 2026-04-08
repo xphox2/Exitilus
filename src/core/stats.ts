@@ -320,6 +320,8 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   lines.push(botBorder);
 
   // Render with animation
+  // Send font size hint: stats is 72 cols, use larger font
+  session.write('\x1B[8;25;80t');
   session.clear();
   for (const line of lines) {
     session.writeln(line);
@@ -327,11 +329,16 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   }
 }
 
-/** Show stats - picks enhanced or classic based on session mode */
+/** Show stats - picks enhanced or classic based on session mode.
+ *  Includes pause and font restore - callers should NOT add their own pause. */
 export async function showStats(session: PlayerSession, player: PlayerRecord, content: GameContent): Promise<void> {
   if ((session as any).graphicsMode === 'enhanced') {
     await showStatsEnhanced(session, player, content);
+    await session.pause();
+    // Restore font for 160-col content
+    session.write('\x1B[8;50;160t');
   } else {
     showStatsClassic(session, player, content);
+    await session.pause();
   }
 }
