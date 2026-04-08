@@ -125,33 +125,93 @@ async function recruitMilitary(
   }
 
   await session.showAnsi('MILITARY.ANS');
-  session.writeln(`${ANSI.BRIGHT_YELLOW}  ═══ Recruit Military ═══${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}(1) Soldiers  $${SOLDIER_COST} each    (have ${player.soldiers})${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}(2) Knights   $${KNIGHT_COST} each    (have ${player.knights})${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}(3) Cannons   $${CANNON_COST} each    (have ${player.cannons})${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_CYAN}(4) Forts     $${FORT_COST} each   (have ${player.forts})${ANSI.RESET}`);
-  session.writeln(`  ${ANSI.BRIGHT_YELLOW}Gold: $${formatGold(player.gold)}${ANSI.RESET}`);
-  session.writeln('');
 
-  const typeInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  Recruit which type? (0 cancel): ${ANSI.BRIGHT_WHITE}`);
-  const type = parseInt(typeInput, 10);
-  if (type < 1 || type > 4) return;
+  const W = ANSI.BRIGHT_WHITE;
+  const RST = ANSI.RESET;
 
-  const costs = [SOLDIER_COST, KNIGHT_COST, CANNON_COST, FORT_COST];
-  const fields: ('soldiers' | 'knights' | 'cannons' | 'forts')[] = ['soldiers', 'knights', 'cannons', 'forts'];
-  const names = ['soldiers', 'knights', 'cannons', 'forts'];
-  const cost = costs[type - 1];
-  const field = fields[type - 1];
+  // Fill in military data fields using cursor positioning
+  session.write(`\x1B[7;48H${W}${player.soldiers}${RST}`);
+  session.write(`\x1B[8;47H${W}${player.knights}${RST}`);
+  session.write(`\x1B[9;47H${W}${player.cannons}${RST}`);
+  session.write(`\x1B[10;45H${W}${player.forts}${RST}`);
+  session.write(`\x1B[11;48H${W}${player.trainingLevel}%${RST}`);
+  session.write(`\x1B[12;46H${W}${player.morale}%${RST}`);
 
-  const maxAfford = Math.floor(player.gold / cost);
-  const qtyInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  How many? (max ${maxAfford}): ${ANSI.BRIGHT_WHITE}`);
+  // MILITARY.ANS has its own menu: [S]oldiers, [K]nights, [C]annons, [F]orts, [T]rain, [D]ischarge, [R]eturn
+  // Read key matching the art's menu
+  const validKeys = ['s', 'k', 'c', 'f', 't', 'd', 'r'];
+  let choice = '';
+  while (!choice) {
+    const key = await session.readKey();
+    if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+  }
+
+  if (choice === 'r') return;
+
+  if (choice === 't') {
+    // Train army
+    if (player.soldiers === 0) {
+      session.writeln(`${ANSI.BRIGHT_RED}  No soldiers to train!${ANSI.RESET}`);
+      return;
+    }
+    const trainCost = player.soldiers; // 1 gold per soldier per percent
+    const maxPercent = Math.min(100 - player.trainingLevel, Math.floor(player.gold / trainCost));
+    if (maxPercent <= 0) {
+      session.writeln(`${ANSI.BRIGHT_RED}  Can't afford training!${ANSI.RESET}`);
+      return;
+    }
+    const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Train how many percent? (max ${maxPercent}, costs $${trainCost}/percent): ${ANSI.BRIGHT_WHITE}`);
+    const pct = Math.min(parseInt(input, 10) || 0, maxPercent);
+    if (pct > 0) {
+      player.gold -= pct * trainCost;
+      player.trainingLevel = Math.min(100, player.trainingLevel + pct);
+      db.updatePlayer(player);
+      session.writeln(`${ANSI.BRIGHT_GREEN}  Training increased to ${player.trainingLevel}%!${ANSI.RESET}`);
+    }
+    return;
+  }
+
+  if (choice === 'd') {
+    // Discharge soldiers
+    if (player.soldiers === 0) {
+      session.writeln(`${ANSI.BRIGHT_RED}  No soldiers to discharge!${ANSI.RESET}`);
+      return;
+    }
+    const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Discharge how many? (have ${player.soldiers}): ${ANSI.BRIGHT_WHITE}`);
+    const qty = Math.min(parseInt(input, 10) || 0, player.soldiers);
+    if (qty > 0) {
+      player.soldiers -= qty;
+      db.updatePlayer(player);
+      session.writeln(`${ANSI.BRIGHT_GREEN}  Discharged ${qty} soldiers.${ANSI.RESET}`);
+    }
+    return;
+  }
+
+  // Hire units: s=soldiers, k=knights, c=cannons, f=forts
+  const unitMap: Record<string, { cost: number; field: 'soldiers' | 'knights' | 'cannons' | 'forts'; name: string }> = {
+    's': { cost: SOLDIER_COST, field: 'soldiers', name: 'soldiers' },
+    'k': { cost: KNIGHT_COST, field: 'knights', name: 'knights' },
+    'c': { cost: CANNON_COST, field: 'cannons', name: 'cannons' },
+    'f': { cost: FORT_COST, field: 'forts', name: 'forts' },
+  };
+
+  const unit = unitMap[choice];
+  if (!unit) return;
+
+  const maxAfford = Math.floor(player.gold / unit.cost);
+  if (maxAfford === 0) {
+    session.writeln(`${ANSI.BRIGHT_RED}  You can't afford any ${unit.name}! ($${unit.cost} each)${ANSI.RESET}`);
+    return;
+  }
+
+  const qtyInput = await session.readLine(`${ANSI.BRIGHT_CYAN}  How many ${unit.name}? (max ${maxAfford}, $${unit.cost} each): ${ANSI.BRIGHT_WHITE}`);
   const qty = Math.min(parseInt(qtyInput, 10) || 0, maxAfford);
 
   if (qty > 0) {
-    player.gold -= qty * cost;
-    player[field] += qty;
+    player.gold -= qty * unit.cost;
+    player[unit.field] += qty;
     db.updatePlayer(player);
-    session.writeln(`${ANSI.BRIGHT_GREEN}  Recruited ${qty} ${names[type - 1]}!${ANSI.RESET}`);
+    session.writeln(`${ANSI.BRIGHT_GREEN}  Recruited ${qty} ${unit.name}!${ANSI.RESET}`);
   }
 }
 
