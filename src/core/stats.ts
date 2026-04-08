@@ -177,12 +177,16 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   function padRow(left: string, right: string = ''): string {
     const lVis = displayWidth(left);
     const rVis = displayWidth(right);
-    const innerW = W - 2;
+    const innerW = W - 2; // space between the two ║ borders
     if (right) {
-      const gap = Math.max(1, innerW - lVis - rVis);
-      return row(' ' + left + ' '.repeat(gap) + right + ' '.repeat(Math.max(0, innerW - lVis - gap - rVis - 1)));
+      // Layout: [space][left][gap][right]  total must equal innerW
+      const used = 1 + lVis + rVis;
+      const gap = Math.max(1, innerW - used);
+      return row(' ' + left + ' '.repeat(gap) + right);
     }
-    return row(' ' + left + ' '.repeat(Math.max(0, innerW - lVis - 1)));
+    // Layout: [space][left][padding]  total must equal innerW
+    const pad = Math.max(0, innerW - 1 - lVis);
+    return row(' ' + left + ' '.repeat(pad));
   }
 
   function emptyRow(): string {
@@ -190,9 +194,15 @@ export async function showStatsEnhanced(session: PlayerSession, player: PlayerRe
   }
 
   function headerRow(icon: string, title: string): string {
-    const titleLen = displayWidth(icon) + 1 + title.length;
-    const leftDash = Math.floor((W - 4 - titleLen) / 2);
-    const rightDash = W - 4 - titleLen - leftDash;
+    // Layout: [sp][dashes][sp][icon][sp][title][sp][dashes][sp]
+    // Fixed: 6 chars (4 spaces + icon + 1 space between icon and title... wait let me just count)
+    // ' ' + dashes + ' ' + icon + ' ' + title + ' ' + dashes + ' '
+    //  1     left     1     1     1    tLen     1     right    1  = 6 + 1 + tLen + left + right
+    const iconW = displayWidth(icon);
+    const totalFixed = 5 + iconW + title.length; // spaces(5) + icon + title
+    const dashSpace = (W - 2) - totalFixed;
+    const leftDash = Math.max(1, Math.floor(dashSpace / 2));
+    const rightDash = Math.max(1, dashSpace - leftDash);
     return row(
       ' ' + c(GOLD_DIM) + '─'.repeat(leftDash) + ' ' +
       c(GOLD) + icon + ' ' + c(WHITE) + title +
