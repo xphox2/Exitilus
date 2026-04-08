@@ -4,6 +4,7 @@ import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { showStats } from '../core/stats.js';
+import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 export async function personalCommands(
   session: PlayerSession,
@@ -14,14 +15,19 @@ export async function personalCommands(
   const validKeys = ['c', 'l', 'a', 'n', 'y', 'r', 'q'];
 
   while (true) {
-    session.clear();
-    await session.showAnsi('PERSONAL.ANS');
+    let choice: string;
+    if (shouldUseOverlay(session, 'PERSONAL.ANS')) {
+      choice = await showEnhancedMenuOverlay(session, 'PERSONAL.ANS', MENU_CONFIGS.PERSONAL.title, MENU_CONFIGS.PERSONAL.options);
+    } else {
+      session.clear();
+      await session.showAnsi('PERSONAL.ANS');
 
-    let choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) {
-        choice = key.toLowerCase();
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) {
+          choice = key.toLowerCase();
+        }
       }
     }
 
