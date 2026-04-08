@@ -371,19 +371,34 @@ export async function enterArmyManor(
         '[A] Attack     [D] Diplomacy  [Y] Stats',
         '[R] Return     Your Choice: ',
       ];
-      const startRow = 19;
-      const startCol = 18;
+      const startRow = 20; // skip a line after "You are paying" (row 17) + art rows
+      const startCol = 15;
+      const bw = 50; // border width
       const Y = `\x1B[1;33m`; const W = `\x1B[1;37m`; const G = `\x1B[1;32m`; const C = `\x1B[1;36m`; const RST = ANSI.RESET;
+      const border = Y + '═'.repeat(bw) + RST;
 
       await new Promise(r => setTimeout(r, 150));
 
-      session.write(`\x1B[${startRow};${startCol}H${Y}[${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit${RST}`);
-      await new Promise(r => setTimeout(r, 30));
-      session.write(`\x1B[${startRow+1};${startCol}H${Y}[${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury${RST}`);
-      await new Promise(r => setTimeout(r, 30));
-      session.write(`\x1B[${startRow+2};${startCol}H${Y}[${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats${RST}`);
-      await new Promise(r => setTimeout(r, 30));
-      session.write(`\x1B[${startRow+3};${startCol}H${Y}[${W}R${Y}]${G} Return     ${C}Your Choice: ${W}`);
+      let r = startRow;
+      session.write(`\x1B[${r};${startCol}H${Y}╔${border}${Y}╗${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit  ${Y}║${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury ${Y}║${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats    ${Y}║${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}║ ${W}R${Y}]${G} Return     ${C}Your Choice: ${W}             ${Y}║${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}╚${border}${Y}╝${RST}`);
+
+      // Position cursor at the prompt
+      session.write(`\x1B[${r-1};${startCol + 29}H${W}`);
 
       choice = '';
       while (!choice) {
