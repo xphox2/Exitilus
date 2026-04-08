@@ -241,7 +241,7 @@ function optVisLen(opt: MenuOption): number {
 /** Pre-built menu configurations for each game screen */
 export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[] }> = {
   MAIN: {
-    title: '⚔  MAIN STREET  ⚔',
+    title: '+ MAIN STREET +',
     options: [
       { key: 'S', label: 'Shops' },
       { key: 'G', label: 'Guilds' },
@@ -265,7 +265,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   SHOPS: {
-    title: '🛡  THE SHOPS  🗡',
+    title: '+ THE SHOPS +',
     options: [
       { key: 'W', label: 'Weapon Shop' },
       { key: 'S', label: 'Shield Shop' },
@@ -276,7 +276,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   WEAPON: {
-    title: '⚔  WEAPON SHOP  ⚔',
+    title: '+ WEAPON SHOP +',
     options: [
       { key: 'B', label: 'Browse & Buy' },
       { key: 'S', label: 'Sell Equipment' },
@@ -286,7 +286,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   SHIELD: {
-    title: '🛡  SHIELD SHOP  🛡',
+    title: '+ SHIELD SHOP +',
     options: [
       { key: 'B', label: 'Browse & Buy' },
       { key: 'S', label: 'Sell Equipment' },
@@ -296,7 +296,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   ARMOUR: {
-    title: '🗡  ARMOUR SHOP  🗡',
+    title: '+ ARMOUR SHOP +',
     options: [
       { key: 'B', label: 'Browse & Buy' },
       { key: 'S', label: 'Sell Equipment' },
@@ -306,7 +306,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   CHURCH: {
-    title: '✦  THE CHURCH  ✦',
+    title: '+ THE CHURCH +',
     options: [
       { key: 'B', label: 'Buy Healing Potions' },
       { key: 'C', label: 'Contribute to Church' },
@@ -318,7 +318,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   INN: {
-    title: '🍺  THE TAVERN  🍺',
+    title: '+ THE TAVERN +',
     options: [
       { key: 'M', label: 'Message Board' },
       { key: 'D', label: 'Drink at Bar' },
@@ -329,7 +329,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   GUILDS: {
-    title: '✧  THE GUILDS  ✧',
+    title: '+ THE GUILDS +',
     options: [
       { key: 'S', label: "Sorcerers' Guild" },
       { key: 'A', label: "Alchemists' Guild" },
@@ -342,7 +342,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   ALLEYS: {
-    title: '🗡  BACK ALLEYS  🗡',
+    title: '+ BACK ALLEYS +',
     options: [
       { key: 'D', label: 'Drughouse' },
       { key: 'T', label: "Thieves' Guild" },
@@ -353,7 +353,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   BANK: {
-    title: '💰  THE BANK  💰',
+    title: '+ THE BANK +',
     options: [
       { key: 'D', label: 'Deposit' },
       { key: 'W', label: 'Withdraw' },
@@ -364,7 +364,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   TRAIN: {
-    title: '⚔  TRAINING GROUNDS  ⚔',
+    title: '+ TRAINING GROUNDS +',
     options: [
       { key: '1', label: 'Strength' },
       { key: '2', label: 'Defense' },
@@ -375,7 +375,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   LIBRARY: {
-    title: '📖  GRAND LIBRARY  📖',
+    title: '+ GRAND LIBRARY +',
     options: [
       { key: 'H', label: 'History of the Realm' },
       { key: 'M', label: 'Merchant Knowledge' },
@@ -388,7 +388,7 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
     ],
   },
   MANOR: {
-    title: '🏰  ARMY & MANOR  🏰',
+    title: '+ ARMY & MANOR +',
     options: [
       { key: 'I', label: 'Inspect Manor' },
       { key: 'P', label: 'Purchase Land' },
@@ -402,9 +402,9 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'R', label: 'Return' },
     ],
   },
-  MERCHANT: { title: '💎  MERCHANTS  💎', options: [] },
+  MERCHANT: { title: '+ MERCHANTS +', options: [] },
   PERSONAL: {
-    title: '👤  PERSONAL  👤',
+    title: '+ PERSONAL +',
     options: [
       { key: 'C', label: 'Change Profession' },
       { key: 'L', label: 'Level Status' },
@@ -414,9 +414,9 @@ export const MENU_CONFIGS: Record<string, { title: string; options: MenuOption[]
       { key: 'R', label: 'Return' },
     ],
   },
-  FIGHT: { title: '⚔  PLAYER FIGHT  ⚔', options: [] },
+  FIGHT: { title: '+ PLAYER FIGHT +', options: [] },
   MAGICIAN: {
-    title: "✧  MAGICIAN'S SHOP  ✧",
+    title: "+ MAGICIAN'S SHOP +",
     options: [
       { key: 'B', label: 'Browse & Buy' },
       { key: 'R', label: 'Return' },
