@@ -371,7 +371,7 @@ export async function enterArmyManor(
         '[A] Attack     [D] Diplomacy  [Y] Stats',
         '[R] Return     Your Choice: ',
       ];
-      const startRow = 20;
+      const startRow = 23;
       const startCol = 15;
       const bw = 50; // inner width between ║ borders
       const Y = `\x1B[1;33m`; const W = `\x1B[1;37m`; const G = `\x1B[1;32m`; const C = `\x1B[1;36m`; const RST = ANSI.RESET;
