@@ -1,3 +1,13 @@
+## 0.6.3
+
+Redesign manor data screen with proper programmatic rendering.
+
+### Fixed
+- Manor overview now renders a clean data table below the ANSI title art instead of broken cursor-positioned overlays that didn't align with the art layout
+- Enhanced mode shows true-color bordered box with Population, Military, and Buildings sections
+- Classic mode shows clean color-coded text layout with all manor stats
+- Menu options rendered inline below data instead of overlapping art at wrong positions
+
 ## 0.6.2
 
 Implement 7 missing features from the original game for full feature parity.
