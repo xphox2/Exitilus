@@ -359,13 +359,38 @@ export async function enterArmyManor(
     const validKeys = ['i', 'p', 'm', 'b', 't', 'c', 'a', 'd', 'y', 'r', 'q'];
     let choice: string;
 
-    if ((session as any).graphicsMode === 'enhanced') {
-      // Enhanced: always overlay menu on the image
-      choice = await showEnhancedMenuOverlay(session, 'MANOR.ANS', MENU_CONFIGS.MANOR.title, MENU_CONFIGS.MANOR.options, undefined, undefined, 'right-center');
-    } else {
-      session.clear();
-      await session.showAnsi('MANOR.ANS');
+    session.clear();
+    await session.showAnsi('MANOR.ANS');
 
+    if ((session as any).graphicsMode === 'enhanced') {
+      // Place menu below "You are paying" line (row 17), skip one line = row 19
+      // Center within 80 cols: menu is about 46 chars, so start at col ~17
+      const menuItems = [
+        '[I] Inspect    [P] Purchase   [M] Recruit',
+        '[B] Build      [T] Tax Rate   [C] Treasury',
+        '[A] Attack     [D] Diplomacy  [Y] Stats',
+        '[R] Return     Your Choice: ',
+      ];
+      const startRow = 19;
+      const startCol = 18;
+      const Y = `\x1B[1;33m`; const W = `\x1B[1;37m`; const G = `\x1B[1;32m`; const C = `\x1B[1;36m`; const RST = ANSI.RESET;
+
+      await new Promise(r => setTimeout(r, 150));
+
+      session.write(`\x1B[${startRow};${startCol}H${Y}[${W}I${Y}]${G} Inspect    ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit${RST}`);
+      await new Promise(r => setTimeout(r, 30));
+      session.write(`\x1B[${startRow+1};${startCol}H${Y}[${W}B${Y}]${G} Build      ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury${RST}`);
+      await new Promise(r => setTimeout(r, 30));
+      session.write(`\x1B[${startRow+2};${startCol}H${Y}[${W}A${Y}]${G} Attack     ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats${RST}`);
+      await new Promise(r => setTimeout(r, 30));
+      session.write(`\x1B[${startRow+3};${startCol}H${Y}[${W}R${Y}]${G} Return     ${C}Your Choice: ${W}`);
+
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+      }
+    } else {
       session.writeln('');
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}I${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Inspect Manor${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}P${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Purchase Land${ANSI.RESET}`);
