@@ -12,7 +12,9 @@ export async function enterLibrary(
   player: PlayerRecord,
   content: GameContent
 ): Promise<void> {
-  const validKeys = ['h', 'm', 'n', 'd', 'i', 'e', 'r', 'q', 'y'];
+  // ANSI art keys: E=History, W=Merchants, A=Noble Arts, B=Death, M=Hints, U=Secrets, S=Emperors
+  const validKeys = ['e', 'w', 'a', 'b', 'm', 'u', 's', 'r', 'q', 'y',
+                     'h', 'n', 'd', 'i']; // also accept the old code keys
 
   while (true) {
     let choice: string;
@@ -32,13 +34,14 @@ export async function enterLibrary(
     }
 
     switch (choice) {
-      case 'h':
+      case 'e': // [E]xitilus History (ANSI art key)
+      case 'h': // old code key
         session.clear();
         await session.showAnsi('HISTORY.ANS');
         await session.pause();
         break;
 
-      case 'm':
+      case 'w': // [W]ay of the Merchants (ANSI art key)
         session.clear();
         session.writeln(`${ANSI.BRIGHT_YELLOW}  ═══ Merchant Knowledge ═══${ANSI.RESET}`);
         session.writeln('');
@@ -59,7 +62,8 @@ export async function enterLibrary(
         await session.pause();
         break;
 
-      case 'n':
+      case 'a': // [A]rt of being a Noble (ANSI art key)
+      case 'n': // old code key
         session.clear();
         session.writeln(`${ANSI.BRIGHT_YELLOW}  ═══ The Noble Arts of Combat ═══${ANSI.RESET}`);
         session.writeln('');
@@ -74,7 +78,8 @@ export async function enterLibrary(
         await session.pause();
         break;
 
-      case 'd':
+      case 'b': // [B]ook of Doom (ANSI art key)
+      case 'd': // old code key
         session.clear();
         session.writeln(`${ANSI.BRIGHT_RED}  ═══ On Death ═══${ANSI.RESET}`);
         session.writeln('');
@@ -89,13 +94,25 @@ export async function enterLibrary(
         await session.pause();
         break;
 
-      case 'i':
+      case 'm': // [M]agic Mystique (ANSI art key)
+      case 'i': // old code key
         session.clear();
         await session.showAnsi('HINTS.ANS');
         await session.pause();
         break;
 
-      case 'e':
+      case 'u': // [U]nknown Secrets (ANSI art key)
+        session.clear();
+        session.writeln(`${ANSI.BRIGHT_MAGENTA}  ═══ Unknown Secrets ═══${ANSI.RESET}`);
+        session.writeln('');
+        session.writeln(`  ${ANSI.CYAN}The realm holds many secrets yet to be discovered...${ANSI.RESET}`);
+        session.writeln(`  ${ANSI.CYAN}Explore every area, talk to every NPC, and try every option.${ANSI.RESET}`);
+        session.writeln(`  ${ANSI.CYAN}The Black Market sells items you won't find anywhere else.${ANSI.RESET}`);
+        session.writeln(`  ${ANSI.CYAN}Some quests have hidden outcomes based on your choices.${ANSI.RESET}`);
+        await session.pause();
+        break;
+
+      case 's': // [S]ee Hall of Emperors (ANSI art key)
         session.clear();
         await session.showAnsi('HALL.ANS');
         await session.pause();

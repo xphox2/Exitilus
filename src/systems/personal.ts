@@ -12,7 +12,8 @@ export async function personalCommands(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
-  const validKeys = ['c', 'l', 'a', 'n', 'y', 'r', 'q'];
+  // ANSI art keys: P=Profession, L=Level, W=Messages, A=Announce, M=Masters, C=Criminal, T=TodayNews, N=YesterdayNews
+  const validKeys = ['p', 'c', 'l', 'w', 'a', 'm', 't', 'n', 'y', 'r', 'q'];
 
   while (true) {
     let choice: string;
@@ -32,17 +33,27 @@ export async function personalCommands(
     }
 
     switch (choice) {
-      case 'c':
+      case 'p': // [P] in ANSI art
+      case 'c': // old code key
         await changeProfession(session, player, content, db);
         break;
       case 'l':
         await levelUp(session, player, content, db);
         break;
+      case 'w': // [W]rite Messages
+        session.writeln(`${ANSI.BRIGHT_CYAN}  Visit the Tavern's Message Board to send messages.${ANSI.RESET}`);
+        await session.pause();
+        break;
       case 'a':
         session.writeln(`${ANSI.BRIGHT_CYAN}  No announcements today.${ANSI.RESET}`);
         await session.pause();
         break;
-      case 'n':
+      case 'm': // [M] Realm Masters
+        session.writeln(`${ANSI.BRIGHT_CYAN}  Realm Masters are not available at this time.${ANSI.RESET}`);
+        await session.pause();
+        break;
+      case 't': // [T]oday's News
+      case 'n': // [N] Yesterday's News
         session.clear();
         await session.showAnsi('PNEWS.ANS');
         await session.pause();
