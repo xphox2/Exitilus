@@ -359,7 +359,8 @@ export async function enterArmyManor(
     const validKeys = ['i', 'p', 'm', 'b', 't', 'c', 'a', 'd', 'y', 'r', 'q'];
     let choice: string;
 
-    if (shouldUseOverlay(session, 'MANOR.ANS')) {
+    if ((session as any).graphicsMode === 'enhanced') {
+      // Enhanced: always overlay menu on the image
       choice = await showEnhancedMenuOverlay(session, 'MANOR.ANS', MENU_CONFIGS.MANOR.title, MENU_CONFIGS.MANOR.options, undefined, undefined, 'right-center');
     } else {
       session.clear();
