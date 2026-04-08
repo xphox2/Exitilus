@@ -184,10 +184,14 @@ export class GameEngine {
           // Welcome back
           this.session.writeln('');
           this.session.writeln(`${ANSI.BRIGHT_GREEN}Welcome back, ${ANSI.BRIGHT_YELLOW}${player.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
+          // Only reset daily counters if last login was a different day
+          const today = new Date().toISOString().slice(0, 10);
+          const lastDay = player.lastLogin ? player.lastLogin.slice(0, 10) : '';
+          if (today !== lastDay) {
+            player.monsterFights = 0;
+            player.playerFights = 0;
+          }
           player.lastLogin = new Date().toISOString();
-          // Reset daily counters
-          player.monsterFights = 0;
-          player.playerFights = 0;
           this.db.updatePlayer(player);
           await checkMessages(this.session, player, this.db);
           await this.session.pause();
