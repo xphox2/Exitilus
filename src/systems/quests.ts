@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { findMonster, findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
+import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -207,45 +208,183 @@ const QUESTS: QuestDef[] = [
   },
 ];
 
+// ── Enhanced quest board colors ──
+const GOLD: RGB = { r: 220, g: 180, b: 50 };
+const GOLD_DIM: RGB = { r: 100, g: 75, b: 20 };
+const BG_DARK: RGB = { r: 10, g: 10, b: 20 };
+const WHITE_C: RGB = { r: 240, g: 240, b: 250 };
+const GREEN_C: RGB = { r: 70, g: 220, b: 90 };
+const CYAN_C: RGB = { r: 80, g: 200, b: 220 };
+const RED_C: RGB = { r: 220, g: 55, b: 55 };
+const DIM_C: RGB = { r: 55, g: 55, b: 65 };
+const YELLOW_C: RGB = { r: 220, g: 200, b: 50 };
+const MAGENTA_C: RGB = { r: 180, g: 80, b: 220 };
+
+const cc = (color: RGB) => fg(color.r, color.g, color.b);
+const bgd = bg(BG_DARK.r, BG_DARK.g, BG_DARK.b);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function questBorder(left: string, fill: string, right: string, width: number): string {
+  let s = '';
+  for (let i = 0; i < width; i++) {
+    const t = width > 1 ? i / (width - 1) : 0;
+    const color = lerpColor(GOLD_DIM, GOLD, Math.sin(t * Math.PI));
+    s += fg(color.r, color.g, color.b);
+    if (i === 0) s += left;
+    else if (i === width - 1) s += right;
+    else s += fill;
+  }
+  return s + RESET;
+}
+
+async function showEnhancedQuestBoard(
+  session: PlayerSession,
+  player: PlayerRecord,
+  content: GameContent
+): Promise<string> {
+  const W = 68;
+  const d = 20;
+  const lines: string[] = [];
+
+  function qrow(content: string, visLen: number): string {
+    const pad = Math.max(0, W - 2 - visLen);
+    return cc(GOLD) + '|' + bgd + content + ' '.repeat(pad) + RESET + cc(GOLD) + '|' + RESET;
+  }
+
+  // Title
+  lines.push(questBorder('+', '=', '+', W));
+  const title = 'QUEST BOARD';
+  const tPad = Math.floor((W - 2 - title.length) / 2);
+  lines.push(qrow(' '.repeat(tPad) + cc(WHITE_C) + title, tPad + title.length));
+  lines.push(questBorder('+', '-', '+', W));
+
+  // Player info
+  const info = 'Level ' + player.level + '  |  Quests completed: ' + player.questsCompleted.length + '/' + QUESTS.length;
+  lines.push(qrow(' ' + cc(CYAN_C) + info, 1 + info.length));
+  lines.push(questBorder('+', '-', '+', W));
+
+  // Quest listings
+  for (let i = 0; i < QUESTS.length; i++) {
+    const q = QUESTS[i];
+    const completed = player.questsCompleted.includes(q.id);
+    const locked = player.level < q.minLevel;
+    const available = !locked && (!completed || content.config.questReplay);
+
+    const num = String(i + 1);
+    let nameColor = available ? WHITE_C : DIM_C;
+    let lvColor = available ? YELLOW_C : DIM_C;
+    let descColor = available ? CYAN_C : DIM_C;
+
+    let statusTag = '';
+    let statusLen = 0;
+    if (completed && !content.config.questReplay) {
+      statusTag = cc(DIM_C) + ' [Done]';
+      statusLen = 7;
+    } else if (completed) {
+      statusTag = cc(MAGENTA_C) + ' [Redo]';
+      statusLen = 7;
+    } else if (locked) {
+      statusTag = cc(RED_C) + ' [Lv ' + q.minLevel + '+]';
+      statusLen = 5 + String(q.minLevel).length + 2;
+    } else {
+      statusTag = cc(GREEN_C) + ' [Go!]';
+      statusLen = 6;
+    }
+
+    // Line 1: number, name, level, status
+    const line1 = ' ' + cc(available ? GREEN_C : DIM_C) + num + ') ' + cc(nameColor) + q.name;
+    const line1Right = cc(lvColor) + 'Lv' + q.minLevel + statusTag;
+    const line1Vis = 1 + num.length + 2 + q.name.length;
+    const line1RVis = 2 + String(q.minLevel).length + statusLen;
+    const line1Gap = Math.max(1, W - 3 - line1Vis - line1RVis);
+    lines.push(qrow(line1 + ' '.repeat(line1Gap) + line1Right, line1Vis + line1Gap + line1RVis));
+
+    // Line 2: description + rewards
+    const rewardText = '$' + formatGold(q.rewards.gold) + ' + ' + formatGold(q.rewards.xp) + 'xp';
+    const descTrunc = q.description.slice(0, W - 10 - rewardText.length);
+    const line2 = '    ' + cc(descColor) + descTrunc;
+    const line2Right = cc(YELLOW_C) + rewardText;
+    const line2Vis = 4 + descTrunc.length;
+    const line2RVis = rewardText.length;
+    const line2Gap = Math.max(1, W - 3 - line2Vis - line2RVis);
+    lines.push(qrow(line2 + ' '.repeat(line2Gap) + line2Right, line2Vis + line2Gap + line2RVis));
+
+    // Separator between quests (except last)
+    if (i < QUESTS.length - 1) {
+      const sep = ' '.repeat(2) + cc(GOLD_DIM) + '-'.repeat(W - 6);
+      lines.push(qrow(sep, W - 4));
+    }
+  }
+
+  lines.push(questBorder('+', '-', '+', W));
+
+  // Return option
+  lines.push(qrow(' ' + cc(GREEN_C) + 'R) ' + cc(WHITE_C) + 'Return to Main Street', 1 + 3 + 22));
+
+  lines.push(questBorder('+', '-', '+', W));
+
+  // Prompt
+  const prompt = ' Choose a quest: ';
+  lines.push(qrow(cc(CYAN_C) + prompt, prompt.length));
+
+  lines.push(questBorder('+', '=', '+', W));
+
+  // Render with animation
+  for (const line of lines) {
+    session.writeln(line);
+    await sleep(d);
+  }
+
+  return session.readLine('');
+}
+
 export async function enterQuests(
   session: PlayerSession,
   player: PlayerRecord,
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
+  const isEnhanced = (session as any).graphicsMode === 'enhanced';
   session.clear();
-  session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════════════════╗`);
-  session.writeln(`║               QUEST BOARD                    ║`);
-  session.writeln(`╚══════════════════════════════════════════════╝${ANSI.RESET}`);
-  session.writeln('');
 
-  for (let i = 0; i < QUESTS.length; i++) {
-    const q = QUESTS[i];
-    const completed = player.questsCompleted.includes(q.id);
-    const locked = player.level < q.minLevel;
-    let color: string = ANSI.BRIGHT_GREEN;
-    let status = '';
-    if (completed && !content.config.questReplay) {
-      color = ANSI.BRIGHT_BLACK;
-      status = ' [Completed]';
-    } else if (completed) {
-      status = ` ${ANSI.BRIGHT_CYAN}[Done - Repeatable]`;
-    }
-    if (locked) {
-      color = ANSI.BRIGHT_BLACK;
-      status = ` [Requires Lv ${q.minLevel}]`;
-    }
+  let input: string;
 
-    session.writeln(
-      `  ${color}(${i + 1}) ${q.name.padEnd(25)} Lv ${String(q.minLevel).padStart(2)}+  ${q.description}${status}${ANSI.RESET}`
-    );
+  if (isEnhanced) {
+    input = await showEnhancedQuestBoard(session, player, content);
+  } else {
+    session.writeln(`${ANSI.BRIGHT_YELLOW}╔══════════════════════════════════════════════╗`);
+    session.writeln(`║               QUEST BOARD                    ║`);
+    session.writeln(`╚══════════════════════════════════════════════╝${ANSI.RESET}`);
+    session.writeln('');
+
+    for (let i = 0; i < QUESTS.length; i++) {
+      const q = QUESTS[i];
+      const completed = player.questsCompleted.includes(q.id);
+      const locked = player.level < q.minLevel;
+      let color: string = ANSI.BRIGHT_GREEN;
+      let status = '';
+      if (completed && !content.config.questReplay) {
+        color = ANSI.BRIGHT_BLACK;
+        status = ' [Completed]';
+      } else if (completed) {
+        status = ` ${ANSI.BRIGHT_CYAN}[Done - Repeatable]`;
+      }
+      if (locked) {
+        color = ANSI.BRIGHT_BLACK;
+        status = ` [Requires Lv ${q.minLevel}]`;
+      }
+      session.writeln(
+        `  ${color}(${i + 1}) ${q.name.padEnd(25)} Lv ${String(q.minLevel).padStart(2)}+  ${q.description}${status}${ANSI.RESET}`
+      );
+    }
+    session.writeln('');
+    session.writeln(`  ${ANSI.BRIGHT_GREEN}(R) Return to Main Street${ANSI.RESET}`);
+    session.writeln('');
+    input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Choose a quest: ${ANSI.BRIGHT_WHITE}`);
   }
-
-  session.writeln('');
-  session.writeln(`  ${ANSI.BRIGHT_GREEN}(R) Return to Main Street${ANSI.RESET}`);
-  session.writeln('');
-
-  const input = await session.readLine(`${ANSI.BRIGHT_CYAN}  Choose a quest: ${ANSI.BRIGHT_WHITE}`);
   if (input.toLowerCase() === 'r') return;
 
   const idx = parseInt(input, 10) - 1;
