@@ -370,9 +370,13 @@ export class GameEngine {
 
   private async showBulletin(): Promise<void> {
     this.session.clear();
-    // Read the generated ANSI bulletin
+    // Regenerate the bulletin with current data before showing
     const __dir = dirname(fileURLToPath(import.meta.url));
-    const bulletinPath = join(__dir, '..', '..', 'bulletin.ans');
+    const projectRoot = join(__dir, '..', '..');
+    const { generateBulletin } = await import('../systems/bulletin.js');
+    generateBulletin(this.db, this.content, projectRoot);
+    // Now read and display it
+    const bulletinPath = join(projectRoot, 'bulletin.ans');
     if (existsSync(bulletinPath)) {
       const content = readFileSync(bulletinPath, 'utf-8');
       this.session.write(content);
