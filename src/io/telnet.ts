@@ -122,6 +122,18 @@ export class TelnetAdapter implements PlayerSession {
         throw new Error('Connection closed');
       }
 
+      // Skip escape sequences (arrow keys, etc.)
+      if (ch === '\x1B') {
+        const next = await this.readChar();
+        if (next === '[') {
+          let seq = await this.readChar();
+          while (seq.charCodeAt(0) >= 0x20 && seq.charCodeAt(0) < 0x40) {
+            seq = await this.readChar();
+          }
+        }
+        continue;
+      }
+
       // Printable characters
       if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) < 127) {
         line += ch;

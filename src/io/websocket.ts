@@ -107,6 +107,19 @@ export class WebSocketAdapter implements PlayerSession {
         continue;
       }
       if (ch === '\x03') throw new Error('Connection closed');
+      // Skip escape sequences (arrow keys, etc.) - consume the whole sequence
+      if (ch === '\x1B') {
+        const next = await this.readChar();
+        if (next === '[') {
+          // CSI sequence - consume until we hit a letter
+          let seq = await this.readChar();
+          while (seq.charCodeAt(0) >= 0x20 && seq.charCodeAt(0) < 0x40) {
+            seq = await this.readChar();
+          }
+          // Entire sequence consumed, discard
+        }
+        continue;
+      }
       if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) < 127) {
         line += ch;
         this.write(ch);
@@ -127,6 +140,16 @@ export class WebSocketAdapter implements PlayerSession {
         continue;
       }
       if (ch === '\x03') throw new Error('Connection closed');
+      if (ch === '\x1B') {
+        const next = await this.readChar();
+        if (next === '[') {
+          let seq = await this.readChar();
+          while (seq.charCodeAt(0) >= 0x20 && seq.charCodeAt(0) < 0x40) {
+            seq = await this.readChar();
+          }
+        }
+        continue;
+      }
       if (ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) < 127) { password += ch; this.write('*'); }
     }
   }
