@@ -375,10 +375,10 @@ export async function walkOutside(
     session.writeln('');
 
     const items = content.areas.map((area, i) => {
-      const locked = player.level < area.minLevel;
+      const locked = player.level < area.minLevel || !player.alive;
       return {
         key: String(i + 1),
-        label: `${area.name}${locked ? ` (Lv ${area.minLevel}+)` : ''}`,
+        label: `${area.name}${locked ? ` (Lv ${area.minLevel}+)` : ''}${!player.alive ? ' [DEAD]' : ''}`,
         enabled: !locked,
       };
     });

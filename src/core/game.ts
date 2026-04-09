@@ -55,7 +55,7 @@ function checkAutoResurrection(player: PlayerRecord): boolean {
   if (characterAge > 7) return false;
 
   const daysSinceDeath = daysBetween(player.deathDate, today);
-  if (daysSinceDeath !== 1) return false;
+  if (daysSinceDeath > 1) return false;
 
   player.alive = true;
   player.deathDate = null;
