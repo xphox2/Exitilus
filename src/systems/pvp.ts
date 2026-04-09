@@ -141,6 +141,7 @@ export async function playerFight(
     // Player lost
     player.hp = 0;
     player.alive = false;
+    player.deathDate = new Date().toISOString().slice(0, 10);
     const goldLost = Math.floor(player.gold * 0.1);
     player.gold -= goldLost;
     opponent.gold += goldLost;
@@ -156,6 +157,7 @@ export async function playerFight(
     if (player.xp > player.highXp) player.highXp = player.xp;
     opponent.hp = 0;
     opponent.alive = false;
+    opponent.deathDate = new Date().toISOString().slice(0, 10);
     opponent.gold -= goldWon;
     session.writeln(`${ANSI.BRIGHT_GREEN}  ⚔  You defeated ${ANSI.BRIGHT_WHITE}${opponent.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  You take $${formatGold(goldWon)} gold and earn ${formatGold(xpWon)} XP!${ANSI.RESET}`);

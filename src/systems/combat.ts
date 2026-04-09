@@ -163,6 +163,7 @@ async function fightMonster(
     if (player.hp <= 0) {
       player.hp = 0;
       player.alive = false;
+      player.deathDate = new Date().toISOString().slice(0, 10);
       const deathMsg = content.prompts?.deathMessage ?? 'You have fallen in battle...';
       session.writeln(`${ANSI.BRIGHT_RED}  ☠  ${deathMsg}${ANSI.RESET}`);
       return { won: false, fled: false, goldEarned: 0, xpEarned: 0, itemDropped: null, playerDied: true };

@@ -248,6 +248,8 @@ function generateNpcManors(db: GameDatabase, content: GameContent, log: string[]
       questsCompleted: [],
       alive: true,
       lastLogin: new Date().toISOString(),
+      createdDate: new Date().toISOString(),
+      deathDate: null,
       soldiers: 20 + level * 10 + randomInt(0, 30),
       knights: Math.floor(level / 2) + randomInt(0, 5),
       cannons: Math.max(0, Math.floor(level / 3) + randomInt(-1, 3)),

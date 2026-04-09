@@ -1,3 +1,12 @@
+## 0.6.4
+
+Auto-resurrection on next login for players who died yesterday.
+
+### Added
+- **Auto-resurrection**: Any dead player who died the previous day auto-resurrects on login with half HP/MP and 5% stat reduction (same penalties as church resurrection)
+- **Character tracking**: Added `createdDate` and `deathDate` fields to track when characters were created and when they died
+- **One-time migration**: Existing dead players get `deathDate` set to yesterday so they can auto-resurrect on next login
+
 ## 0.6.3
 
 Fix manor data screen cursor positions to align with ANSI art layout.

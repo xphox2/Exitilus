@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS players (
   quests_completed TEXT NOT NULL DEFAULT '[]',
   alive INTEGER NOT NULL DEFAULT 1,
   last_login TEXT NOT NULL DEFAULT '',
+  created_date TEXT NOT NULL DEFAULT '',
+  death_date TEXT,
   soldiers INTEGER NOT NULL DEFAULT 0,
   knights INTEGER NOT NULL DEFAULT 0,
   cannons INTEGER NOT NULL DEFAULT 0,
@@ -120,7 +122,7 @@ export class GameDatabase {
         hp, max_hp, mp, max_mp, strength, defense, agility, leadership, wisdom,
         gold, bank_gold, evil_deeds, monster_fights, player_fights, healing_potions, mana_potions,
         right_hand, left_hand, armour, ring, manor_id, kingdom_id, quests_completed,
-        alive, last_login, soldiers, knights, cannons, forts, training_level, morale,
+        alive, last_login, created_date, death_date, soldiers, knights, cannons, forts, training_level, morale,
         serfs, food, farms, silos, circuses, iron_mines, gold_mines, tax_rate)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
@@ -132,7 +134,7 @@ export class GameDatabase {
       player.manaPotions,
       player.rightHand, player.leftHand, player.armour, player.ring,
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
-      player.alive ? 1 : 0, player.lastLogin,
+      player.alive ? 1 : 0, player.lastLogin, player.createdDate, player.deathDate ?? null,
       player.soldiers, player.knights, player.cannons, player.forts,
       player.trainingLevel, player.morale, player.serfs, player.food,
       player.farms, player.silos, player.circuses, player.ironMines,
@@ -153,7 +155,7 @@ export class GameDatabase {
         leadership=?, wisdom=?, gold=?, bank_gold=?, evil_deeds=?,
         monster_fights=?, player_fights=?, healing_potions=?, mana_potions=?,
         right_hand=?, left_hand=?, armour=?, ring=?, manor_id=?, kingdom_id=?,
-        quests_completed=?, alive=?, last_login=?,
+        quests_completed=?, alive=?, last_login=?, created_date=?, death_date=?,
         soldiers=?, knights=?, cannons=?, forts=?, training_level=?, morale=?,
         serfs=?, food=?, farms=?, silos=?, circuses=?, iron_mines=?, gold_mines=?, tax_rate=?
       WHERE id=?
@@ -166,7 +168,7 @@ export class GameDatabase {
       player.manaPotions,
       player.rightHand, player.leftHand, player.armour, player.ring,
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
-      player.alive ? 1 : 0, player.lastLogin,
+      player.alive ? 1 : 0, player.lastLogin, player.createdDate, player.deathDate ?? null,
       player.soldiers, player.knights, player.cannons, player.forts,
       player.trainingLevel, player.morale, player.serfs, player.food,
       player.farms, player.silos, player.circuses, player.ironMines,
@@ -221,6 +223,23 @@ export class GameDatabase {
     if (!existing.has('ring')) {
       this.db.run("ALTER TABLE players ADD COLUMN ring TEXT");
     }
+    if (!existing.has('death_date')) {
+      this.db.run("ALTER TABLE players ADD COLUMN death_date TEXT");
+    }
+    if (!existing.has('created_date')) {
+      this.db.run("ALTER TABLE players ADD COLUMN created_date TEXT NOT NULL DEFAULT ''");
+    }
+    this.backfillDeathDates();
+  }
+
+  private backfillDeathDates(): void {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    this.db.run(
+      "UPDATE players SET death_date = ? WHERE alive = 0 AND death_date IS NULL",
+      [yesterdayStr]
+    );
   }
 
   private rowToPlayer(row: Record<string, unknown>): PlayerRecord {
@@ -260,6 +279,8 @@ export class GameDatabase {
       questsCompleted: JSON.parse((row['quests_completed'] as string) || '[]'),
       alive: (row['alive'] as number) === 1,
       lastLogin: row['last_login'] as string,
+      createdDate: row['created_date'] as string,
+      deathDate: (row['death_date'] as string) || null,
       soldiers: row['soldiers'] as number,
       knights: row['knights'] as number,
       cannons: row['cannons'] as number,

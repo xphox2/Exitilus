@@ -33,6 +33,33 @@ import { checkMessages } from '../systems/messaging.js';
 import { runDailyMaintenance } from '../systems/maintenance.js';
 import { inspectEquipment } from '../systems/equipment.js';
 
+function daysBetween(dateA: string, dateB: string): number {
+  const a = new Date(dateA + 'T00:00:00Z');
+  const b = new Date(dateB + 'T00:00:00Z');
+  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function checkAutoResurrection(player: PlayerRecord): boolean {
+  if (player.alive || !player.deathDate) return false;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const characterAge = player.createdDate ? daysBetween(player.createdDate, today) : 999;
+  if (characterAge > 7) return false;
+
+  const daysSinceDeath = daysBetween(player.deathDate, today);
+  if (daysSinceDeath !== 1) return false;
+
+  player.alive = true;
+  player.deathDate = null;
+  player.hp = Math.floor(player.maxHp * 0.5);
+  player.mp = Math.floor(player.maxMp * 0.5);
+  player.strength = Math.max(1, player.strength - Math.floor(player.strength * 0.05));
+  player.defense = Math.max(1, player.defense - Math.floor(player.defense * 0.05));
+  player.lastLogin = new Date().toISOString();
+
+  return true;
+}
+
 export class GameEngine {
   private player: PlayerRecord | null = null;
   private graphicsMode: GraphicsMode;
@@ -178,9 +205,17 @@ export class GameEngine {
         }
 
         if (!player.alive) {
-          // Dead player - attempt resurrection
-          const resurrected = await attemptResurrection(this.session, player, this.db);
-          if (!resurrected) return;
+          if (checkAutoResurrection(player)) {
+            this.db.updatePlayer(player);
+            this.session.writeln('');
+            this.session.writeln(`${ANSI.BRIGHT_GREEN}  ★ The night has passed... you open your eyes...${ANSI.RESET}`);
+            this.session.writeln(`${ANSI.BRIGHT_GREEN}  ★ ${player.name} has been resurrected!${ANSI.RESET}`);
+            this.session.writeln(`${ANSI.BRIGHT_YELLOW}  You feel weakened. HP: ${player.hp}/${player.maxHp}, some stats reduced.${ANSI.RESET}`);
+            await this.session.pause();
+          } else {
+            const resurrected = await attemptResurrection(this.session, player, this.db);
+            if (!resurrected) return;
+          }
         } else {
           // Welcome back
           this.session.writeln('');
@@ -311,6 +346,7 @@ export class GameEngine {
           const confirm = await this.session.readLine(`${ANSI.BRIGHT_RED}  Type YES to confirm: ${ANSI.BRIGHT_WHITE}`);
           if (confirm.toUpperCase() === 'YES') {
             this.player.alive = false;
+            this.player.deathDate = new Date().toISOString().slice(0, 10);
             this.player.hp = 0;
             this.db.updatePlayer(this.player);
             this.session.writeln(`${ANSI.BRIGHT_RED}  You end your adventure permanently...${ANSI.RESET}`);

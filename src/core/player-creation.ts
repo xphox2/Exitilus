@@ -229,6 +229,8 @@ export async function createNewPlayer(
     questsCompleted: [],
     alive: true,
     lastLogin: now,
+    createdDate: now,
+    deathDate: null,
     soldiers: 0,
     knights: 0,
     cannons: 0,

@@ -13,8 +13,8 @@ export async function attemptResurrection(
 ): Promise<boolean> {
   if (player.alive) return true;
 
-  const daysSinceDeath = player.lastLogin
-    ? (Date.now() - new Date(player.lastLogin).getTime()) / (1000 * 60 * 60 * 24)
+  const daysSinceDeath = player.deathDate
+    ? (Date.now() - new Date(player.deathDate).getTime()) / (1000 * 60 * 60 * 24)
     : 999;
 
   session.clear();
@@ -51,6 +51,7 @@ export async function attemptResurrection(
   // Resurrection succeeds but with penalties
   player.bankGold -= cost;
   player.alive = true;
+  player.deathDate = null;
   player.hp = Math.floor(player.maxHp * 0.5); // Come back at half health
   player.mp = Math.floor(player.maxMp * 0.5);
   // Lose some stats as penalty

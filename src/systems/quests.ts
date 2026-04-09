@@ -592,6 +592,7 @@ async function runQuest(
   for (const step of quest.steps) {
     if (player.hp <= 0) {
       player.alive = false;
+      player.deathDate = new Date().toISOString().slice(0, 10);
       session.writeln(`${ANSI.BRIGHT_RED}  You have fallen during the quest...${ANSI.RESET}`);
       db.updatePlayer(player);
       await session.pause();

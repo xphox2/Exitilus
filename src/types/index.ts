@@ -154,6 +154,8 @@ export interface PlayerRecord {
   questsCompleted: string[];
   alive: boolean;
   lastLogin: string;
+  createdDate: string;
+  deathDate: string | null;
   // Military
   soldiers: number;
   knights: number;
