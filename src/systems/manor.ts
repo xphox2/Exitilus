@@ -442,7 +442,7 @@ export async function enterArmyManor(
   db: GameDatabase
 ): Promise<void> {
   while (true) {
-    const validKeys = ['i', 'p', 'm', 'b', 't', 'c', 'a', 'd', 'y', 'r', 'q'];
+    const validKeys = ['i', 'p', 'u', 'b', 't', 'c', 'a', 'd', 'm', 'x', 'e', 'r', 'q'];
     let choice: string;
 
     session.clear();
@@ -509,13 +509,16 @@ export async function enterArmyManor(
       session.write(`\x1B[${r};${startCol}H${Y}╔${'═'.repeat(bw)}╗${RST}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}M${Y}]${G} Recruit    ${Y}[${W}B${Y}]${G} Build`)}`);
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}U${Y}]${G} Recruit    ${Y}[${W}B${Y}]${G} Build`)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
       session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury   ${Y}[${W}A${Y}]${G} Attack`)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}Y${Y}]${G} Stats      ${Y}[${W}R${Y}]${G} Return`)}`);
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}M${Y}]${G} Main Stats ${Y}[${W}X${Y}]${G} Extended  ${Y}[${W}E${Y}]${G} Equipment`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}R${Y}]${G} Return`)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
       session.write(`\x1B[${r};${startCol}H${mRow(` ${C}Your Choice: ${W}`)}`);
@@ -534,13 +537,15 @@ export async function enterArmyManor(
       session.writeln('');
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}I${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Inspect Manor${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}P${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Purchase Land${ANSI.RESET}`);
-      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}M${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Recruit Military${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}U${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Recruit Military${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}B${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Build Structures${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}T${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Set Tax Rate${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}C${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Collect Treasury${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}A${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Attack Another Manor${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}D${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Diplomacy & Treaties${ANSI.RESET}`);
-      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}Y${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Your Stats${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}M${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Main Stats${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}X${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Extended Info${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}E${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Equipment${ANSI.RESET}`);
       session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}R${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Return${ANSI.RESET}`);
       session.writeln('');
 
@@ -556,14 +561,13 @@ export async function enterArmyManor(
 
     switch (choice) {
       case 'i':
-        // Refresh - just continue the loop to redisplay with updated data
         break;
       case 'p':
         session.clear();
         await purchaseLand(session, player, db);
         await session.pause();
         break;
-      case 'm':
+      case 'u':
         session.clear();
         await recruitMilitary(session, player, db);
         await session.pause();
@@ -592,13 +596,159 @@ export async function enterArmyManor(
         session.clear();
         await enterDiplomacy(session, player, content, db);
         break;
-      case 'y':
+      case 'm':
         session.clear();
         await showStats(session, player, content);
+        await session.pause();
+        break;
+      case 'x':
+        session.clear();
+        await showExtended(session, player, content);
+        await session.pause();
+        break;
+      case 'e':
+        session.clear();
+        await showEquipment(session, player, content, db);
+        await session.pause();
         break;
       case 'q':
       case 'r':
         return;
+    }
+  }
+}
+
+async function showExtended(
+  session: PlayerSession,
+  player: PlayerRecord,
+  content: GameContent,
+): Promise<void> {
+  session.clear();
+  await session.showAnsi('EXTENDED.ANS');
+
+  const W = ANSI.BRIGHT_WHITE;
+  const Y = ANSI.BRIGHT_YELLOW;
+  const C = ANSI.CYAN;
+  const R = ANSI.BRIGHT_RED;
+  const G = ANSI.BRIGHT_GREEN;
+  const RST = ANSI.RESET;
+
+  const hpColor = player.hp < player.maxHp * 0.25 ? R : player.hp < player.maxHp * 0.5 ? Y : G;
+  const evilKindColor = player.evilDeeds < 5 ? G : player.evilDeeds < 20 ? Y : R;
+  const kindEvil = player.evilDeeds < 5 ? 'Kind' : player.evilDeeds < 20 ? 'Neutral' : 'Evil';
+
+  // Row 3: Hitpoints, Spell One
+  session.write(`\x1B[3;24H${hpColor}${player.hp}/${player.maxHp}${RST}`);
+  session.write(`\x1B[3;60H${W}${player.rightHand ? 'Fireball' : 'None'}${RST}`);
+
+  // Row 4: Mana, Spell Two
+  session.write(`\x1B[4;24H${C}${player.mp}/${player.maxMp}${RST}`);
+  session.write(`\x1B[4;60H${W}${player.leftHand ? 'Ice Storm' : 'None'}${RST}`);
+
+  // Row 5: Strength, Spell Three
+  session.write(`\x1B[5;24H${W}${player.strength}${RST}`);
+  session.write(`\x1B[5;60H${W}${player.armour ? 'Lightning' : 'None'}${RST}`);
+
+  // Row 6: Defense, Spell Four
+  session.write(`\x1B[6;24H${W}${player.defense}${RST}`);
+  session.write(`\x1B[6;60H${W}${player.ring ? 'Heal' : 'None'}${RST}`);
+
+  // Row 7: Intelligence, Wisdom, Agility
+  session.write(`\x1B[7;24H${W}${player.wisdom}${RST}`);
+  session.write(`\x1B[7;59H${W}${player.agility}${RST}`);
+
+  // Row 8: Evil Deeds
+  session.write(`\x1B[8;24H${evilKindColor}${player.evilDeeds}${RST}`);
+
+  // Row 12: Monster Fights, Player Fights
+  session.write(`\x1B[12;24H${W}${player.monsterFights}${RST}`);
+  session.write(`\x1B[12;59H${W}${player.playerFights}${RST}`);
+
+  // Row 13: Kind/Evilness
+  session.write(`\x1B[13;24H${evilKindColor}${kindEvil}${RST}`);
+
+  // Row 14: Total Exp, High Exp
+  session.write(`\x1B[14;24H${Y}${player.xp}${RST}`);
+  session.write(`\x1B[14;59H${Y}${player.highXp}${RST}`);
+
+  await session.pause();
+}
+
+async function showEquipment(
+  session: PlayerSession,
+  player: PlayerRecord,
+  content: GameContent,
+  db: GameDatabase,
+): Promise<void> {
+  session.clear();
+  await session.showAnsi('EQUIP.ANS');
+
+  const W = ANSI.BRIGHT_WHITE;
+  const Y = ANSI.BRIGHT_YELLOW;
+  const C = ANSI.CYAN;
+  const R = ANSI.BRIGHT_RED;
+  const G = ANSI.BRIGHT_GREEN;
+  const RST = ANSI.RESET;
+
+  function writeAt(row: number, col: number, text: string): void {
+    session.write(`\x1B[${row};${col}H${text}${RST}`);
+  }
+
+  // Equipment slots (rows 1-4)
+  const slots = [
+    { row: 1, label: 'Right Hand', item: player.rightHand },
+    { row: 2, label: 'Left Hand', item: player.leftHand },
+    { row: 3, label: 'Armour', item: player.armour },
+    { row: 4, label: 'Ring', item: player.ring },
+  ];
+
+  for (const slot of slots) {
+    const item = slot.item ? content.items.find(i => i.id === slot.item) : null;
+    const col = slot.label === 'Right Hand' || slot.label === 'Armour' ? 22 : 47;
+    writeAt(slot.row, col, item ? item.name : 'Empty');
+  }
+
+  // Inventory items (rows 5-19, columns 20-42 and 45-67)
+  // Player doesn't have inventory in our implementation, so show empty slots
+  for (let row = 5; row <= 19; row++) {
+    writeAt(row, 20, 'Empty');
+  }
+  for (let row = 5; row <= 18; row++) {
+    writeAt(row, 45, 'Empty');
+  }
+
+  // Show menu options
+  session.writeln('');
+  session.writeln(`  ${Y}[${W}E${Y}]${G} Equip    ${Y}[${W}U${Y}]${G} Unequip  ${Y}[${W}I${Y}]${G} Inspect  ${Y}[${W}D${Y}]${G} Drop     ${Y}[${W}R${Y}]${G} Return${RST}`);
+  session.writeln('');
+
+  const validKeys = ['e', 'u', 'i', 'd', 'r'];
+  let choice = '';
+  while (choice !== 'r') {
+    const key = await session.readKey();
+    if (validKeys.includes(key.toLowerCase())) {
+      choice = key.toLowerCase();
+    }
+
+    if (choice === 'r') break;
+
+    switch (choice) {
+      case 'e':
+        session.writeln(`${C}  Which slot do you want to equip an item into?${RST}`);
+        session.writeln(`${C}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring, or (I)nventory${RST}`);
+        session.writeln(`${Y}  [R] Return${RST}`);
+        break;
+      case 'u':
+        session.writeln(`${C}  Which slot do you want to unequip?${RST}`);
+        session.writeln(`${C}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring${RST}`);
+        session.writeln(`${Y}  [R] Return${RST}`);
+        break;
+      case 'i':
+      case 'd':
+        session.writeln(`${C}  No inventory system implemented yet.${RST}`);
+        await session.pause();
+        choice = '';
+        break;
     }
   }
 }
