@@ -6,6 +6,7 @@ import { ANSI } from '../io/ansi.js';
 import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
+import { attemptResurrection } from './resurrection.js';
 
 
 function randomInt(min: number, max: number): number {
@@ -18,7 +19,9 @@ export async function enterChurch(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
-  const validKeys = ['b', 'p', 'c', 'g', 'a', 's', 'r', 'q', 'y'];
+  const validKeys = player.alive
+    ? ['b', 'p', 'c', 'g', 'a', 's', 'r', 'q', 'y']
+    : ['r', 'q'];
 
   while (true) {
     let choice: string;
@@ -39,6 +42,16 @@ export async function enterChurch(
     }
 
     switch (choice) {
+      case 'r': {
+        if (!player.alive) {
+          const resurrected = await attemptResurrection(session, player, db);
+          if (resurrected) {
+            return;
+          }
+        }
+        break;
+      }
+
       case 'b': {
         const cost = 80; // Church sells potions cheaper
         session.writeln(`${ANSI.BRIGHT_GREEN}  The church offers healing potions for $${cost} each.${ANSI.RESET}`);

@@ -42,10 +42,15 @@ function daysBetween(dateA: string, dateB: string): number {
   return Math.abs(bDay - aDay);
 }
 
+function getLocalDateString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function checkAutoResurrection(player: PlayerRecord): boolean {
   if (player.alive || !player.deathDate) return false;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateString();
   const characterAge = player.createdDate ? daysBetween(player.createdDate, today) : 999;
   if (characterAge > 7) return false;
 
