@@ -449,32 +449,42 @@ export async function enterArmyManor(
     await session.showAnsi('MANOR.ANS');
 
     // Fill in manor data fields on the ANSI art
+    // MANOR.ANS has data labels followed by cursor-move blank spaces for values
     const W_C = ANSI.BRIGHT_WHITE;
     const RST_C = ANSI.RESET;
     if (player.manorId) {
-      session.write(`\x1B[8;18H${W_C}${player.manorId}${RST_C}`);
-      session.write(`\x1B[8;27H${W_C}${player.knights}${RST_C}`);
-      session.write(`\x1B[8;34H${W_C}${player.farms}${RST_C}`);
-      session.write(`\x1B[9;18H${W_C}${player.serfs}${RST_C}`);
-      session.write(`\x1B[9;27H${W_C}${player.cannons}${RST_C}`);
-      session.write(`\x1B[9;34H${W_C}${player.silos}${RST_C}`);
-      session.write(`\x1B[10;18H${W_C}${player.food}${RST_C}`);
-      session.write(`\x1B[10;27H${W_C}${player.soldiers}${RST_C}`);
-      session.write(`\x1B[10;39H${W_C}${player.circuses}${RST_C}`);
-      session.write(`\x1B[11;18H${W_C}${player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A'}${RST_C}`);
-      session.write(`\x1B[11;27H${W_C}${player.trainingLevel}%${RST_C}`);
-      session.write(`\x1B[11;39H${W_C}${player.ironMines}${RST_C}`);
-      session.write(`\x1B[12;18H${W_C}${player.taxRate}%${RST_C}`);
-      session.write(`\x1B[12;27H${W_C}${player.morale}%${RST_C}`);
-      session.write(`\x1B[12;39H${W_C}${player.goldMines}${RST_C}`);
-      session.write(`\x1B[13;18H${W_C}0${RST_C}`);
-      session.write(`\x1B[13;27H${W_C}${player.forts}${RST_C}`);
+      // Row 8: Land Size, Knights, Farms - values after colon at positions 25, 48, 72
+      session.write(`\x1B[8;25H${W_C}${player.manorId}${RST_C}`);
+      session.write(`\x1B[8;48H${W_C}${player.knights}${RST_C}`);
+      session.write(`\x1B[8;72H${W_C}${player.farms}${RST_C}`);
+      // Row 9: Population, Cannons, Silos
+      session.write(`\x1B[9;25H${W_C}${player.serfs}${RST_C}`);
+      session.write(`\x1B[9;48H${W_C}${player.cannons}${RST_C}`);
+      session.write(`\x1B[9;72H${W_C}${player.silos}${RST_C}`);
+      // Row 10: Food, Soldiers, Circuses
+      session.write(`\x1B[10;25H${W_C}${player.food}${RST_C}`);
+      session.write(`\x1B[10;48H${W_C}${player.soldiers}${RST_C}`);
+      session.write(`\x1B[10;72H${W_C}${player.circuses}${RST_C}`);
+      // Row 11: Serf Support, Training, Iron Mines
+      const foodSupport = player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A';
+      session.write(`\x1B[11;25H${W_C}${foodSupport}${RST_C}`);
+      session.write(`\x1B[11;48H${W_C}${player.trainingLevel}%${RST_C}`);
+      session.write(`\x1B[11;72H${W_C}${player.ironMines}${RST_C}`);
+      // Row 12: Serf Tax, Morale, Gold Mines
+      session.write(`\x1B[12;25H${W_C}${player.taxRate}%${RST_C}`);
+      session.write(`\x1B[12;48H${W_C}${player.morale}%${RST_C}`);
+      session.write(`\x1B[12;72H${W_C}${player.goldMines}${RST_C}`);
+      // Row 13: War Turns, Forts
+      session.write(`\x1B[13;25H${W_C}${player.forts}${RST_C}`);
+      session.write(`\x1B[13;48H${W_C}${player.forts}${RST_C}`);
+      // Row 17: Kingdom name
       const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
       session.write(`\x1B[17;17H${W_C}${kingdom?.name ?? 'None'}${RST_C}`);
+      // Row 18: Tax payment
       const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
       session.write(`\x1B[18;17H${W_C}$${formatGold(taxPayment)} in taxes${RST_C}`);
     } else {
-      session.write(`\x1B[8;18H${ANSI.BRIGHT_RED}No manor yet${RST_C}`);
+      session.write(`\x1B[8;25H${ANSI.BRIGHT_RED}No manor yet${RST_C}`);
     }
 
     if ((session as any).graphicsMode === 'enhanced') {
