@@ -30,11 +30,11 @@ function fillManorFields(
   player: PlayerRecord,
   content: GameContent,
 ): void {
+  const W = ANSI.BRIGHT_WHITE;
+  const RST = ANSI.RESET;
+
   if (!player.manorId) {
     session.write(`\x1B[4;4H${ANSI.BRIGHT_RED}You do not own a manor. Purchase land to begin.${ANSI.RESET}`);
-    // Clear the remaining label rows
-    session.write(`\x1B[5;1H${' '.repeat(80)}`);
-    session.write(`\x1B[6;1H${' '.repeat(80)}`);
     return;
   }
 
@@ -42,52 +42,31 @@ function fillManorFields(
   const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
   const foodSupport = player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A';
 
-  // The ANSI art has labels packed in rows 4-6 in a 3-section layout.
-  // We clear rows 4-6 and redraw with labels + values properly spaced.
-  // Row 4: Left panel labels | separator | Right panel labels
-  // Row 5: Left panel data   | separator | Right panel data
-  // etc.
+  // The ANSI art already has labels built in. We only write VALUES at the correct positions.
+  // Row 4: Land Size | Knights | Population | Cannons | Farms
+  session.write(`\x1B[4;15H${W}${player.manorId}${RST}`);
+  session.write(`\x1B[4;40H${W}${player.knights}${RST}`);
+  session.write(`\x1B[4;55H${W}${player.serfs}${RST}`);
+  session.write(`\x1B[4;70H${W}${player.cannons}${RST}`);
+  session.write(`\x1B[4;79H${W}${player.farms}${RST}`);
 
-  const Y = ANSI.BRIGHT_YELLOW;
-  const W = ANSI.BRIGHT_WHITE;
-  const C = ANSI.CYAN;
-  const D = ANSI.BRIGHT_BLACK;
-  const RST = ANSI.RESET;
+  // Row 5: Food | Soldiers | Silos | Serf Support | Training | Circuses
+  session.write(`\x1B[5;10H${W}${player.food}${RST}`);
+  session.write(`\x1B[5;25H${W}${player.soldiers}${RST}`);
+  session.write(`\x1B[5;38H${W}${player.silos}${RST}`);
+  session.write(`\x1B[5;56H${W}${foodSupport}${RST}`);
+  session.write(`\x1B[5;72H${W}${player.trainingLevel}%${RST}`);
+  session.write(`\x1B[5;79H${W}${player.circuses}${RST}`);
 
-  // Clear rows 4-6 and redraw with proper label:value formatting
-  // Left panel (col 1-36), separator (col 37-38), Right panel (col 39-80)
+  // Row 6: Serf Tax | Morale | Gold Mines | Iron Mines | Forts
+  session.write(`\x1B[6;14H${W}${player.taxRate}%${RST}`);
+  session.write(`\x1B[6;28H${W}${player.morale}%${RST}`);
+  session.write(`\x1B[6;43H${W}${player.goldMines}${RST}`);
+  session.write(`\x1B[6;58H${W}${player.ironMines}${RST}`);
+  session.write(`\x1B[6;74H${W}${player.forts}${RST}`);
 
-  // Row 4: Land Size / Knights / Farms  |  Population / Cannons / Silos
-  session.write(`\x1B[4;1H${' '.repeat(80)}`);
-  session.write(`\x1B[4;2H${Y}Land Size:${W}${player.manorId}${RST}`);
-  session.write(`\x1B[4;28H${Y}Knights:${W}${player.knights}${RST}`);
-  session.write(`\x1B[4;40H${Y}Population:${W}${player.serfs}${RST}`);
-  session.write(`\x1B[4;58H${Y}Cannons:${W}${player.cannons}${RST}`);
-  session.write(`\x1B[4;70H${Y}Farms:${W}${player.farms}${RST}`);
-
-  // Row 5: Food / Soldiers / Circuses  |  Serf Support / Training / Iron Mines
-  session.write(`\x1B[5;1H${' '.repeat(80)}`);
-  session.write(`\x1B[5;2H${Y}Food:${W}${player.food}${RST}`);
-  session.write(`\x1B[5;14H${Y}Soldiers:${W}${player.soldiers}${RST}`);
-  session.write(`\x1B[5;28H${Y}Silos:${W}${player.silos}${RST}`);
-  session.write(`\x1B[5;40H${Y}Serf Support:${W}${foodSupport}${RST}`);
-  session.write(`\x1B[5;58H${Y}Training:${W}${player.trainingLevel}%${RST}`);
-  session.write(`\x1B[5;70H${Y}Circuses:${W}${player.circuses}${RST}`);
-
-  // Row 6: Tax Rate / Morale / Gold Mines  |  War Turns / Forts
-  session.write(`\x1B[6;1H${' '.repeat(80)}`);
-  session.write(`\x1B[6;2H${Y}Serf Tax:${W}${player.taxRate}%${RST}`);
-  session.write(`\x1B[6;14H${Y}Morale:${W}${player.morale}%${RST}`);
-  session.write(`\x1B[6;28H${Y}Gold Mines:${W}${player.goldMines}${RST}`);
-  session.write(`\x1B[6;40H${Y}Iron Mines:${W}${player.ironMines}${RST}`);
-  session.write(`\x1B[6;58H${Y}Forts:${W}${player.forts}${RST}`);
-
-  // Row 7: Fix up the "Your Ruler is" and "You are paying" fields
-  // "Your Ruler is" ends at col 50, "You are paying" ends at col 78
-  session.write(`\x1B[7;50H${W}${(kingdom?.name ?? 'None').padEnd(13).slice(0, 13)}${RST}`);
-  session.write(`\x1B[7;78H${RST}`);
-  // "You are paying" line wraps to row 8 - clear and show tax info
-  session.write(`\x1B[8;1H${Y}  Tax Income: ${W}$${formatGold(taxPayment)}   ${Y}Gold: ${W}$${formatGold(player.gold)}${RST}`);
+  // Row 7: Kingdom name
+  session.write(`\x1B[7;14H${W}${(kingdom?.name ?? 'None')}${RST}`);
 }
 
 async function purchaseLand(
