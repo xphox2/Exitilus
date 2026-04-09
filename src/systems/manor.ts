@@ -25,21 +25,16 @@ const CIRCUS_COST = 800;
 const IRON_MINE_COST = 1500;
 const GOLD_MINE_COST = 3000;
 
-function displayManorData(
+function fillManorFields(
   session: PlayerSession,
   player: PlayerRecord,
   content: GameContent,
 ): void {
-  const Y = ANSI.BRIGHT_YELLOW;
-  const W = ANSI.BRIGHT_WHITE;
-  const C = ANSI.CYAN;
-  const G = ANSI.BRIGHT_GREEN;
-  const RST = ANSI.RESET;
-
   if (!player.manorId) {
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_RED}You do not own a manor. Purchase land to begin.${ANSI.RESET}`);
-    session.writeln('');
+    session.write(`\x1B[4;4H${ANSI.BRIGHT_RED}You do not own a manor. Purchase land to begin.${ANSI.RESET}`);
+    // Clear the remaining label rows
+    session.write(`\x1B[5;1H${' '.repeat(80)}`);
+    session.write(`\x1B[6;1H${' '.repeat(80)}`);
     return;
   }
 
@@ -47,18 +42,52 @@ function displayManorData(
   const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
   const foodSupport = player.serfs > 0 ? Math.floor(player.food / player.serfs * 100) + '%' : 'N/A';
 
-  session.writeln('');
-  session.writeln(`${Y}╔════════════════════════════════════════════════════════════════╗${RST}`);
-  session.writeln(`${Y}║                    ${W}MANOR OF ${player.manorId.padEnd(40)}${Y}║${RST}`);
-  session.writeln(`${Y}╠════════════════════════════════════════════════════════════════╣${RST}`);
-  session.writeln(`${Y}║  ${G}Land:${W} ${String(player.manorId).padEnd(12)}  ${G}Kingdom:${W} ${String(kingdom?.name ?? 'None').padEnd(15)}  ${G}Tax Income:${W} $${formatGold(taxPayment).padEnd(8)}${Y}║${RST}`);
-  session.writeln(`${Y}╠════════════════════════════════════════════════════════════════╣${RST}`);
-  session.writeln(`${Y}║  ${G}Serfs:${W} ${String(player.serfs).padEnd(8)}  ${G}Food:${W} ${String(player.food).padEnd(8)}  ${G}Food/Serf:${W} ${String(foodSupport).padEnd(6)}  ${G}Morale:${W} ${String(player.morale + '%').padEnd(8)}${Y}║${RST}`);
-  session.writeln(`${Y}║  ${G}Soldiers:${W} ${String(player.soldiers).padEnd(6)}  ${G}Knights:${W} ${String(player.knights).padEnd(6)}  ${G}Cannons:${W} ${String(player.cannons).padEnd(6)}  ${G}Forts:${W} ${String(player.forts).padEnd(6)}${Y}║${RST}`);
-  session.writeln(`${Y}║  ${G}Training:${W} ${String(player.trainingLevel + '%').padEnd(6)}  ${G}Tax Rate:${W} ${String(player.taxRate + '%').padEnd(6)}  ${G}Farms:${W} ${String(player.farms).padEnd(6)}  ${G}Silos:${W} ${String(player.silos).padEnd(6)}${Y}║${RST}`);
-  session.writeln(`${Y}║  ${G}Circuses:${W} ${String(player.circuses).padEnd(5)}  ${G}Gold Mines:${W} ${String(player.goldMines).padEnd(5)}  ${G}Iron Mines:${W} ${String(player.ironMines).padEnd(5)}${Y}║${RST}`);
-  session.writeln(`${Y}╚════════════════════════════════════════════════════════════════╝${RST}`);
-  session.writeln('');
+  // The ANSI art has labels packed in rows 4-6 in a 3-section layout.
+  // We clear rows 4-6 and redraw with labels + values properly spaced.
+  // Row 4: Left panel labels | separator | Right panel labels
+  // Row 5: Left panel data   | separator | Right panel data
+  // etc.
+
+  const Y = ANSI.BRIGHT_YELLOW;
+  const W = ANSI.BRIGHT_WHITE;
+  const C = ANSI.CYAN;
+  const D = ANSI.BRIGHT_BLACK;
+  const RST = ANSI.RESET;
+
+  // Clear rows 4-6 and redraw with proper label:value formatting
+  // Left panel (col 1-36), separator (col 37-38), Right panel (col 39-80)
+
+  // Row 4: Land Size / Knights / Farms  |  Population / Cannons / Silos
+  session.write(`\x1B[4;1H${' '.repeat(80)}`);
+  session.write(`\x1B[4;2H${Y}Land Size:${W}${player.manorId}${RST}`);
+  session.write(`\x1B[4;28H${Y}Knights:${W}${player.knights}${RST}`);
+  session.write(`\x1B[4;40H${Y}Population:${W}${player.serfs}${RST}`);
+  session.write(`\x1B[4;58H${Y}Cannons:${W}${player.cannons}${RST}`);
+  session.write(`\x1B[4;70H${Y}Farms:${W}${player.farms}${RST}`);
+
+  // Row 5: Food / Soldiers / Circuses  |  Serf Support / Training / Iron Mines
+  session.write(`\x1B[5;1H${' '.repeat(80)}`);
+  session.write(`\x1B[5;2H${Y}Food:${W}${player.food}${RST}`);
+  session.write(`\x1B[5;14H${Y}Soldiers:${W}${player.soldiers}${RST}`);
+  session.write(`\x1B[5;28H${Y}Silos:${W}${player.silos}${RST}`);
+  session.write(`\x1B[5;40H${Y}Serf Support:${W}${foodSupport}${RST}`);
+  session.write(`\x1B[5;58H${Y}Training:${W}${player.trainingLevel}%${RST}`);
+  session.write(`\x1B[5;70H${Y}Circuses:${W}${player.circuses}${RST}`);
+
+  // Row 6: Tax Rate / Morale / Gold Mines  |  War Turns / Forts
+  session.write(`\x1B[6;1H${' '.repeat(80)}`);
+  session.write(`\x1B[6;2H${Y}Serf Tax:${W}${player.taxRate}%${RST}`);
+  session.write(`\x1B[6;14H${Y}Morale:${W}${player.morale}%${RST}`);
+  session.write(`\x1B[6;28H${Y}Gold Mines:${W}${player.goldMines}${RST}`);
+  session.write(`\x1B[6;40H${Y}Iron Mines:${W}${player.ironMines}${RST}`);
+  session.write(`\x1B[6;58H${Y}Forts:${W}${player.forts}${RST}`);
+
+  // Row 7: Fix up the "Your Ruler is" and "You are paying" fields
+  // "Your Ruler is" ends at col 50, "You are paying" ends at col 78
+  session.write(`\x1B[7;50H${W}${(kingdom?.name ?? 'None').padEnd(13).slice(0, 13)}${RST}`);
+  session.write(`\x1B[7;78H${RST}`);
+  // "You are paying" line wraps to row 8 - clear and show tax info
+  session.write(`\x1B[8;1H${Y}  Tax Income: ${W}$${formatGold(taxPayment)}   ${Y}Gold: ${W}$${formatGold(player.gold)}${RST}`);
 }
 
 async function purchaseLand(
@@ -428,8 +457,11 @@ export async function enterArmyManor(
     session.clear();
     await session.showAnsi('MANOR.ANS');
 
-    // Show manor data below the ANSI art
-    displayManorData(session, player, content);
+    // Fill in manor data on top of the ANSI art (rows 4-8)
+    fillManorFields(session, player, content);
+
+    // Position cursor below the data area for menu
+    session.write('\x1B[10;1H');
 
     if ((session as any).graphicsMode === 'enhanced') {
       const gc = fg(220, 180, 50);
@@ -440,7 +472,6 @@ export async function enterArmyManor(
       session.writeln(`  ${gc}[${wc}I${gc}]${grc} Inspect  ${gc}[${wc}P${gc}]${grc} Purchase  ${gc}[${wc}M${gc}]${grc} Recruit   ${gc}[${wc}B${gc}]${grc} Build${RESET}`);
       session.writeln(`  ${gc}[${wc}T${gc}]${grc} Tax Rate ${gc}[${wc}C${gc}]${grc} Treasury  ${gc}[${wc}A${gc}]${grc} Attack    ${gc}[${wc}D${gc}]${grc} Diplomacy${RESET}`);
       session.writeln(`  ${gc}[${wc}Y${gc}]${grc} Stats    ${gc}[${wc}R${gc}]${grc} Return${RESET}`);
-      session.writeln('');
       session.write(`  ${cc}Your Choice: ${wc}`);
 
       choice = '';
