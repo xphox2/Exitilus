@@ -224,6 +224,7 @@ export async function createNewPlayer(
     leftHand: null,
     armour: null,
     ring: null,
+    inventory: [],
     manorId: null,
     kingdomId,
     questsCompleted: [],

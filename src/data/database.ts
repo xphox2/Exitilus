@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS players (
   left_hand TEXT,
   armour TEXT,
   ring TEXT,
+  inventory TEXT NOT NULL DEFAULT '[]',
   manor_id TEXT,
   kingdom_id TEXT,
   quests_completed TEXT NOT NULL DEFAULT '[]',
@@ -121,10 +122,10 @@ export class GameDatabase {
       INSERT INTO players (name, real_name, password_hash, sex, class_id, race_id, level, xp, high_xp,
         hp, max_hp, mp, max_mp, strength, defense, agility, leadership, wisdom,
         gold, bank_gold, evil_deeds, monster_fights, player_fights, healing_potions, mana_potions,
-        right_hand, left_hand, armour, ring, manor_id, kingdom_id, quests_completed,
+        right_hand, left_hand, armour, ring, inventory, manor_id, kingdom_id, quests_completed,
         alive, last_login, created_date, death_date, soldiers, knights, cannons, forts, training_level, morale,
         serfs, food, farms, silos, circuses, iron_mines, gold_mines, tax_rate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       player.name, player.realName, player.passwordHash, player.sex, player.classId, player.raceId,
       player.level, player.xp, player.highXp, player.hp, player.maxHp,
@@ -133,6 +134,7 @@ export class GameDatabase {
       player.evilDeeds, player.monsterFights, player.playerFights, player.healingPotions,
       player.manaPotions,
       player.rightHand, player.leftHand, player.armour, player.ring,
+      JSON.stringify(player.inventory ?? []),
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
       player.alive ? 1 : 0, player.lastLogin, player.createdDate, player.deathDate ?? null,
       player.soldiers, player.knights, player.cannons, player.forts,
@@ -154,7 +156,7 @@ export class GameDatabase {
         hp=?, max_hp=?, mp=?, max_mp=?, strength=?, defense=?, agility=?,
         leadership=?, wisdom=?, gold=?, bank_gold=?, evil_deeds=?,
         monster_fights=?, player_fights=?, healing_potions=?, mana_potions=?,
-        right_hand=?, left_hand=?, armour=?, ring=?, manor_id=?, kingdom_id=?,
+        right_hand=?, left_hand=?, armour=?, ring=?, inventory=?, manor_id=?, kingdom_id=?,
         quests_completed=?, alive=?, last_login=?, created_date=?, death_date=?,
         soldiers=?, knights=?, cannons=?, forts=?, training_level=?, morale=?,
         serfs=?, food=?, farms=?, silos=?, circuses=?, iron_mines=?, gold_mines=?, tax_rate=?
@@ -167,6 +169,7 @@ export class GameDatabase {
       player.evilDeeds, player.monsterFights, player.playerFights, player.healingPotions,
       player.manaPotions,
       player.rightHand, player.leftHand, player.armour, player.ring,
+      JSON.stringify(player.inventory ?? []),
       player.manorId, player.kingdomId, JSON.stringify(player.questsCompleted),
       player.alive ? 1 : 0, player.lastLogin, player.createdDate, player.deathDate ?? null,
       player.soldiers, player.knights, player.cannons, player.forts,
@@ -229,6 +232,9 @@ export class GameDatabase {
     if (!existing.has('created_date')) {
       this.db.run("ALTER TABLE players ADD COLUMN created_date TEXT NOT NULL DEFAULT ''");
     }
+    if (!existing.has('inventory')) {
+      this.db.run("ALTER TABLE players ADD COLUMN inventory TEXT NOT NULL DEFAULT '[]'");
+    }
     this.backfillDeathDates();
   }
 
@@ -281,6 +287,7 @@ export class GameDatabase {
       leftHand: (row['left_hand'] as string) || null,
       armour: (row['armour'] as string) || null,
       ring: (row['ring'] as string) || null,
+      inventory: JSON.parse((row['inventory'] as string) || '[]'),
       manorId: (row['manor_id'] as string) || null,
       kingdomId: (row['kingdom_id'] as string) || null,
       questsCompleted: JSON.parse((row['quests_completed'] as string) || '[]'),

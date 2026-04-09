@@ -561,6 +561,31 @@ export async function enterArmyManor(
 
     switch (choice) {
       case 'i':
+        if (!player.manorId) {
+          session.writeln(`${ANSI.BRIGHT_RED}  You need a manor first!${ANSI.RESET}`);
+          await session.pause();
+        } else {
+          session.clear();
+          await session.showAnsi('INSPECT.ANS');
+          const W2 = ANSI.BRIGHT_WHITE;
+          const RST2 = ANSI.RESET;
+          session.write(`\x1B[8;15H${W2}${player.manorId}${RST2}`);
+          session.write(`\x1B[10;15H${W2}${player.knights}${RST2}`);
+          session.write(`\x1B[10;35H${W2}${player.soldiers}${RST2}`);
+          session.write(`\x1B[10;55H${W2}${player.cannons}${RST2}`);
+          session.write(`\x1B[10;72H${W2}${player.forts}${RST2}`);
+          session.write(`\x1B[12;15H${W2}${player.serfs}${RST2}`);
+          session.write(`\x1B[12;35H${W2}${player.farms}${RST2}`);
+          session.write(`\x1B[12;55H${W2}${player.silos}${RST2}`);
+          session.write(`\x1B[12;72H${W2}${player.circuses}${RST2}`);
+          session.write(`\x1B[14;15H${W2}${player.food}${RST2}`);
+          session.write(`\x1B[14;35H${W2}${player.ironMines}${RST2}`);
+          session.write(`\x1B[14;55H${W2}${player.goldMines}${RST2}`);
+          session.write(`\x1B[16;15H${W2}${player.trainingLevel}%${RST2}`);
+          session.write(`\x1B[16;35H${W2}${player.morale}%${RST2}`);
+          session.write(`\x1B[16;55H${W2}${player.taxRate}%${RST2}`);
+          await session.pause();
+        }
         break;
       case 'p':
         session.clear();
@@ -680,75 +705,192 @@ async function showEquipment(
   content: GameContent,
   db: GameDatabase,
 ): Promise<void> {
-  session.clear();
-  await session.showAnsi('EQUIP.ANS');
-
-  const W = ANSI.BRIGHT_WHITE;
+  const MAX_INVENTORY = 40;
   const Y = ANSI.BRIGHT_YELLOW;
+  const W = ANSI.BRIGHT_WHITE;
   const C = ANSI.CYAN;
   const R = ANSI.BRIGHT_RED;
   const G = ANSI.BRIGHT_GREEN;
   const RST = ANSI.RESET;
 
-  function writeAt(row: number, col: number, text: string): void {
-    session.write(`\x1B[${row};${col}H${text}${RST}`);
-  }
+  async function redrawEquipment(): Promise<void> {
+    session.clear();
+    await session.showAnsi('EQUIP.ANS');
 
-  // Equipment slots (rows 1-4)
-  const slots = [
-    { row: 1, label: 'Right Hand', item: player.rightHand },
-    { row: 2, label: 'Left Hand', item: player.leftHand },
-    { row: 3, label: 'Armour', item: player.armour },
-    { row: 4, label: 'Ring', item: player.ring },
-  ];
+    const slots = [
+      { row: 1, col: 22, field: 'rightHand' as const },
+      { row: 2, col: 47, field: 'leftHand' as const },
+      { row: 3, col: 22, field: 'armour' as const },
+      { row: 4, col: 47, field: 'ring' as const },
+    ];
 
-  for (const slot of slots) {
-    const item = slot.item ? content.items.find(i => i.id === slot.item) : null;
-    const col = slot.label === 'Right Hand' || slot.label === 'Armour' ? 22 : 47;
-    writeAt(slot.row, col, item ? item.name : 'Empty');
-  }
+    for (const slot of slots) {
+      const itemId = player[slot.field];
+      const item = itemId ? content.items.find(i => i.id === itemId) : null;
+      session.write(`\x1B[${slot.row};${slot.col}H${item ? item.name : 'Empty'}${RST}`);
+    }
 
-  // Inventory items (rows 5-19, columns 20-42 and 45-67)
-  // Player doesn't have inventory in our implementation, so show empty slots
-  for (let row = 5; row <= 19; row++) {
-    writeAt(row, 20, 'Empty');
-  }
-  for (let row = 5; row <= 18; row++) {
-    writeAt(row, 45, 'Empty');
-  }
+    for (let i = 0; i < MAX_INVENTORY; i++) {
+      const row = 5 + Math.floor(i / 2);
+      const col = i % 2 === 0 ? 20 : 45;
+      const itemId = player.inventory[i];
+      const item = itemId ? content.items.find(it => it.id === itemId) : null;
+      const num = i + 5;
+      session.write(`\x1B[${row};${col - 3}H${String(num).padStart(2, ' ')}:${item ? item.name : 'Empty'}${RST}`);
+    }
 
-  // Show menu options
-  session.writeln('');
-  session.writeln(`  ${Y}[${W}E${Y}]${G} Equip    ${Y}[${W}U${Y}]${G} Unequip  ${Y}[${W}I${Y}]${G} Inspect  ${Y}[${W}D${Y}]${G} Drop     ${Y}[${W}R${Y}]${G} Return${RST}`);
-  session.writeln('');
+    session.write(`\x1B[20;1H`);
+  }
 
   const validKeys = ['e', 'u', 'i', 'd', 'r'];
-  let choice = '';
-  while (choice !== 'r') {
+
+  while (true) {
+    await redrawEquipment();
+    session.writeln('');
+    session.writeln(`  ${Y}[${W}E${Y}]${G} Equip    ${Y}[${W}U${Y}]${G} Unequip  ${Y}[${W}I${Y}]${G} Inspect  ${Y}[${W}D${Y}]${G} Drop     ${Y}[${W}R${Y}]${G} Return${RST}`);
+    session.writeln('');
+
     const key = await session.readKey();
-    if (validKeys.includes(key.toLowerCase())) {
-      choice = key.toLowerCase();
-    }
+    if (!validKeys.includes(key.toLowerCase())) continue;
+    const choice = key.toLowerCase();
 
     if (choice === 'r') break;
 
     switch (choice) {
-      case 'e':
-        session.writeln(`${C}  Which slot do you want to equip an item into?${RST}`);
-        session.writeln(`${C}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring, or (I)nventory${RST}`);
-        session.writeln(`${Y}  [R] Return${RST}`);
+      case 'e': {
+        session.writeln(`${Y}  Which slot do you want to equip?${ANSI.RESET}`);
+        session.writeln(`${Y}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring${ANSI.RESET}`);
+        session.writeln(`${Y}  (I)nventory${ANSI.RESET}`);
+        session.writeln(`${Y}  [R] Return${ANSI.RESET}`);
+        const slotKey = await session.readKey();
+        if (slotKey.toLowerCase() === 'r') break;
+
+        let targetField: 'rightHand' | 'leftHand' | 'armour' | 'ring' | 'inventory' | null = null;
+        if (slotKey.toLowerCase() === 'r') targetField = 'rightHand';
+        else if (slotKey.toLowerCase() === 'l') targetField = 'leftHand';
+        else if (slotKey.toLowerCase() === 'a') targetField = 'armour';
+        else if (slotKey.toLowerCase() === 'g') targetField = 'ring';
+        else if (slotKey.toLowerCase() === 'i') targetField = 'inventory';
+        else break;
+
+        if (targetField === 'inventory') {
+          session.writeln(`${Y}  Enter inventory slot number (5-44):${ANSI.RESET}`);
+          const input = await session.readLine(`${W}  Slot: `);
+          const idx = parseInt(input) - 5;
+          if (isNaN(idx) || idx < 0 || idx >= MAX_INVENTORY || !player.inventory[idx]) {
+            session.writeln(`${R}  Invalid slot or empty${ANSI.RESET}`);
+            await session.pause();
+            break;
+          }
+          session.writeln(`${Y}  Which slot do you want to equip it to?${ANSI.RESET}`);
+          session.writeln(`${Y}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring${ANSI.RESET}`);
+          const equipSlot = await session.readKey();
+          let equipField: 'rightHand' | 'leftHand' | 'armour' | 'ring' | null = null;
+          if (equipSlot.toLowerCase() === 'r') equipField = 'rightHand';
+          else if (equipSlot.toLowerCase() === 'l') equipField = 'leftHand';
+          else if (equipSlot.toLowerCase() === 'a') equipField = 'armour';
+          else if (equipSlot.toLowerCase() === 'g') equipField = 'ring';
+          else break;
+
+          const itemId = player.inventory[idx];
+          const currentEquipped = player[equipField];
+          player[equipField] = itemId;
+          player.inventory[idx] = currentEquipped ?? '';
+          db.updatePlayer(player);
+          session.writeln(`${G}  Equipped!${ANSI.RESET}`);
+          await session.pause();
+        } else if (targetField) {
+          session.writeln(`${Y}  Enter inventory slot number (5-44):${ANSI.RESET}`);
+          const input = await session.readLine(`${W}  Slot: `);
+          const idx = parseInt(input) - 5;
+          if (isNaN(idx) || idx < 0 || idx >= MAX_INVENTORY || !player.inventory[idx]) {
+            session.writeln(`${R}  Invalid slot or empty${ANSI.RESET}`);
+            await session.pause();
+            break;
+          }
+          const itemId = player.inventory[idx];
+          const currentEquipped = player[targetField];
+          player[targetField] = itemId;
+          player.inventory[idx] = currentEquipped ?? '';
+          db.updatePlayer(player);
+          session.writeln(`${G}  Equipped!${ANSI.RESET}`);
+          await session.pause();
+        }
         break;
-      case 'u':
-        session.writeln(`${C}  Which slot do you want to unequip?${RST}`);
-        session.writeln(`${C}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring${RST}`);
-        session.writeln(`${Y}  [R] Return${RST}`);
-        break;
-      case 'i':
-      case 'd':
-        session.writeln(`${C}  No inventory system implemented yet.${RST}`);
+      }
+      case 'u': {
+        session.writeln(`${Y}  Which equipped slot do you want to unequip?${ANSI.RESET}`);
+        session.writeln(`${Y}  (R)ight hand, (L)eft hand, (A)rmour, (G)ring${ANSI.RESET}`);
+        session.writeln(`${Y}  [R] Return${ANSI.RESET}`);
+        const slotKey = await session.readKey();
+        let unequipField: 'rightHand' | 'leftHand' | 'armour' | 'ring' | null = null;
+        if (slotKey.toLowerCase() === 'r') unequipField = 'rightHand';
+        else if (slotKey.toLowerCase() === 'l') unequipField = 'leftHand';
+        else if (slotKey.toLowerCase() === 'a') unequipField = 'armour';
+        else if (slotKey.toLowerCase() === 'g') unequipField = 'ring';
+        else break;
+
+        const itemId = player[unequipField];
+        if (!itemId) {
+          session.writeln(`${Y}  That slot is empty${ANSI.RESET}`);
+          await session.pause();
+          break;
+        }
+
+        if (player.inventory.length >= MAX_INVENTORY) {
+          session.writeln(`${R}  Inventory full!${ANSI.RESET}`);
+          await session.pause();
+          break;
+        }
+
+        player[unequipField] = null;
+        player.inventory.push(itemId);
+        db.updatePlayer(player);
+        session.writeln(`${G}  Unequipped to inventory!${ANSI.RESET}`);
         await session.pause();
-        choice = '';
         break;
+      }
+      case 'i': {
+        session.writeln(`${Y}  Enter inventory slot to inspect (5-44):${ANSI.RESET}`);
+        const input = await session.readLine(`${W}  Slot: `);
+        const idx = parseInt(input) - 5;
+        if (isNaN(idx) || idx < 0 || idx >= MAX_INVENTORY || !player.inventory[idx]) {
+          session.writeln(`${R}  Invalid slot or empty${ANSI.RESET}`);
+          await session.pause();
+          break;
+        }
+        const itemId = player.inventory[idx];
+        const item = content.items.find(i => i.id === itemId);
+        if (item) {
+          session.writeln(`${C}  ${item.name}${ANSI.RESET}`);
+          session.writeln(`  ${item.description}`);
+          if (item.strengthBonus) session.writeln(`${Y}  Strength: ${W}+${item.strengthBonus}${ANSI.RESET}`);
+          if (item.defenseBonus) session.writeln(`${Y}  Defense: ${W}+${item.defenseBonus}${ANSI.RESET}`);
+          if (item.hpBonus) session.writeln(`${Y}  HP: ${W}+${item.hpBonus}${ANSI.RESET}`);
+          if (item.magicBonus) session.writeln(`${Y}  Magic: ${W}+${item.magicBonus}${ANSI.RESET}`);
+        }
+        await session.pause();
+        break;
+      }
+      case 'd': {
+        session.writeln(`${Y}  Enter inventory slot to drop (5-44):${ANSI.RESET}`);
+        const input = await session.readLine(`${W}  Slot: `);
+        const idx = parseInt(input) - 5;
+        if (isNaN(idx) || idx < 0 || idx >= MAX_INVENTORY || !player.inventory[idx]) {
+          session.writeln(`${R}  Invalid slot or empty${ANSI.RESET}`);
+          await session.pause();
+          break;
+        }
+        session.writeln(`${R}  Are you sure you want to drop this item?${ANSI.RESET}`);
+        const confirm = await session.readLine(`${Y}  (Y)es: ${ANSI.RESET}`);
+        if (confirm.toUpperCase() === 'Y') {
+          player.inventory.splice(idx, 1);
+          db.updatePlayer(player);
+          session.writeln(`${G}  Item dropped!${ANSI.RESET}`);
+          await session.pause();
+        }
+        break;
+      }
     }
   }
 }

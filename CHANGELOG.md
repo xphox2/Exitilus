@@ -1,3 +1,17 @@
+## 0.6.5
+
+Full inventory system implementation and Manor Inspect feature.
+
+### Added
+- **Inventory system**: 40-slot player inventory with equip/unequip/inspect/drop functionality
+- **Inventory database field**: `inventory TEXT` column storing JSON array of item IDs
+- **Manor Inspect (`I` key)**: Dedicated manor inspection screen loading INSPECT.ANS with full manor stats
+- **Equipment screen**: Full equip/unequip/inspect/drop workflow for all equipment slots
+
+### Fixed
+- TypeScript errors in `showEquipment()` - proper type unions and null handling for inventory operations
+- Manor `case 'i':` handler was empty - now properly shows INSPECT.ANS
+
 ## 0.6.4
 
 Auto-resurrection on next login for players who died yesterday.

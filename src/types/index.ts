@@ -149,6 +149,7 @@ export interface PlayerRecord {
   leftHand: string | null;
   armour: string | null;
   ring: string | null;
+  inventory: string[]; // Up to 40 slots (items 05-44 in original)
   manorId: string | null;
   kingdomId: string | null;
   questsCompleted: string[];
