@@ -42,14 +42,15 @@ export async function enterChurch(
     }
 
     switch (choice) {
-      case 'r': {
+      case 'r':
+      case 'q': {
         if (!player.alive) {
           const resurrected = await attemptResurrection(session, player, db);
           if (resurrected) {
             return;
           }
         }
-        break;
+        return;
       }
 
       case 'b': {
