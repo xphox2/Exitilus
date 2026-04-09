@@ -236,9 +236,16 @@ export class GameDatabase {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    const today = yesterdayStr;
+
     this.db.run(
       "UPDATE players SET death_date = ? WHERE alive = 0 AND death_date IS NULL",
       [yesterdayStr]
+    );
+
+    this.db.run(
+      "UPDATE players SET created_date = ? WHERE created_date IS NULL OR created_date = ''",
+      [today]
     );
   }
 
