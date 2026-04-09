@@ -1,3 +1,15 @@
+## 0.6.6
+
+Remove Manor Inspect (I key) - INSPECT.ANS layout not mapped correctly. Need to analyze ANSI escape sequences to determine proper cursor positions before re-implementing.
+
+### Removed
+- Manor Inspect (`I` key) - removed until proper position mapping is done
+
+### Fixed
+- Manor screen: removed duplicate menu overlay text that was rendering on top of MANOR.ANS art
+- Kingdom name position: col 31 → col 15 (was 16 columns too far right)
+- Tax payment position: col 32 → col 16 (was 16 columns too far right)
+
 ## 0.6.5
 
 Full inventory system implementation and Manor Inspect feature.
@@ -5,12 +17,10 @@ Full inventory system implementation and Manor Inspect feature.
 ### Added
 - **Inventory system**: 40-slot player inventory with equip/unequip/inspect/drop functionality
 - **Inventory database field**: `inventory TEXT` column storing JSON array of item IDs
-- **Manor Inspect (`I` key)**: Dedicated manor inspection screen loading INSPECT.ANS with full manor stats
 - **Equipment screen**: Full equip/unequip/inspect/drop workflow for all equipment slots
 
 ### Fixed
 - TypeScript errors in `showEquipment()` - proper type unions and null handling for inventory operations
-- Manor `case 'i':` handler was empty - now properly shows INSPECT.ANS
 
 ## 0.6.4
 

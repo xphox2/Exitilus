@@ -442,7 +442,7 @@ export async function enterArmyManor(
   db: GameDatabase
 ): Promise<void> {
   while (true) {
-    const validKeys = ['i', 'p', 'u', 'b', 't', 'c', 'a', 'd', 'm', 'x', 'e', 'r', 'q'];
+    const validKeys = ['p', 'u', 'b', 't', 'c', 'a', 'd', 'm', 'x', 'e', 'r', 'q'];
     let choice: string;
 
     session.clear();
@@ -493,33 +493,6 @@ export async function enterArmyManor(
     if (choice.toLowerCase() === 'q' || choice.toLowerCase() === 'r') return;
 
     switch (choice) {
-      case 'i':
-        if (!player.manorId) {
-          session.writeln(`${ANSI.BRIGHT_RED}  You need a manor first!${ANSI.RESET}`);
-          await session.pause();
-        } else {
-          session.clear();
-          await session.showAnsi('INSPECT.ANS');
-          const W2 = ANSI.BRIGHT_WHITE;
-          const RST2 = ANSI.RESET;
-          session.write(`\x1B[8;15H${W2}${player.manorId}${RST2}`);
-          session.write(`\x1B[10;15H${W2}${player.knights}${RST2}`);
-          session.write(`\x1B[10;35H${W2}${player.soldiers}${RST2}`);
-          session.write(`\x1B[10;55H${W2}${player.cannons}${RST2}`);
-          session.write(`\x1B[10;72H${W2}${player.forts}${RST2}`);
-          session.write(`\x1B[12;15H${W2}${player.serfs}${RST2}`);
-          session.write(`\x1B[12;35H${W2}${player.farms}${RST2}`);
-          session.write(`\x1B[12;55H${W2}${player.silos}${RST2}`);
-          session.write(`\x1B[12;72H${W2}${player.circuses}${RST2}`);
-          session.write(`\x1B[14;15H${W2}${player.food}${RST2}`);
-          session.write(`\x1B[14;35H${W2}${player.ironMines}${RST2}`);
-          session.write(`\x1B[14;55H${W2}${player.goldMines}${RST2}`);
-          session.write(`\x1B[16;15H${W2}${player.trainingLevel}%${RST2}`);
-          session.write(`\x1B[16;35H${W2}${player.morale}%${RST2}`);
-          session.write(`\x1B[16;55H${W2}${player.taxRate}%${RST2}`);
-          await session.pause();
-        }
-        break;
       case 'p':
         session.clear();
         await purchaseLand(session, player, db);
