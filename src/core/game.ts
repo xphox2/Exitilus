@@ -34,9 +34,12 @@ import { runDailyMaintenance } from '../systems/maintenance.js';
 import { inspectEquipment } from '../systems/equipment.js';
 
 function daysBetween(dateA: string, dateB: string): number {
-  const a = new Date(dateA + 'T00:00:00Z');
-  const b = new Date(dateB + 'T00:00:00Z');
-  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  const a = new Date(dateA + 'T00:00:00');
+  const b = new Date(dateB + 'T00:00:00');
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const aDay = Math.floor(a.getTime() / msPerDay);
+  const bDay = Math.floor(b.getTime() / msPerDay);
+  return Math.abs(bDay - aDay);
 }
 
 function checkAutoResurrection(player: PlayerRecord): boolean {
