@@ -478,12 +478,12 @@ export async function enterArmyManor(
       // Row 13: War Turns, Forts
       session.write(`\x1B[13;20H${W_C}${player.forts}${RST_C}`);
       session.write(`\x1B[13;40H${W_C}${player.forts}${RST_C}`);
-      // Row 17: Kingdom name
+      // Row 17: Kingdom name - start AFTER "Your Ruler is" (13 chars) + space
       const kingdom = content.kingdoms.find(k => k.id === player.kingdomId);
-      session.write(`\x1B[17;17H${W_C}${kingdom?.name ?? 'None'}${RST_C}`);
-      // Row 18: Tax payment
+      session.write(`\x1B[17;31H${W_C}${kingdom?.name ?? 'None'}${RST_C}`);
+      // Row 18: Tax payment - start AFTER "You are paying" (14 chars) + space
       const taxPayment = Math.floor(player.serfs * player.taxRate / 100);
-      session.write(`\x1B[18;17H${W_C}$${formatGold(taxPayment)} in taxes${RST_C}`);
+      session.write(`\x1B[18;32H${W_C}$${formatGold(taxPayment)} in taxes${RST_C}`);
     } else {
       session.write(`\x1B[6;10H${ANSI.BRIGHT_RED}No manor yet${RST_C}`);
     }
