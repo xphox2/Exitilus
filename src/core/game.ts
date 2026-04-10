@@ -64,6 +64,8 @@ function checkAutoResurrection(player: PlayerRecord): boolean {
   player.strength = Math.max(1, player.strength - Math.floor(player.strength * 0.05));
   player.defense = Math.max(1, player.defense - Math.floor(player.defense * 0.05));
   player.lastLogin = new Date().toISOString();
+  player.monsterFights = 0;
+  player.playerFights = 0;
 
   return true;
 }
