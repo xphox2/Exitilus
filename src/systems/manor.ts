@@ -502,8 +502,14 @@ export async function enterArmyManor(
     session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}E${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Equipment${ANSI.RESET}`);
     session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}R${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Return${ANSI.RESET}`);
     session.writeln('');
-    choice = await session.readKey();
-    if (choice.toLowerCase() === 'q' || choice.toLowerCase() === 'r') return;
+
+    choice = '';
+    while (!choice) {
+      const key = await session.readKey();
+      if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+    }
+
+    session.write('\x1B[30;1H\r\n');
 
     switch (choice) {
       case 'p':
