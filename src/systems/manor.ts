@@ -517,10 +517,7 @@ export async function enterArmyManor(
       session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury   ${Y}[${W}A${Y}]${G} Attack`)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}M${Y}]${G} Main Stats ${Y}[${W}X${Y}]${G} Extended  ${Y}[${W}E${Y}]${G} Equipment`)}`);
-      await new Promise(rv => setTimeout(rv, 25));
-      r++;
-      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}R${Y}]${G} Return`)}`);
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}R${Y}]${G} Return`)}`);
       await new Promise(rv => setTimeout(rv, 25));
       r++;
       session.write(`\x1B[${r};${startCol}H${mRow(` ${C}Your Choice: ${W}`)}`);
