@@ -489,24 +489,72 @@ export async function enterArmyManor(
     }
 
     session.write('\x1B[23;1H');
-    session.writeln('');
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}P${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Purchase Land${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}U${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Recruit Military${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}B${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Build Structures${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}T${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Set Tax Rate${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}C${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Collect Treasury${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}A${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Attack Another Manor${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}D${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Diplomacy & Treaties${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}M${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Main Stats${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}X${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Extended Info${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}E${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Equipment${ANSI.RESET}`);
-    session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}R${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Return${ANSI.RESET}`);
-    session.writeln('');
 
-    choice = '';
-    while (!choice) {
-      const key = await session.readKey();
-      if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+    if ((session as any).graphicsMode === 'enhanced') {
+      const startRow = 23;
+      const startCol = 15;
+      const bw = 50;
+      const Y = `\x1B[1;33m`; const W = `\x1B[1;37m`; const G = `\x1B[1;32m`; const C = `\x1B[1;36m`; const RST = ANSI.RESET;
+
+      function stripAnsi(s: string): string {
+        return s.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+      }
+
+      function mRow(content: string): string {
+        const visLen = stripAnsi(content).length;
+        return Y + '║' + content + ' '.repeat(Math.max(0, bw - visLen)) + Y + '║' + RST;
+      }
+
+      await new Promise(r => setTimeout(r, 150));
+
+      let r = startRow;
+      session.write(`\x1B[${r};${startCol}H${Y}╔${'═'.repeat(bw)}╗${RST}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}P${Y}]${G} Purchase   ${Y}[${W}U${Y}]${G} Recruit    ${Y}[${W}B${Y}]${G} Build`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}T${Y}]${G} Tax Rate   ${Y}[${W}C${Y}]${G} Treasury   ${Y}[${W}A${Y}]${G} Attack`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}D${Y}]${G} Diplomacy  ${Y}[${W}M${Y}]${G} Main Stats ${Y}[${W}X${Y}]${G} Extended  ${Y}[${W}E${Y}]${G} Equipment`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${Y}[${W}R${Y}]${G} Return`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${mRow(` ${C}Your Choice: ${W}`)}`);
+      await new Promise(rv => setTimeout(rv, 25));
+      r++;
+      session.write(`\x1B[${r};${startCol}H${Y}╚${'═'.repeat(bw)}╝${RST}`);
+
+      session.write(`\x1B[${r-1};${startCol + 30}H${W}`);
+
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+      }
+    } else {
+      session.writeln('');
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}P${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Purchase Land${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}U${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Recruit Military${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}B${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Build Structures${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}T${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Set Tax Rate${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}C${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Collect Treasury${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}A${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Attack Another Manor${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}D${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Diplomacy & Treaties${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}M${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Main Stats${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}X${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Extended Info${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}E${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Equipment${ANSI.RESET}`);
+      session.writeln(`  ${ANSI.BRIGHT_YELLOW}(${ANSI.BRIGHT_WHITE}R${ANSI.BRIGHT_YELLOW})${ANSI.RESET} ${ANSI.BRIGHT_GREEN}Return${ANSI.RESET}`);
+      session.writeln('');
+
+      choice = '';
+      while (!choice) {
+        const key = await session.readKey();
+        if (validKeys.includes(key.toLowerCase())) choice = key.toLowerCase();
+      }
     }
 
     session.write('\x1B[30;1H\r\n');
