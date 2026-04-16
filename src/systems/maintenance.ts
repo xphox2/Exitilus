@@ -1,6 +1,7 @@
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import type { PlayerRecord } from '../types/index.js';
+import { isKingdomConquered } from './conquest.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -211,7 +212,9 @@ function generateNpcManors(db: GameDatabase, content: GameContent, log: string[]
 
     const classId = content.classes[randomInt(0, content.classes.length - 1)].id;
     const raceId = content.races[randomInt(0, content.races.length - 1)].id;
-    const kingdomId = content.kingdoms[randomInt(0, content.kingdoms.length - 1)].id;
+    const unconqueredKingdoms = content.kingdoms.filter(k => !isKingdomConquered(db, k.id));
+    if (unconqueredKingdoms.length === 0) break;
+    const kingdomId = unconqueredKingdoms[randomInt(0, unconqueredKingdoms.length - 1)].id;
 
     db.createPlayer({
       name: npcName,

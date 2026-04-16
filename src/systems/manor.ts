@@ -418,6 +418,7 @@ async function attackManor(
     player.gold += goldStolen;
     player.serfs += serfsGained;
     player.soldiers = Math.max(0, player.soldiers - soldiersLost);
+    if (player.xp > player.highXp) player.highXp = player.xp;
     target.gold -= goldStolen;
     target.serfs -= serfsGained;
     target.soldiers = Math.max(0, Math.floor(target.soldiers * 0.5));
@@ -462,6 +463,7 @@ async function attackManor(
 
     session.writeln(`${ANSI.BRIGHT_RED}  ☠  DEFEAT! ${target.name}'s forces repelled your attack!${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_RED}  Lost ${soldiersLost} soldiers. Morale drops.${ANSI.RESET}`);
+    db.updatePlayer(target);
   }
 
   db.updatePlayer(player);

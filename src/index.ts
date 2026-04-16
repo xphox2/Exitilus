@@ -114,12 +114,14 @@ async function main() {
     const hostIdx = args.indexOf('--host');
     const host = hostIdx >= 0 && args[hostIdx + 1] ? args[hostIdx + 1] : undefined;
 
-    createWebServer({ port, host, ansiDir, db, content, timeLimit });
+    const webServer = createWebServer({ port, host, ansiDir, db, content, timeLimit });
 
     process.on('SIGINT', () => {
       console.log('\n[Web] Shutting down...');
-      db.close();
-      process.exit(0);
+      webServer.close(() => {
+        db.close();
+        process.exit(0);
+      });
     });
 
   } else if (telnetMode) {
@@ -129,7 +131,7 @@ async function main() {
       ? parseInt(args[portIdx + 1], 10)
       : 2323;
 
-    createTelnetServer({
+    const telnetServer = createTelnetServer({
       port,
       ansiDir,
       timeLimit,
@@ -143,8 +145,10 @@ async function main() {
     // Keep process alive
     process.on('SIGINT', () => {
       console.log('\n[Telnet] Shutting down...');
-      db.close();
-      process.exit(0);
+      telnetServer.close(() => {
+        db.close();
+        process.exit(0);
+      });
     });
 
   } else if (doorMode) {
