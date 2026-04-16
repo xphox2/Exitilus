@@ -77,8 +77,23 @@ export class GameDatabase {
     const SQL = await initSqlJs();
 
     if (existsSync(this.dbPath)) {
-      const buffer = readFileSync(this.dbPath);
-      this.db = new SQL.Database(buffer);
+      let buffer: Buffer;
+      try {
+        buffer = readFileSync(this.dbPath);
+        this.db = new SQL.Database(buffer);
+      } catch (err) {
+        console.error(`[Database] Corrupted database file detected: ${this.dbPath}`);
+        const backupPath = this.dbPath + '.corrupted.' + Date.now();
+        try {
+          const { renameSync } = await import('fs');
+          renameSync(this.dbPath, backupPath);
+          console.error(`[Database] Backed up corrupted file to: ${backupPath}`);
+        } catch {
+          console.error(`[Database] Failed to backup corrupted file`);
+        }
+        console.error(`[Database] Creating fresh database`);
+        this.db = new SQL.Database();
+      }
     } else {
       this.db = new SQL.Database();
     }
