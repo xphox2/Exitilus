@@ -148,8 +148,10 @@ export class GameEngine {
           await this.enterRealm();
           break;
         case 'w':
+          await this.showWorldNews();
+          break;
         case 'y':
-          await this.showBulletin();
+          await this.showYesterdayNews();
           break;
         case 'h':
           await this.showHallOfEmperors();
@@ -440,6 +442,24 @@ export class GameEngine {
       this.session.writeln(`${ANSI.BRIGHT_CYAN}No scoreboard bulletin has been generated yet.${ANSI.RESET}`);
     }
     await this.session.pause();
+  }
+
+  private async showYesterdayNews(): Promise<void> {
+    const __dir = dirname(fileURLToPath(import.meta.url));
+    const projectRoot = join(__dir, '..', '..');
+    const { showYesterdayBulletin } = await import('../systems/bulletin.js');
+    showYesterdayBulletin(this.session, projectRoot);
+    await this.session.pause();
+  }
+
+  private async showWorldNews(): Promise<void> {
+    const { showWorldNews: generateWorldNews } = await import('../systems/bulletin.js');
+    generateWorldNews(this.session, this.db, this.content);
+    await this.session.pause();
+  }
+
+  private async showTodaysNews(): Promise<void> {
+    await this.showBulletin();
   }
 
   private async showHallOfEmperors(): Promise<void> {

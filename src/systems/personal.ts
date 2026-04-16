@@ -1,3 +1,6 @@
+import { readFileSync, existsSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import type { PlayerSession } from '../io/session.js';
 import type { PlayerRecord } from '../types/index.js';
 import type { GameContent } from '../data/loader.js';
@@ -6,6 +9,12 @@ import { ANSI } from '../io/ansi.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 import { recordWinner, getHallOfFame } from './halloffame.js';
+import { showYesterdayBulletin, generateBulletin } from './bulletin.js';
+
+function getProjectRoot(): string {
+  const __dir = dirname(fileURLToPath(import.meta.url));
+  return join(__dir, '..', '..');
+}
 
 export async function personalCommands(
   session: PlayerSession,
@@ -56,10 +65,19 @@ export async function personalCommands(
         session.writeln(`${ANSI.BRIGHT_CYAN}  Realm Masters are not available at this time.${ANSI.RESET}`);
         await session.pause();
         break;
-      case 't': // [T]oday's News
-      case 'n': // [N] Yesterday's News
+      case 't': // [T]oday's News - show current bulletin
         session.clear();
-        await session.showAnsi('PNEWS.ANS');
+        generateBulletin(db, content, getProjectRoot());
+        const bulletinPath = join(getProjectRoot(), 'bulletin.ans');
+        if (existsSync(bulletinPath)) {
+          session.write(readFileSync(bulletinPath, 'utf-8'));
+        } else {
+          session.writeln(`${ANSI.BRIGHT_CYAN}No news available yet.${ANSI.RESET}`);
+        }
+        await session.pause();
+        break;
+      case 'n': // [N] Yesterday's News - show yesterday's bulletin
+        showYesterdayBulletin(session, getProjectRoot());
         await session.pause();
         break;
       case 'q':

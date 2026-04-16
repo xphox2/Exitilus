@@ -1,11 +1,13 @@
-import { writeFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, copyFileSync } from 'fs';
 import { join } from 'path';
 import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import type { PlayerRecord } from '../types/index.js';
+import { getHallOfFame } from './halloffame.js';
 
 /** Generate a scoreboard bulletin file for BBS display.
- *  Creates both ANSI (.ans) and plain text (.txt) versions. */
+ *  Creates both ANSI (.ans) and plain text (.txt) versions.
+ *  Also archives the previous day's bulletin as yesterday.ans */
 export function generateBulletin(
   db: GameDatabase,
   content: GameContent,
@@ -15,14 +17,124 @@ export function generateBulletin(
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+  // Archive yesterday's bulletin before generating new one
+  const bulletinPath = join(outputDir, 'bulletin.ans');
+  const yesterdayPath = join(outputDir, 'yesterday.ans');
+  if (existsSync(bulletinPath)) {
+    copyFileSync(bulletinPath, yesterdayPath);
+  }
+
   const ansi = generateAnsiBulletin(players, content, dateStr);
   const text = generateTextBulletin(players, content, dateStr);
 
-  writeFileSync(join(outputDir, 'bulletin.ans'), ansi);
+  writeFileSync(bulletinPath, ansi);
   writeFileSync(join(outputDir, 'bulletin.txt'), text);
   writeFileSync(join(outputDir, 'scores.txt'), text);
 
   console.log(`[Bulletin] Generated bulletin.ans, bulletin.txt, scores.txt in ${outputDir}`);
+}
+
+export function showYesterdayBulletin(session: { clear: () => void; writeln: (s: string) => void; write: (s: string) => void; pause: () => Promise<void> }, outputDir: string): void {
+  const yesterdayPath = join(outputDir, 'yesterday.ans');
+  session.clear();
+  if (existsSync(yesterdayPath)) {
+    session.write(readFileSync(yesterdayPath, 'utf-8'));
+  } else {
+    session.writeln('\x1B[1;36m  No yesterday\'s news available yet.\x1B[0m');
+    session.writeln('');
+    session.writeln('  Run the game daily to build up the news archive!');
+  }
+}
+
+export function showWorldNews(
+  session: { clear: () => void; writeln: (s: string) => void; pause: () => Promise<void> },
+  db: GameDatabase,
+  content: GameContent
+): void {
+  session.clear();
+  const BY = '\x1B[1;33m';
+  const BW = '\x1B[1;37m';
+  const BC = '\x1B[1;36m';
+  const BG = '\x1B[1;32m';
+  const BM = '\x1B[1;35m';
+  const BR = '\x1B[1;31m';
+  const R = '\x1B[0m';
+  const G = '\x1B[32m';
+
+  const players = db.listPlayers();
+  const alivePlayers = players.filter(p => p.alive);
+
+  session.writeln(`${BY}╔════════════════════════════════════════════════════════════════╗${R}`);
+  session.writeln(`${BY}║${BW}                      W O R L D   N E W S                       ${BY}║${R}`);
+  session.writeln(`${BY}║${BC}               Legends and Champions of the Realm                   ${BY}║${R}`);
+  session.writeln(`${BY}╚════════════════════════════════════════════════════════════════╝${R}`);
+  session.writeln('');
+
+  // ── Hall of Emperors ──
+  session.writeln(`${BY}  ═══════════════════ HALL OF EMPERORS ═══════════════════${R}`);
+  const hallOfFame = getHallOfFame(db.dataDir);
+  if (hallOfFame.length > 0) {
+    for (const e of hallOfFame.slice(0, 10)) {
+      const cls = content.classes.find(c => c.id === e.classId);
+      const race = content.races.find(r => r.id === e.raceId);
+      session.writeln(
+        `  ${BM}★ ${BW}${e.name}${G} the ${cls?.name ?? '?'} ` +
+        `(${race?.name ?? '?'}) - ${BY}Level ${e.level}${R}`
+      );
+      session.writeln(`    ${BC}Date: ${e.formattedDate}  |  ${BM}${e.wonBy}${R}`);
+    }
+  } else {
+    session.writeln(`  ${BC}  No Emperors have risen yet. Conquer all kingdoms to become legend!${R}`);
+  }
+  session.writeln('');
+
+  // ── All-Time Champions ──
+  session.writeln(`${BY}  ══════════════ ALL-TIME CHAMPIONS ══════════════${R}`);
+
+  const topLevel = [...players].sort((a, b) => b.level - a.level || b.xp - a.xp).slice(0, 3);
+  if (topLevel.length > 0) {
+    session.writeln(`  ${BC}Highest Level:${R}`);
+    for (let i = 0; i < topLevel.length; i++) {
+      const p = topLevel[i];
+      const medal = i === 0 ? `${BY}★` : i === 1 ? `${BW}☆` : `${BM}◆`;
+      session.writeln(`    ${medal} ${BW}${p.name} ${G}Level ${p.level}${R}`);
+    }
+  }
+
+  const richest = [...players].sort((a, b) => (b.gold + b.bankGold) - (a.gold + a.bankGold)).slice(0, 3);
+  if (richest.length > 0) {
+    session.writeln(`  ${BY}Richest:${R}`);
+    for (let i = 0; i < richest.length; i++) {
+      const p = richest[i];
+      const medal = i === 0 ? `${BY}★` : i === 1 ? `${BW}☆` : `${BM}◆`;
+      session.writeln(`    ${medal} ${BW}${p.name} ${BY}$${Math.floor(p.gold + p.bankGold).toLocaleString()}${R}`);
+    }
+  }
+
+  const strongest = [...players].sort((a, b) => (b.strength + b.defense + b.agility) - (a.strength + a.defense + a.agility)).slice(0, 3);
+  if (strongest.length > 0) {
+    session.writeln(`  ${BR}Strongest:${R}`);
+    for (let i = 0; i < strongest.length; i++) {
+      const p = strongest[i];
+      const medal = i === 0 ? `${BY}★` : i === 1 ? `${BW}☆` : `${BM}◆`;
+      session.writeln(`    ${medal} ${BW}${p.name} ${BR}STR:${p.strength} DEF:${p.defense} AGI:${p.agility}${R}`);
+    }
+  }
+
+  const mostQuests = [...players].sort((a, b) => b.questsCompleted.length - a.questsCompleted.length).filter(p => p.questsCompleted.length > 0).slice(0, 3);
+  if (mostQuests.length > 0) {
+    session.writeln(`  ${BC}Most Quests:${R}`);
+    for (let i = 0; i < mostQuests.length; i++) {
+      const p = mostQuests[i];
+      const medal = i === 0 ? `${BY}★` : i === 1 ? `${BW}☆` : `${BM}◆`;
+      session.writeln(`    ${medal} ${BW}${p.name} ${BC}${p.questsCompleted.length} quests${R}`);
+    }
+  }
+
+  session.writeln('');
+  session.writeln(`${BY}╔════════════════════════════════════════════════════════════════╗${R}`);
+  session.writeln(`${BY}║${G}           The Realm remembers its heroes for eternity.               ${BY}║${R}`);
+  session.writeln(`${BY}╚════════════════════════════════════════════════════════════════╝${R}`);
 }
 
 function fmtGold(n: number): string {
