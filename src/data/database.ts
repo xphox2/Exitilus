@@ -110,8 +110,13 @@ export class GameDatabase {
   }
 
   save(): void {
-    const data = this.db.export();
-    writeFileSync(this.dbPath, Buffer.from(data));
+    try {
+      const data = this.db.export();
+      writeFileSync(this.dbPath, Buffer.from(data));
+    } catch (err) {
+      console.error('[Database] Failed to save to disk:', err);
+      throw err;
+    }
   }
 
   findPlayerByName(name: string): PlayerRecord | null {

@@ -56,7 +56,12 @@ export async function checkAndProcessConquest(
   if (isKingdomConquered(db, targetKingdomId)) {
     const kingdomIds = content.kingdoms.map(k => k.id);
 
-    recordKingdomConquest(db, player.id, targetKingdomId);
+    try {
+      recordKingdomConquest(db, player.id, targetKingdomId);
+    } catch (err) {
+      session.writeln(`${ANSI.BRIGHT_RED}  Error: Conquest record could not be saved!${ANSI.RESET}`);
+      return;
+    }
 
     session.writeln('');
     session.writeln(`${ANSI.BRIGHT_MAGENTA}  ═══ KINGDOM CONQUERED! ═══${ANSI.RESET}`);

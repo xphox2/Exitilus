@@ -360,6 +360,11 @@ async function attackManor(
     return;
   }
 
+  if (!player.alive) {
+    session.writeln(`${ANSI.BRIGHT_RED}  You are dead and cannot lead armies!${ANSI.RESET}`);
+    return;
+  }
+
   const targets = db.listPlayers().filter(
     p => p.id !== player.id && p.manorId && p.alive
   );
@@ -437,7 +442,14 @@ async function attackManor(
     target.goldMines = 0;
     target.morale = 0;
 
-    db.updatePlayer(target);
+    try {
+      db.updatePlayer(target);
+    } catch (err) {
+      console.error('[Manor] Failed to save manor destruction:', err);
+      session.writeln(`${ANSI.BRIGHT_RED}  Error: Manor destruction could not be saved!${ANSI.RESET}`);
+      return;
+    }
+
     if (target.kingdomId) {
       await checkAndProcessConquest(session, player, target.kingdomId, content, db);
     }
@@ -453,7 +465,6 @@ async function attackManor(
   }
 
   db.updatePlayer(player);
-  db.updatePlayer(target);
 }
 
 export async function enterArmyManor(
