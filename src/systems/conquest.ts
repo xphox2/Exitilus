@@ -14,6 +14,10 @@ export function getManorLordCount(db: GameDatabase, kingdomId: string): number {
 export function isKingdomConquered(db: GameDatabase, kingdomId: string): boolean {
   const manorCount = getManorLordCount(db, kingdomId);
   if (manorCount > 0) return false;
+  if (manorCount === 0) {
+    const totalManors = db.listPlayers().filter(p => p.manorId && p.alive).length;
+    return totalManors > 0;
+  }
   return true;
 }
 
