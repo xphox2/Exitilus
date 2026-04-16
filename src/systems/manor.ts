@@ -437,6 +437,7 @@ async function attackManor(
     target.goldMines = 0;
     target.morale = 0;
 
+    db.updatePlayer(target);
     if (target.kingdomId) {
       await checkAndProcessConquest(session, player, target.kingdomId, content, db);
     }

@@ -12,7 +12,9 @@ export function getManorLordCount(db: GameDatabase, kingdomId: string): number {
 }
 
 export function isKingdomConquered(db: GameDatabase, kingdomId: string): boolean {
-  return getManorLordCount(db, kingdomId) === 0;
+  const manorCount = getManorLordCount(db, kingdomId);
+  if (manorCount > 0) return false;
+  return true;
 }
 
 export function recordKingdomConquest(db: GameDatabase, playerId: number, kingdomId: string): void {
@@ -24,7 +26,13 @@ export function getPlayerConquests(db: GameDatabase, playerId: number, kingdoms:
 }
 
 export function checkEmperorWin(db: GameDatabase, playerId: number, kingdoms: string[]): boolean {
-  return getPlayerConquests(db, playerId, kingdoms).length === kingdoms.length;
+  const allKingdomIds = kingdoms;
+  for (const k of allKingdomIds) {
+    if (db.getState(`conquest:${playerId}:${k}`) !== 'true') {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function hasEmperorVictory(db: GameDatabase, playerId: number): boolean {
@@ -49,18 +57,18 @@ export async function checkAndProcessConquest(
     const kingdomIds = content.kingdoms.map(k => k.id);
 
     recordKingdomConquest(db, player.id, targetKingdomId);
-    const conquered = getPlayerConquests(db, player.id, kingdomIds);
 
     session.writeln('');
     session.writeln(`${ANSI.BRIGHT_MAGENTA}  ═══ KINGDOM CONQUERED! ═══${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  You have conquered ${kingdomName}!${ANSI.RESET}`);
     session.writeln(`${ANSI.CYAN}  All manor lords in this kingdom have been defeated.${ANSI.RESET}`);
     session.writeln('');
-    session.writeln(`${ANSI.CYAN}  Kingdoms conquered: ${conquered.length}/${kingdomIds.length}${ANSI.RESET}`);
 
     if (checkEmperorWin(db, player.id, kingdomIds)) {
       await triggerEmperorVictory(session, player, db);
     } else {
+      const conquered = getPlayerConquests(db, player.id, kingdomIds);
+      session.writeln(`${ANSI.CYAN}  Kingdoms conquered: ${conquered.length}/${kingdomIds.length}${ANSI.RESET}`);
       session.writeln(`${ANSI.BRIGHT_YELLOW}  Conquer all 4 kingdoms to become EMPEROR!${ANSI.RESET}`);
       await session.pause();
     }
