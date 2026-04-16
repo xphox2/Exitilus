@@ -8,6 +8,7 @@ import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 
 import { enterDiplomacy } from '../systems/diplomacy.js';
+import { checkAndProcessConquest } from '../systems/conquest.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -420,6 +421,24 @@ async function attackManor(
     session.writeln(`${ANSI.BRIGHT_GREEN}  ⚔  VICTORY! You conquered ${target.name}'s forces!${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_GREEN}  Plundered $${formatGold(goldStolen)} gold and captured ${serfsGained} serfs.${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  Lost ${soldiersLost} soldiers in the battle.${ANSI.RESET}`);
+
+    session.writeln(`${ANSI.BRIGHT_MAGENTA}  ⚔  You have destroyed their manor!${ANSI.RESET}`);
+    const destroyedManorName = target.manorId;
+    target.manorId = null;
+    target.soldiers = 0;
+    target.knights = 0;
+    target.cannons = 0;
+    target.forts = 0;
+    target.serfs = 0;
+    target.food = 0;
+    target.farms = 0;
+    target.silos = 0;
+    target.circuses = 0;
+    target.ironMines = 0;
+    target.goldMines = 0;
+    target.morale = 0;
+
+    await checkAndProcessConquest(session, player, target.kingdomId!, content, db);
   } else {
     // Defeat
     const soldiersLost = Math.floor(player.soldiers * 0.3);
