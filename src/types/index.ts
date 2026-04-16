@@ -116,6 +116,7 @@ export interface GameConfig {
   startingGold: number;
   fightLevelDifference: number;
   maxStatValue: number;
+  maxPlayerLevel: number;
 }
 
 export interface PlayerRecord {

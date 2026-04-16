@@ -91,7 +91,6 @@ export function createWebServer(options: {
     ws.on('pong', () => { (ws as any).isAlive = true; });
 
     const remoteAddr = req.socket.remoteAddress ?? 'unknown';
-    console.log(`[Web] Connection from ${remoteAddr}`);
 
     const session = new WebSocketAdapter(ws, { ansiDir, timeLimit });
     const engine = new GameEngine(session, db, content, 'enhanced');
@@ -101,7 +100,6 @@ export function createWebServer(options: {
         console.error(`[Web] Error for ${remoteAddr}:`, err.message);
       }
     }).finally(() => {
-      console.log(`[Web] Disconnected: ${remoteAddr}`);
       session.close();
     });
   });

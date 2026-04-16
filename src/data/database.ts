@@ -68,9 +68,15 @@ CREATE TABLE IF NOT EXISTS game_state (
 export class GameDatabase {
   private db!: Database;
   private dbPath: string;
+  private _dataDir: string;
 
   constructor(dataDir: string) {
     this.dbPath = join(dataDir, 'exitilus.db');
+    this._dataDir = dataDir;
+  }
+
+  get dataDir(): string {
+    return this._dataDir;
   }
 
   async init(): Promise<void> {
@@ -325,5 +331,11 @@ export class GameDatabase {
       goldMines: row['gold_mines'] as number,
       taxRate: row['tax_rate'] as number,
     };
+  }
+
+  resetGame(): void {
+    this.db.run('DELETE FROM players');
+    this.db.run('DELETE FROM game_state');
+    this.save();
   }
 }

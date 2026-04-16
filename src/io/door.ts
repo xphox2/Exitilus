@@ -68,7 +68,6 @@ export function readDropFile(dropDir: string): DropFileInfo | null {
   for (const { file, parser } of candidates) {
     const filepath = join(dropDir, file);
     if (existsSync(filepath)) {
-      console.log(`[Door] Found drop file: ${filepath}`);
       try {
         return parser(filepath);
       } catch (err) {

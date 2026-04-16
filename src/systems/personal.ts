@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
+import { recordWinner, getHallOfFame } from './halloffame.js';
 
 export async function personalCommands(
   session: PlayerSession,
@@ -12,7 +13,7 @@ export async function personalCommands(
   content: GameContent,
   db: GameDatabase
 ): Promise<void> {
-  // ANSI art keys: P=Profession, L=Level, W=Messages, A=Announce, M=Masters, C=Criminal, T=TodayNews, N=YesterdayNews
+  // ANSI art keys: P=Profession, L=Level, W=Messages, A=Announce, M=Masters, C=Criminal, T=TodayNews, N=YesterdayNews, Y=Hall of Fame, R=Retire
   const validKeys = ['p', 'c', 'l', 'w', 'a', 'm', 't', 'n', 'y', 'r', 'q'];
 
   while (true) {
@@ -40,6 +41,9 @@ export async function personalCommands(
       case 'l':
         await levelUp(session, player, content, db);
         break;
+      case 'y': // [Y] in ANSI art = Hall of Fame
+        await showHallOfFame(session, db);
+        break;
       case 'w': // [W]rite Messages
         session.writeln(`${ANSI.BRIGHT_CYAN}  Visit the Tavern's Message Board to send messages.${ANSI.RESET}`);
         await session.pause();
@@ -57,10 +61,6 @@ export async function personalCommands(
         session.clear();
         await session.showAnsi('PNEWS.ANS');
         await session.pause();
-        break;
-      case 'y':
-        session.clear();
-        await showStats(session, player, content);
         break;
       case 'q':
       case 'r':
@@ -124,7 +124,8 @@ async function levelUp(
   player: PlayerRecord,
   content: GameContent,
   db: GameDatabase
-): Promise<void> {
+): Promise<boolean> {
+  const maxLevel = content.config.maxPlayerLevel || 100;
   const xpNeeded = player.level * 100 + player.level * player.level * 50;
   session.clear();
   session.writeln(`${ANSI.BRIGHT_YELLOW}  ═══ Level Status ═══${ANSI.RESET}`);
@@ -133,11 +134,10 @@ async function levelUp(
   session.writeln(`  ${ANSI.BRIGHT_CYAN}Current XP:    ${ANSI.BRIGHT_WHITE}${player.xp.toLocaleString()}${ANSI.RESET}`);
   session.writeln(`  ${ANSI.BRIGHT_CYAN}XP for next:   ${ANSI.BRIGHT_WHITE}${xpNeeded.toLocaleString()}${ANSI.RESET}`);
 
-  if (player.xp >= xpNeeded) {
+  if (player.xp >= xpNeeded && player.level < maxLevel) {
     session.writeln('');
     session.writeln(`${ANSI.BRIGHT_GREEN}  You have enough XP to level up!${ANSI.RESET}`);
-    // Level ups happen automatically in combat, but manual check here too
-    while (player.xp >= player.level * 100 + player.level * player.level * 50) {
+    while (player.xp >= player.level * 100 + player.level * player.level * 50 && player.level < maxLevel) {
       player.level++;
       const hpGain = 8 + Math.floor(Math.random() * 8) + Math.floor(player.wisdom / 5);
       const mpGain = 3 + Math.floor(Math.random() * 6) + Math.floor(player.wisdom / 8);
@@ -151,11 +151,43 @@ async function levelUp(
       session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
     }
     db.updatePlayer(player);
+  } else if (player.level >= maxLevel) {
+    session.writeln('');
+    session.writeln(`${ANSI.BRIGHT_MAGENTA}  ★★★ You have reached MAXIMUM LEVEL! ★★★${ANSI.RESET}`);
+    session.writeln(`${ANSI.BRIGHT_YELLOW}  You are a legend of Exitilus!${ANSI.RESET}`);
+    return true;
   } else {
     const remaining = xpNeeded - player.xp;
     session.writeln(`  ${ANSI.BRIGHT_CYAN}XP remaining:  ${ANSI.BRIGHT_YELLOW}${remaining.toLocaleString()}${ANSI.RESET}`);
   }
 
+  session.writeln('');
+  await session.pause();
+  return false;
+}
+
+async function showHallOfFame(session: PlayerSession, db: GameDatabase): Promise<void> {
+  const entries = getHallOfFame(db.dataDir);
+  session.clear();
+  session.writeln(`${ANSI.BRIGHT_YELLOW}╔════════════════════════════════════════════════════════════════╗`);
+  session.writeln(`║                    H A L L   O F   F A M E                 ║`);
+  session.writeln(`╚════════════════════════════════════════════════════════════════╝${ANSI.RESET}`);
+  session.writeln('');
+
+  if (entries.length === 0) {
+    session.writeln(`  ${ANSI.BRIGHT_CYAN}No winners yet. Be the first to achieve max level!${ANSI.RESET}`);
+  } else {
+    session.writeln(`  ${ANSI.CYAN}${'#'.padEnd(3)} ${'Name'.padEnd(16)} ${'Level'.padStart(6)} ${'Gold'.padStart(12)} ${'Date'.padEnd(14)} Won By${ANSI.RESET}`);
+    session.writeln(`  ${ANSI.CYAN}${'─'.repeat(65)}${ANSI.RESET}`);
+    for (const e of entries.slice(0, 20)) {
+      session.writeln(
+        `  ${ANSI.BRIGHT_WHITE}${String(e.index).padEnd(3)} ${e.name.padEnd(16)} ` +
+        `${ANSI.BRIGHT_YELLOW}${String(e.level).padStart(6)} ` +
+        `${ANSI.BRIGHT_GREEN}$${e.gold.toLocaleString().padStart(12)} ` +
+        `${ANSI.CYAN}${e.formattedDate.padEnd(14)} ${ANSI.MAGENTA}${e.wonBy}${ANSI.RESET}`
+      );
+    }
+  }
   session.writeln('');
   await session.pause();
 }

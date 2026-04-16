@@ -15,6 +15,7 @@ game:
   startingGold: 2000
   fightLevelDifference: 30  # percent - can only attack players within this % of your level
   maxStatValue: 30000
+  maxPlayerLevel: 100       # level at which player is considered a winner
 
 kingdoms:
   - id: chocolate

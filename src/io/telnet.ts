@@ -223,14 +223,12 @@ export function createTelnetServer(
     });
 
     const remoteAddr = `${socket.remoteAddress}:${socket.remotePort}`;
-    console.log(`[Telnet] Connection from ${remoteAddr}`);
 
     options.onConnection(session).catch((err) => {
       if (err.message !== 'Connection closed') {
         console.error(`[Telnet] Error for ${remoteAddr}:`, err.message);
       }
     }).finally(() => {
-      console.log(`[Telnet] Disconnected: ${remoteAddr}`);
       session.close();
     });
   });
