@@ -423,7 +423,6 @@ async function attackManor(
     session.writeln(`${ANSI.BRIGHT_YELLOW}  Lost ${soldiersLost} soldiers in the battle.${ANSI.RESET}`);
 
     session.writeln(`${ANSI.BRIGHT_MAGENTA}  ⚔  You have destroyed their manor!${ANSI.RESET}`);
-    const destroyedManorName = target.manorId;
     target.manorId = null;
     target.soldiers = 0;
     target.knights = 0;
@@ -438,7 +437,9 @@ async function attackManor(
     target.goldMines = 0;
     target.morale = 0;
 
-    await checkAndProcessConquest(session, player, target.kingdomId!, content, db);
+    if (target.kingdomId) {
+      await checkAndProcessConquest(session, player, target.kingdomId, content, db);
+    }
   } else {
     // Defeat
     const soldiersLost = Math.floor(player.soldiers * 0.3);
