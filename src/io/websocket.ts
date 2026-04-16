@@ -53,7 +53,8 @@ export class WebSocketAdapter implements PlayerSession {
       }
     });
 
-    ws.on('error', () => {
+    ws.on('error', (err) => {
+      console.error('[WebSocket] Error:', err.message);
       this.closed = true;
     });
   }

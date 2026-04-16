@@ -631,6 +631,7 @@ async function runQuest(
           if (monsterHp > 0) {
             player.hp -= monsterDmg;
             session.writeln(`  ${ANSI.BRIGHT_RED}The ${monster.name} deals ${monsterDmg} damage! (HP: ${Math.max(0, player.hp)}/${player.maxHp})${ANSI.RESET}`);
+            db.updatePlayer(player);
           }
         }
 
@@ -659,6 +660,7 @@ async function runQuest(
         if (chosen.damage) {
           player.hp -= chosen.damage;
           session.writeln(`  ${ANSI.BRIGHT_RED}You take ${chosen.damage} damage! (HP: ${Math.max(0, player.hp)}/${player.maxHp})${ANSI.RESET}`);
+          db.updatePlayer(player);
         }
         if (chosen.gold) {
           player.gold += chosen.gold;
@@ -694,6 +696,7 @@ async function runQuest(
           if (step.failDamage) {
             player.hp -= step.failDamage;
             session.writeln(`  ${ANSI.BRIGHT_RED}You take ${step.failDamage} damage! (HP: ${Math.max(0, player.hp)}/${player.maxHp})${ANSI.RESET}`);
+            db.updatePlayer(player);
           }
         }
         session.writeln('');
