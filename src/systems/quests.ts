@@ -679,6 +679,7 @@ async function runQuest(
             session.writeln(`  ${ANSI.BRIGHT_GREEN}+${amt} ${k}!${ANSI.RESET}`);
           }
         }
+        db.updatePlayer(player);
         session.writeln('');
         await session.pause();
         break;
