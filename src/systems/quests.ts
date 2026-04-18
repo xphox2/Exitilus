@@ -735,6 +735,10 @@ async function runQuest(
       session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
       xpForNextLevel = player.level * 100 + player.level * player.level * 50;
     }
+    if (levelUpsThisQuest === maxLevelUpsPerAction && player.xp >= xpForNextLevel) {
+      session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
+      player.xp = xpForNextLevel - 1;
+    }
 
     if (!player.questsCompleted.includes(quest.id)) {
       player.questsCompleted.push(quest.id);

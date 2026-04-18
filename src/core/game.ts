@@ -193,6 +193,7 @@ export class GameEngine {
     if (name.toUpperCase() === 'NEW') {
       player = await createNewPlayer(this.session, this.content, this.db);
     } else {
+      await this.db.reload();
       player = this.db.findPlayerByName(name);
       if (!player) {
         this.session.writeln(`${ANSI.BRIGHT_RED}No character named "${name}" found.${ANSI.RESET}`);

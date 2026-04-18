@@ -80,6 +80,10 @@ export class GameDatabase {
   }
 
   async init(): Promise<void> {
+    await this.reload();
+  }
+
+  async reload(): Promise<void> {
     const SQL = await initSqlJs();
 
     if (existsSync(this.dbPath)) {

@@ -154,6 +154,10 @@ export async function enterDiplomacy(
             session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
             xpForNextLevel = player.level * 100 + player.level * player.level * 50;
           }
+          if (levelUpsThisWar === maxLevelUpsPerAction && player.xp >= xpForNextLevel) {
+            session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
+            player.xp = xpForNextLevel - 1;
+          }
 
           session.writeln(`${ANSI.BRIGHT_GREEN}  VICTORY! You crushed ${enemy.name}'s forces!${ANSI.RESET}`);
           session.writeln(`${ANSI.BRIGHT_GREEN}  Plundered $${formatGold(goldTaken)} gold!${ANSI.RESET}`);

@@ -111,6 +111,11 @@ export async function enterTavern(
                     session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
                     xpForNextLevel = player.level * 100 + player.level * player.level * 50;
                   }
+                  // XP draining fix: cap XP at max level
+                  if (player.level >= maxLevel && player.xp >= xpForNextLevel) {
+                    session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
+                    player.xp = xpForNextLevel - 1;
+                  }
                 }
                 else if (match.reward.type === 'hp') { player.hp = Math.min(player.maxHp, player.hp + match.reward.amount); session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} HP!${ANSI.RESET}`); }
                 db.updatePlayer(player);

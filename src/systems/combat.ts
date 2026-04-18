@@ -249,7 +249,8 @@ async function fightMonster(
     xpForNextLevel = player.level * 100 + player.level * player.level * 50;
   }
   if (levelUpsThisFight === maxLevelUpsPerFight && player.xp >= xpForNextLevel) {
-    session.writeln(`${ANSI.BRIGHT_CYAN}  (XP overflow saved for next fight...)${ANSI.RESET}`);
+    session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
+    player.xp = xpForNextLevel - 1;
   }
 
   return { won: true, fled: false, goldEarned, xpEarned, itemDropped, playerDied: false };

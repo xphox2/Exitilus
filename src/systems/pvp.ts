@@ -180,6 +180,12 @@ export async function playerFight(
       xpForNextLevel = player.level * 100 + player.level * player.level * 50;
     }
 
+    // Cap XP at max level to prevent XP overflow exploit
+    if (player.level >= maxLevel && player.xp >= xpForNextLevel) {
+      session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
+      player.xp = xpForNextLevel - 1;
+    }
+
     session.writeln(`${ANSI.BRIGHT_GREEN}  ⚔  You defeated ${ANSI.BRIGHT_WHITE}${opponent.name}${ANSI.BRIGHT_GREEN}!${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  You take $${formatGold(goldWon)} gold and earn ${formatGold(xpWon)} XP!${ANSI.RESET}`);
 
