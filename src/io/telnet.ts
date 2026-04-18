@@ -13,6 +13,7 @@ export class TelnetAdapter implements PlayerSession {
   private closed = false;
   private userName = '';
   public graphicsMode: string = 'classic';
+  public beforeClose: (() => void) | null = null;
 
   constructor(socket: net.Socket, options: { ansiDir: string; timeLimit?: number }) {
     this.socket = socket;
@@ -49,6 +50,7 @@ export class TelnetAdapter implements PlayerSession {
 
     socket.on('close', () => {
       this.closed = true;
+      if (this.beforeClose) { this.beforeClose(); this.beforeClose = null; }
       if (this.inputResolve) {
         this.inputResolve('\x03'); // Signal disconnect
         this.inputResolve = null;

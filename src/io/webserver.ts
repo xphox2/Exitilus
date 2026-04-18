@@ -95,6 +95,12 @@ export function createWebServer(options: {
     const session = new WebSocketAdapter(ws, { ansiDir, timeLimit });
     const engine = new GameEngine(session, db, content, 'enhanced');
 
+    session.beforeClose = () => {
+      if (engine.isPlayerLoaded()) {
+        db.updatePlayer(engine.getPlayer()!);
+      }
+    };
+
     engine.start().catch(err => {
       if (err.message !== 'Connection closed') {
         console.error(`[Web] Error for ${remoteAddr}:`, err.message);

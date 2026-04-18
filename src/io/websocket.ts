@@ -13,6 +13,7 @@ export class WebSocketAdapter implements PlayerSession {
   private inputResolve: ((value: string) => void) | null = null;
   private closed = false;
   private userName = '';
+  public beforeClose: (() => void) | null = null;
   public graphicsMode: string = 'enhanced';
   public termCols: number = 160;
   public termRows: number = 50;
@@ -47,6 +48,7 @@ export class WebSocketAdapter implements PlayerSession {
 
     ws.on('close', () => {
       this.closed = true;
+      if (this.beforeClose) { this.beforeClose(); this.beforeClose = null; }
       if (this.inputResolve) {
         this.inputResolve('\x03');
         this.inputResolve = null;

@@ -90,6 +90,14 @@ export class GameEngine {
     await this.entryMenu();
   }
 
+  isPlayerLoaded(): boolean {
+    return this.player !== null;
+  }
+
+  getPlayer(): PlayerRecord | null {
+    return this.player;
+  }
+
   private async showTitle(): Promise<void> {
     // Pick a random title screen
     if (Math.random() < 0.5) {
