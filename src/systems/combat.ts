@@ -222,8 +222,9 @@ async function fightMonster(
   }
 
   // Level up check
+  const maxLevel = content.config.maxPlayerLevel || 100;
   const xpForNextLevel = player.level * 100 + player.level * player.level * 50;
-  if (player.xp >= xpForNextLevel) {
+  while (player.xp >= xpForNextLevel && player.level < maxLevel) {
     player.level++;
     const hpGain = randomInt(8, 15) + Math.floor(player.wisdom / 5);
     const mpGain = randomInt(3, 8) + Math.floor(player.wisdom / 8);
