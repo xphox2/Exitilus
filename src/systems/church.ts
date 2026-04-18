@@ -105,7 +105,11 @@ export async function enterChurch(
             player.evilDeeds = Math.max(0, player.evilDeeds - Math.floor(amount / 100));
           }
           const maxLevel = content.config.maxPlayerLevel || 100;
-          while (player.xp >= player.level * 100 + player.level * player.level * 50 && player.level < maxLevel) {
+          let levelUpsThisDonation = 0;
+          const maxLevelUpsPerAction = 3;
+          let xpForNextLevel = player.level * 100 + player.level * player.level * 50;
+          while (player.xp >= xpForNextLevel && player.level < maxLevel && levelUpsThisDonation < maxLevelUpsPerAction) {
+            levelUpsThisDonation++;
             player.level++;
             const hpGain = 8 + Math.floor(Math.random() * 8) + Math.floor(player.wisdom / 5);
             const mpGain = 3 + Math.floor(Math.random() * 6) + Math.floor(player.wisdom / 8);
@@ -117,6 +121,7 @@ export async function enterChurch(
             player.defense += Math.floor(Math.random() * 3) + 1;
             player.agility += Math.floor(Math.random() * 2) + 1;
             session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
+            xpForNextLevel = player.level * 100 + player.level * player.level * 50;
           }
           db.updatePlayer(player);
           session.writeln(`${ANSI.BRIGHT_GREEN}  "The gods smile upon your generosity."${ANSI.RESET}`);

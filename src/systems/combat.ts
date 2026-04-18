@@ -221,10 +221,13 @@ async function fightMonster(
     }
   }
 
-  // Level up check
+  // Level up check - cap at 3 level-ups per fight to prevent XP exploit
+  const maxLevelUpsPerFight = 3;
+  let levelUpsThisFight = 0;
   const maxLevel = content.config.maxPlayerLevel || 100;
-  const xpForNextLevel = player.level * 100 + player.level * player.level * 50;
-  while (player.xp >= xpForNextLevel && player.level < maxLevel) {
+  let xpForNextLevel = player.level * 100 + player.level * player.level * 50;
+  while (player.xp >= xpForNextLevel && player.level < maxLevel && levelUpsThisFight < maxLevelUpsPerFight) {
+    levelUpsThisFight++;
     player.level++;
     const hpGain = randomInt(8, 15) + Math.floor(player.wisdom / 5);
     const mpGain = randomInt(3, 8) + Math.floor(player.wisdom / 8);
@@ -242,6 +245,11 @@ async function fightMonster(
       ?? `Congratulations! You reached level ${player.level}!`;
     session.writeln(`${ANSI.BRIGHT_YELLOW}  ★★★ ${lvlMsg} ★★★${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_GREEN}  +${hpGain} Max HP, +${mpGain} Max MP, +${statGain} STR/DEF${ANSI.RESET}`);
+
+    xpForNextLevel = player.level * 100 + player.level * player.level * 50;
+  }
+  if (levelUpsThisFight === maxLevelUpsPerFight && player.xp >= xpForNextLevel) {
+    session.writeln(`${ANSI.BRIGHT_CYAN}  (XP overflow saved for next fight...)${ANSI.RESET}`);
   }
 
   return { won: true, fled: false, goldEarned, xpEarned, itemDropped, playerDied: false };

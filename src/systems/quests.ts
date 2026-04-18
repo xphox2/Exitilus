@@ -717,7 +717,11 @@ async function runQuest(
     if (player.xp > player.highXp) player.highXp = player.xp;
 
     const maxLevel = content.config.maxPlayerLevel || 100;
-    while (player.xp >= player.level * 100 + player.level * player.level * 50 && player.level < maxLevel) {
+    let levelUpsThisQuest = 0;
+    const maxLevelUpsPerAction = 3;
+    let xpForNextLevel = player.level * 100 + player.level * player.level * 50;
+    while (player.xp >= xpForNextLevel && player.level < maxLevel && levelUpsThisQuest < maxLevelUpsPerAction) {
+      levelUpsThisQuest++;
       player.level++;
       const hpGain = 8 + Math.floor(Math.random() * 8) + Math.floor(player.wisdom / 5);
       const mpGain = 3 + Math.floor(Math.random() * 6) + Math.floor(player.wisdom / 8);
@@ -729,6 +733,7 @@ async function runQuest(
       player.defense += Math.floor(Math.random() * 3) + 1;
       player.agility += Math.floor(Math.random() * 2) + 1;
       session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
+      xpForNextLevel = player.level * 100 + player.level * player.level * 50;
     }
 
     if (!player.questsCompleted.includes(quest.id)) {
