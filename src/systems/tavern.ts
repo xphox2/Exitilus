@@ -89,7 +89,24 @@ export async function enterTavern(
               session.writeln(`  ${ANSI.BRIGHT_CYAN}${match.response}${ANSI.RESET}`);
               if (match.reward) {
                 if (match.reward.type === 'gold') { player.gold += match.reward.amount; session.writeln(`  ${ANSI.BRIGHT_YELLOW}+$${formatGold(match.reward.amount)} gold!${ANSI.RESET}`); }
-                else if (match.reward.type === 'xp') { player.xp += match.reward.amount; session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} XP!${ANSI.RESET}`); }
+                else if (match.reward.type === 'xp') {
+                  player.xp += match.reward.amount;
+                  session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} XP!${ANSI.RESET}`);
+                  const maxLevel = content.config.maxPlayerLevel || 100;
+                  while (player.xp >= player.level * 100 + player.level * player.level * 50 && player.level < maxLevel) {
+                    player.level++;
+                    const hpGain = 8 + Math.floor(Math.random() * 8) + Math.floor(player.wisdom / 5);
+                    const mpGain = 3 + Math.floor(Math.random() * 6) + Math.floor(player.wisdom / 8);
+                    player.maxHp += hpGain;
+                    player.maxMp += mpGain;
+                    player.hp = player.maxHp;
+                    player.mp = player.maxMp;
+                    player.strength += Math.floor(Math.random() * 3) + 1;
+                    player.defense += Math.floor(Math.random() * 3) + 1;
+                    player.agility += Math.floor(Math.random() * 2) + 1;
+                    session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
+                  }
+                }
                 else if (match.reward.type === 'hp') { player.hp = Math.min(player.maxHp, player.hp + match.reward.amount); session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} HP!${ANSI.RESET}`); }
                 db.updatePlayer(player);
               }

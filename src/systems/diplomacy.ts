@@ -135,6 +135,21 @@ export async function enterDiplomacy(
           enemy.soldiers = Math.max(0, Math.floor(enemy.soldiers * 0.4));
           player.soldiers = Math.max(0, player.soldiers - Math.floor(player.soldiers * 0.1));
 
+          const maxLevel = content.config.maxPlayerLevel || 100;
+          while (player.xp >= player.level * 100 + player.level * player.level * 50 && player.level < maxLevel) {
+            player.level++;
+            const hpGain = 8 + Math.floor(Math.random() * 8) + Math.floor(player.wisdom / 5);
+            const mpGain = 3 + Math.floor(Math.random() * 6) + Math.floor(player.wisdom / 8);
+            player.maxHp += hpGain;
+            player.maxMp += mpGain;
+            player.hp = player.maxHp;
+            player.mp = player.maxMp;
+            player.strength += Math.floor(Math.random() * 3) + 1;
+            player.defense += Math.floor(Math.random() * 3) + 1;
+            player.agility += Math.floor(Math.random() * 2) + 1;
+            session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
+          }
+
           session.writeln(`${ANSI.BRIGHT_GREEN}  VICTORY! You crushed ${enemy.name}'s forces!${ANSI.RESET}`);
           session.writeln(`${ANSI.BRIGHT_GREEN}  Plundered $${formatGold(goldTaken)} gold!${ANSI.RESET}`);
         } else {
