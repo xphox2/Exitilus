@@ -96,13 +96,8 @@ async function deletePlayer(db: GameDatabase) {
   const confirm = await ask(`  Delete "${player.name}"? Type YES: `);
   if (confirm !== 'YES') return;
 
-  // Mark dead and clear
-  player.alive = false;
-  player.hp = 0;
-  player.gold = 0;
-  player.bankGold = 0;
-  db.updatePlayer(player);
-  console.log(`  ${player.name} deleted (marked dead, gold zeroed).`);
+  db.deletePlayer(player);
+  console.log(`  ${player.name} deleted (removed from database).`);
 }
 
 async function editConfig() {

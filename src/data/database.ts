@@ -250,6 +250,41 @@ export class GameDatabase {
     this.db.close();
   }
 
+  deletePlayer(player: PlayerRecord): void {
+    const playerId = player.id;
+
+    const conquestKeysStmt = this.db.prepare('SELECT key FROM game_state WHERE key LIKE ?');
+    conquestKeysStmt.bind([`conquest:${playerId}:%`]);
+    while (conquestKeysStmt.step()) {
+      const row = conquestKeysStmt.getAsObject();
+      this.db.run('DELETE FROM game_state WHERE key = ?', [row['key']]);
+    }
+    conquestKeysStmt.free();
+
+    const msgIndexRaw = this.getState(`msgindex:${playerId}`);
+    if (msgIndexRaw) {
+      const ids: string[] = JSON.parse(msgIndexRaw);
+      for (const id of ids) {
+        this.db.run('DELETE FROM game_state WHERE key = ?', [`msg:${id}`]);
+      }
+      this.db.run('DELETE FROM game_state WHERE key = ?', [`msgindex:${playerId}`]);
+    }
+
+    const treatyKeysStmt = this.db.prepare('SELECT key FROM game_state WHERE key LIKE ?');
+    treatyKeysStmt.bind(['treaty:%']);
+    while (treatyKeysStmt.step()) {
+      const row = treatyKeysStmt.getAsObject();
+      const key = row['key'] as string;
+      if (key.includes(`:${playerId}:`) || key.endsWith(`:${playerId}`)) {
+        this.db.run('DELETE FROM game_state WHERE key = ?', [key]);
+      }
+    }
+    treatyKeysStmt.free();
+
+    this.db.run('DELETE FROM players WHERE id = ?', [playerId]);
+    this.save();
+  }
+
   /** Add columns that may be missing from older databases */
   private migrateSchema(): void {
     const cols = this.db.exec("PRAGMA table_info(players)");
