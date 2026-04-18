@@ -203,7 +203,12 @@ export class GameDatabase {
       player.farms, player.silos, player.circuses, player.ironMines,
       player.goldMines, player.taxRate, player.id,
     ]);
-    this.save();
+    try {
+      this.save();
+    } catch (err) {
+      console.error(`[Database] CRITICAL: Failed to save player ${player.name}! Data may be lost!`);
+      throw err;
+    }
   }
 
   listPlayers(): PlayerRecord[] {
