@@ -1,3 +1,21 @@
+## 0.6.7
+
+Implement the level-cap win condition and realm reset. Reaching `maxPlayerLevel` (100) now triggers a real victory sequence: the player is recorded in the Hall of Fame and forced to choose an ending. There is no "continue playing" option at max level — the player either retires as a legend (marked dead) or resets the realm (full DB wipe, Hall of Fame preserved). The function loops on invalid input so the player cannot bypass the choice. Wired into all 7 level-up sites: combat, pvp, diplomacy, tavern, church, quests, and personal. Also fixes the Hall of Emperors display in the entry menu (it was showing top players including NPCs; now shows only real winners from the Hall of Fame with their win date) and an unreachable-branch bug in `personal.ts:levelUp()`.
+
+### Added
+- `triggerLevelVictory()` in `src/systems/halloffame.ts` - shared victory handler with dedup via `levelVictory:${playerId}` game_state key
+- Victory screen with class/race/level summary, ASCII box border, and Hall of Fame confirmation
+- Forced-choice prompt: `[R] Retire as a legend` (marks player dead) or `[N] New Game` (calls `db.resetGame()`, requires `Type NEW GAME` confirmation to prevent accidents)
+- `VictoryResult` type: `'retired' | 'reset'`
+- Hall of Fame entries in `showHallOfEmperors()` now show `wonBy` (conquest/victory) and the formatted win date
+
+### Fixed
+- **No level-based win condition**: All 7 level-up sites (combat, pvp, diplomacy, tavern, church, quests, personal) now call `triggerLevelVictory()` when `player.level >= maxPlayerLevel`. Previously only conquest (conquering all 4 kingdoms) recorded a winner.
+- **Hall of Emperors showed NPCs**: The entry-menu `showHallOfEmperors()` was rendering `listPlayers().slice(0, 10)` which included NPCs. Rewritten to use `getHallOfFame()` so only real winners (with their win date) are shown.
+- **`personal.ts:levelUp()` else-if bug**: The `player.level >= maxLevel` branch was nested under `else if` of `player.xp >= xpNeeded`, making it unreachable for the normal "just hit cap" path. Restructured to check after the level-up loop.
+- **`db.resetGame()` was dead code**: The method existed in `database.ts` but was never called from game flow. Now invoked through the victory [N]ew Game path.
+- **Player could keep playing at max level**: Removed the "continue playing" option from the victory screen. The player must retire (die) or reset the realm. Invalid keys are rejected and the prompt redraws.
+
 ## 0.6.6
 
 Remove Manor Inspect (I key) - INSPECT.ANS layout not mapped correctly. Need to analyze ANSI escape sequences to determine proper cursor positions before re-implementing.

@@ -5,6 +5,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { findItem } from '../data/loader.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -219,6 +220,12 @@ export async function playerFight(
       if (taken.length > 0) {
         session.writeln(`${ANSI.BRIGHT_MAGENTA}  You strip their equipment: ${ANSI.BRIGHT_WHITE}${taken.join(', ')}${ANSI.RESET}`);
       }
+    }
+
+    if (player.level >= maxLevel) {
+      await triggerLevelVictory(session, player, db, content);
+      db.updatePlayer(player);
+      return;
     }
   }
 

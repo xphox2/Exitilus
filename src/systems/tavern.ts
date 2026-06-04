@@ -9,6 +9,7 @@ import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/e
 
 import { messageBoard } from '../systems/messaging.js';
 import { rentRoom } from '../systems/inn.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -115,6 +116,12 @@ export async function enterTavern(
                   if (player.level >= maxLevel && player.xp >= xpForNextLevel) {
                     session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
                     player.xp = xpForNextLevel - 1;
+                  }
+
+                  if (player.level >= maxLevel) {
+                    await triggerLevelVictory(session, player, db, content);
+                    db.updatePlayer(player);
+                    return;
                   }
                 }
                 else if (match.reward.type === 'hp') { player.hp = Math.min(player.maxHp, player.hp + match.reward.amount); session.writeln(`  ${ANSI.BRIGHT_GREEN}+${match.reward.amount} HP!${ANSI.RESET}`); }

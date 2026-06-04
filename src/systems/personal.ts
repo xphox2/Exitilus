@@ -8,7 +8,7 @@ import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
-import { recordWinner, getHallOfFame } from './halloffame.js';
+import { getHallOfFame, triggerLevelVictory } from './halloffame.js';
 import { showYesterdayBulletin, generateBulletin } from './bulletin.js';
 
 function getProjectRoot(): string {
@@ -169,9 +169,14 @@ async function levelUp(
       session.writeln(`${ANSI.BRIGHT_YELLOW}  ★ Level ${player.level}! +${hpGain} HP, +${mpGain} MP${ANSI.RESET}`);
     }
     db.updatePlayer(player);
+
+    if (player.level >= maxLevel) {
+      await triggerLevelVictory(session, player, db, content);
+      return true;
+    }
   } else if (player.level >= maxLevel) {
     session.writeln('');
-    session.writeln(`${ANSI.BRIGHT_MAGENTA}  ★★★ You have reached MAXIMUM LEVEL! ★★★${ANSI.RESET}`);
+    session.writeln(`${ANSI.BRIGHT_MAGENTA}  ★★★ You are at MAXIMUM LEVEL! ★★★${ANSI.RESET}`);
     session.writeln(`${ANSI.BRIGHT_YELLOW}  You are a legend of Exitilus!${ANSI.RESET}`);
     return true;
   } else {

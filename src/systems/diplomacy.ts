@@ -4,6 +4,7 @@ import type { GameContent } from '../data/loader.js';
 import type { GameDatabase } from '../data/database.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 /** Treaties stored as game_state keys: "treaty:<kingdomA>:<kingdomB>" = "active" | "" */
 
@@ -157,6 +158,13 @@ export async function enterDiplomacy(
           if (levelUpsThisWar === maxLevelUpsPerAction && player.xp >= xpForNextLevel) {
             session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
             player.xp = xpForNextLevel - 1;
+          }
+
+          if (player.level >= maxLevel) {
+            await triggerLevelVictory(session, player, db, content);
+            db.updatePlayer(player);
+            db.updatePlayer(enemy);
+            return;
           }
 
           session.writeln(`${ANSI.BRIGHT_GREEN}  VICTORY! You crushed ${enemy.name}'s forces!${ANSI.RESET}`);

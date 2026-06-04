@@ -7,6 +7,7 @@ import { confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/enhanced-menus.js';
 import { attemptResurrection } from './resurrection.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 
 function randomInt(min: number, max: number): number {
@@ -126,6 +127,11 @@ export async function enterChurch(
           if (levelUpsThisDonation === maxLevelUpsPerAction && player.xp >= xpForNextLevel) {
             session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
             player.xp = xpForNextLevel - 1;
+          }
+          if (player.level >= maxLevel) {
+            await triggerLevelVictory(session, player, db, content);
+            db.updatePlayer(player);
+            return;
           }
           db.updatePlayer(player);
           session.writeln(`${ANSI.BRIGHT_GREEN}  "The gods smile upon your generosity."${ANSI.RESET}`);

@@ -6,6 +6,7 @@ import { findMonster, findItem } from '../data/loader.js';
 import { ANSI } from '../io/ansi.js';
 import { formatGold } from '../core/menus.js';
 import { fg, bg, RESET, type RGB, lerpColor } from '../io/truecolor.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -738,6 +739,12 @@ async function runQuest(
     if (levelUpsThisQuest === maxLevelUpsPerAction && player.xp >= xpForNextLevel) {
       session.writeln(`${ANSI.BRIGHT_CYAN}  (XP capped at max level - no more level ups possible)${ANSI.RESET}`);
       player.xp = xpForNextLevel - 1;
+    }
+
+    if (player.level >= maxLevel) {
+      await triggerLevelVictory(session, player, db, content);
+      db.updatePlayer(player);
+      return;
     }
 
     if (!player.questsCompleted.includes(quest.id)) {

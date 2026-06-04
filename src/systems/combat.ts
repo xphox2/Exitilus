@@ -7,6 +7,7 @@ import { ANSI } from '../io/ansi.js';
 import { showMenu, confirmPrompt, formatGold } from '../core/menus.js';
 import { showStats } from '../core/stats.js';
 import { castCombatSpell } from './guilds.js';
+import { triggerLevelVictory } from './halloffame.js';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -65,7 +66,8 @@ async function fightMonster(
   session: PlayerSession,
   player: PlayerRecord,
   monster: MonsterDef,
-  content: GameContent
+  content: GameContent,
+  db: GameDatabase
 ): Promise<CombatResult> {
   let monsterHp = getMonsterHp(monster, player.level);
   const monsterMaxHp = monsterHp;
@@ -253,6 +255,11 @@ async function fightMonster(
     player.xp = xpForNextLevel - 1;
   }
 
+  if (player.level >= maxLevel) {
+    await triggerLevelVictory(session, player, db, content);
+    return { won: true, fled: false, goldEarned, xpEarned, itemDropped, playerDied: true };
+  }
+
   return { won: true, fled: false, goldEarned, xpEarned, itemDropped, playerDied: false };
 }
 
@@ -302,7 +309,7 @@ export async function enterCombatArea(
         const monster = areaMonsters[randomInt(0, areaMonsters.length - 1)];
         player.monsterFights++;
 
-        const result = await fightMonster(session, player, monster, content);
+        const result = await fightMonster(session, player, monster, content, db);
         db.updatePlayer(player);
 
         if (result.playerDied) {

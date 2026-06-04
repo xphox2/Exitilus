@@ -13,6 +13,7 @@ import { showEnhancedMenuOverlay, MENU_CONFIGS, shouldUseOverlay } from '../io/e
 import { createNewPlayer } from './player-creation.js';
 import { verifyPassword } from './auth.js';
 import { showStats } from './stats.js';
+import { getHallOfFame } from '../systems/halloffame.js';
 import { walkOutside } from '../systems/combat.js';
 import { enterShops } from '../systems/shops.js';
 import { enterBank } from '../systems/bank.js';
@@ -473,24 +474,27 @@ export class GameEngine {
 
   private async showHallOfEmperors(): Promise<void> {
     this.session.clear();
-    const players = this.db.listPlayers();
+
+    const entries = getHallOfFame(this.db.dataDir);
 
     this.session.writeln(`${ANSI.BRIGHT_YELLOW}╔════════════════════════════════════════════════════════════╗`);
     this.session.writeln(`║                   HALL OF EMPERORS                         ║`);
     this.session.writeln(`╚════════════════════════════════════════════════════════════╝${ANSI.RESET}`);
     this.session.writeln('');
 
-    if (players.length === 0) {
+    if (entries.length === 0) {
       this.session.writeln(`  ${ANSI.BRIGHT_CYAN}The hall stands empty, awaiting its first hero...${ANSI.RESET}`);
+      this.session.writeln(`  ${ANSI.BRIGHT_CYAN}Reach level ${this.content.config.maxPlayerLevel || 100} or conquer all four kingdoms to be remembered.${ANSI.RESET}`);
     } else {
-      const top = players.slice(0, 10);
-      for (let i = 0; i < top.length; i++) {
-        const p = top[i];
-        const rank = `#${i + 1}`.padStart(3);
+      this.session.writeln(`  ${ANSI.CYAN}${'#'.padEnd(3)} ${'Name'.padEnd(16)} ${'Won By'.padEnd(10)} ${'Date'.padEnd(28)} Gold${ANSI.RESET}`);
+      this.session.writeln(`  ${ANSI.CYAN}${'─'.repeat(70)}${ANSI.RESET}`);
+      for (const e of entries.slice(0, 20)) {
         this.session.writeln(
-          `  ${ANSI.BRIGHT_YELLOW}${rank}  ${ANSI.BRIGHT_WHITE}${p.name.padEnd(16)} ` +
-          `${ANSI.BRIGHT_GREEN}Level ${String(p.level).padEnd(4)} ` +
-          `${ANSI.BRIGHT_CYAN}XP: ${p.xp.toLocaleString()}${ANSI.RESET}`
+          `  ${ANSI.BRIGHT_YELLOW}${String(e.index).padEnd(3)} ` +
+          `${ANSI.BRIGHT_WHITE}${e.name.padEnd(16)} ` +
+          `${ANSI.BRIGHT_MAGENTA}${e.wonBy.padEnd(10)} ` +
+          `${ANSI.BRIGHT_CYAN}${e.formattedDate.padEnd(28)} ` +
+          `${ANSI.BRIGHT_GREEN}$${e.gold.toLocaleString()}${ANSI.RESET}`
         );
       }
     }
