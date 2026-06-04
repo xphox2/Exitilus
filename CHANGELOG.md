@@ -1,3 +1,16 @@
+## 0.6.8
+
+Add `npm run update` sysop tool for safe live-game updates.
+
+### Added
+- `src/tools/update.ts` - sysop update script that pulls, installs, builds, and backs up the database
+- New `update` npm script: `npm run update [-- --yes] [-- --no-backup] [-- --branch <name>]`
+- `--ff-only` pull strategy refuses divergent history (no accidental merges on solo dev's master)
+- Auto-detects `package.json` changes between old/new HEAD and only runs `npm install` when needed
+- Timestamped database backup (`exitilus.db.bak.YYYYMMDD-HHMMSS`) before any restart
+- Pre-flight warning for uncommitted local changes
+- Post-update instructions tailored to door/web/telnet modes
+
 ## 0.6.7
 
 Implement the level-cap win condition and realm reset. Reaching `maxPlayerLevel` (100) now triggers a real victory sequence: the player is recorded in the Hall of Fame and forced to choose an ending. There is no "continue playing" option at max level — the player either retires as a legend (marked dead) or resets the realm (full DB wipe, Hall of Fame preserved). The function loops on invalid input so the player cannot bypass the choice. Wired into all 7 level-up sites: combat, pvp, diplomacy, tavern, church, quests, and personal. Also fixes the Hall of Emperors display in the entry menu (it was showing top players including NPCs; now shows only real winners from the Hall of Fame with their win date) and an unreachable-branch bug in `personal.ts:levelUp()`.

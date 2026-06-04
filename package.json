@@ -19,6 +19,7 @@
     "admin:bulletin": "tsx src/tools/admin.ts bulletin",
     "admin:maintenance": "tsx src/tools/admin.ts maintenance",
     "admin:reset": "tsx src/tools/admin.ts reset",
+    "update": "tsx src/tools/update.ts",
     "img2ansi": "tsx src/tools/img2ansi.ts",
     "upscale": "tsx src/tools/upscale-ansi.ts",
     "art": "tsx src/tools/art-replacer.ts"
